@@ -1,0 +1,13 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "telepresence-gui",
+  "outputfilename": "telepresence-gui",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Mohammad Mahdi Momeni",
+    "email": "mm.momeni@rima.tax"
+  }
+}
