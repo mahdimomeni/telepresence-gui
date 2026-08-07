@@ -16,6 +16,9 @@ function App() {
     return (
         <div id="App">
             <img src={logo} id="logo" alt="logo"/>
+            <h1 className="text-3xl font-bold underline">
+                Hello world!
+            </h1>
             <div id="result" className="result">{resultText}</div>
             <div id="input" className="input-box">
                 <input id="name" className="input" onChange={updateName} autoComplete="off" name="input" type="text"/>
