@@ -28,6 +28,8 @@ func main() {
 		Bind: []interface{}{
 			app,
 		},
+		MinWidth:  1024,
+		MinHeight: 768,
 	})
 
 	if err != nil {
