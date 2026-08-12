@@ -13,12 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ModeToggle } from "./mode-toggle"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { SelectFile, StartTelepresence } from "../../wailsjs/go/main/App"
-import { SyntheticEvent, useRef, useState, type SubmitEvent } from "react"
+import { SelectFile, StartTelepresence, GetKubeInfo } from "../../wailsjs/go/main/App"
+import { SyntheticEvent, useEffect, useRef, useState, type SubmitEvent } from "react"
 import { Spinner } from "@/components/ui/spinner"
 import { toast } from "@/components/ui/toast"
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert"
 import { AlertCircleIcon } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 
 interface ConnectFormProps {
     onConnectSuccess: () => void
@@ -59,13 +60,37 @@ const DEFAULT_VALUES = {
 
 export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
     const formRef = useRef<HTMLFormElement>(null)
-
     const [loading, setLoading] = useState(false)
     const [apiError, setApiError] = useState("")
+
+    const [kubeContext, setKubeContext] = useState("")
+    const [availableContexts, setAvailableContexts] = useState<string[]>([])
+    const [namespace, setNamespace] = useState("default")
+
     const [kubeconfigPath, setKubeconfigPath] = useState(DEFAULT_VALUES.kubeconfig)
     const [clientCertificatePath, setClientCertificatePath] = useState(DEFAULT_VALUES["client-certificate"])
     const [clientKeyPath, setClientKeyPath] = useState(DEFAULT_VALUES["client-key"])
     const [telepresenceConfigPath, setTelepresenceConfigPath] = useState(DEFAULT_VALUES.config)
+
+    useEffect(() => {
+        const fetchKubeData = async () => {
+            setLoading(true)
+            try {
+                const info = await GetKubeInfo()
+
+                if (info.kubeconfigPath) setKubeconfigPath(info.kubeconfigPath);
+                if (info.contexts && info.contexts.length > 0) setAvailableContexts(info.contexts);
+                if (info.currentContext) setKubeContext(info.currentContext);
+                if (info.namespace) setNamespace(info.namespace);
+            } catch (error) {
+                console.warn("Could not load kubeconfig defaults:", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchKubeData()
+    }, [])
 
     const handleReset = (event: SyntheticEvent<HTMLFormElement>) => {
         setKubeconfigPath(DEFAULT_VALUES.kubeconfig)
@@ -100,7 +125,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
 
     const handleConnect = async (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault()
-        
+
         setApiError("")
         setLoading(true)
 
@@ -188,7 +213,13 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="grid gap-2">
                                                 <Label htmlFor="namespace">Namespace</Label>
-                                                <Input id="namespace" name="namespace" placeholder="default" />
+                                                <Input
+                                                    id="namespace"
+                                                    name="namespace"
+                                                    placeholder="default"
+                                                    value={namespace}
+                                                    onChange={(e) => setNamespace(e.target.value)}
+                                                />
                                             </div>
                                             <div className="grid gap-2">
                                                 <Label htmlFor="name">Connection Name</Label>
@@ -298,7 +329,32 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
 
                                         <div className="grid gap-2">
                                             <Label htmlFor="context">Context</Label>
-                                            <Input id="context" name="context" placeholder="Kubeconfig context" />
+                                            {availableContexts.length > 0 ? (
+                                                <Select 
+                                                    value={kubeContext} 
+                                                    onValueChange={(value) => {
+                                                        if (value) setKubeContext(value)
+                                                    }}
+                                                >
+                                                    <SelectTrigger id="context">
+                                                        <SelectValue placeholder="Select a context" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {availableContexts.map((ctxName) => (
+                                                            <SelectItem key={ctxName} value={ctxName}>
+                                                                {ctxName}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            ) : (
+                                                <Input
+                                                    id="context"
+                                                    value={kubeContext}
+                                                    onChange={(e) => setKubeContext(e.target.value)}
+                                                    placeholder="e.g., minikube"
+                                                />
+                                            )}
                                         </div>
                                         <div className="grid gap-2">
                                             <Label htmlFor="cluster">Cluster</Label>

@@ -6,7 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -49,6 +52,13 @@ type TelepresenceResponse struct {
 	Error string
 }
 
+type KubeInfo struct {
+	CurrentContext string   `json:"currentContext"`
+	Contexts       []string `json:"contexts"`
+	Namespace      string   `json:"namespace"`
+	KubeconfigPath string   `json:"kubeconfigPath"`
+}
+
 // App struct
 type App struct {
 	ctx context.Context
@@ -72,6 +82,59 @@ func (a *App) shutdown(ctx context.Context) {
 	} else {
 		fmt.Println("Telepresence daemon stopped successfully.")
 	}
+}
+
+func (a *App) GetKubeInfo() (KubeInfo, error) {
+	ctx, cancel := context.WithTimeout(a.ctx, 60*time.Second)
+	defer cancel()
+
+	// Default values
+	info := KubeInfo{
+		Contexts:  []string{},
+		Namespace: "default",
+	}
+
+	// 1. Get Kubeconfig Path from ENV or default to ~/.kube/config
+	envPath := os.Getenv("KUBECONFIG")
+	if envPath != "" {
+		info.KubeconfigPath = envPath
+	} else {
+		if home, err := os.UserHomeDir(); err == nil {
+			info.KubeconfigPath = filepath.Join(home, ".kube", "config")
+		}
+	}
+
+	// 2. Get ALL available contexts
+	cmdAll := exec.CommandContext(ctx, "kubectl", "config", "get-contexts", "-o", "name")
+	outAll, err := cmdAll.Output()
+	if err == nil {
+		lines := strings.Split(string(outAll), "\n")
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if trimmed != "" {
+				info.Contexts = append(info.Contexts, trimmed)
+			}
+		}
+	}
+
+	// 3. Get the current context
+	cmdCtx := exec.CommandContext(ctx, "kubectl", "config", "current-context")
+	outCtx, err := cmdCtx.Output()
+	if err == nil {
+		info.CurrentContext = strings.TrimSpace(string(outCtx))
+	}
+
+	// 4. Get the namespace for the current context (if set)
+	cmdNs := exec.CommandContext(ctx, "kubectl", "config", "view", "--minify", "--output", "jsonpath={..namespace}")
+	outNs, err := cmdNs.Output()
+	if err == nil {
+		ns := strings.TrimSpace(string(outNs))
+		if ns != "" {
+			info.Namespace = ns
+		}
+	}
+
+	return info, nil
 }
 
 func (a *App) StartTelepresence(config ConnectConfig) error {

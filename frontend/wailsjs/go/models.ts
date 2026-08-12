@@ -70,6 +70,24 @@ export namespace main {
 	        this["disable-compression"] = source["disable-compression"];
 	    }
 	}
+	export class KubeInfo {
+	    currentContext: string;
+	    contexts: string[];
+	    namespace: string;
+	    kubeconfigPath: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new KubeInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.currentContext = source["currentContext"];
+	        this.contexts = source["contexts"];
+	        this.namespace = source["namespace"];
+	        this.kubeconfigPath = source["kubeconfigPath"];
+	    }
+	}
 
 }
 
