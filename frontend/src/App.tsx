@@ -1,26 +1,20 @@
-import {useState} from 'react';
 import './App.css';
-import {Greet} from "../wailsjs/go/main/App";
 
-import { Button } from "@/components/ui/button"
 import { ThemeProvider } from '@/components/theme-provider';
-import { ModeToggle } from '@/components/mode-toggle';
-import { ConnectPage } from './pages/connect';
+import { ConnectPage } from './pages/connect-page';
+import { useState } from 'react';
+import { ListPage } from './pages/list-page';
 
 function App() {
-    const [resultText, setResultText] = useState("Please enter your name below 👇");
-    const [name, setName] = useState('');
-    const updateName = (e: any) => setName(e.target.value);
-    const updateResultText = (result: string) => setResultText(result);
-
-    function greet() {
-        Greet(name).then(updateResultText);
-    }
-
+    const [isConnected, setIsConnected] = useState(false)
     return (
         <ThemeProvider defaultTheme='dark' storageKey='vite-ui-theme'>
-            <div id="App">
-                <ConnectPage />
+            <div id="App" className="min-h-screen bg-background text-foreground flex items-center justify-center">
+                {!isConnected ? (
+                    <ConnectPage onConnectSuccess={() => setIsConnected(true)} />
+                ) : (
+                    <ListPage onDisconnect={() => setIsConnected(false)} />
+                )}
             </div>
         </ThemeProvider>
     )

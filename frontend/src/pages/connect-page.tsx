@@ -1,11 +1,14 @@
 import { ConnectForm } from "@/components/connect-form";
 import { LogPanel } from "@/components/log-panel";
 
-export function ConnectPage() {
+interface ConnectPageProps {
+    onConnectSuccess: () => void
+}
+
+export function ConnectPage({ onConnectSuccess }: ConnectPageProps) {
     return (
         <div className="flex items-center justify-center min-h-screen">
-            <ConnectForm />
-            <LogPanel />
+            <ConnectForm onConnectSuccess={onConnectSuccess} />
         </div>
     )
 }

@@ -1,5 +1,6 @@
-import { useState } from "react"
-import { Terminal, ChevronUp, ChevronDown, Trash2 } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { Terminal, ChevronUp, ChevronDown, Trash2, List } from "lucide-react"
+import { EventsOn, EventsOff } from "../../wailsjs/runtime/runtime"
 import {
   Collapsible,
   CollapsibleContent,
@@ -10,15 +11,30 @@ import { Button } from "@/components/ui/button"
 
 export function LogPanel() {
   const [isOpen, setIsOpen] = useState(false)
+  const [logs, setLogs] = useState(new Array())
+  const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Example log state - in reality, you'd stream this from your backend
-  const [logs, setLogs] = useState([
-    "[13:13:52] Starting telepresence daemon...",
-    "[13:13:52] Connecting to traffic manager in namespace default...",
-    "[13:13:53] Connected successfully.",
-    "[13:14:01] Intercepting traffic for service 'backend'...",
-    "[13:14:05] Routing to localhost:8080 active."
-  ])
+  useEffect(() => {
+    EventsOn("daemon-log", (newLine) => {
+      setLogs((prevLogs: any[]): any[] => {
+        const updatedLogs = [...prevLogs, newLine]
+        return updatedLogs.slice(-1000)
+      })
+    })
+
+    return () => {
+      EventsOff("daemon-log")
+    }
+  }, [])
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight
+      }
+    }
+  }, [logs])
 
   return (
     <Collapsible
@@ -59,12 +75,12 @@ export function LogPanel() {
           </div>
 
           {/* Scrollable Log Output */}
-          <ScrollArea className="h-62.5 w-full rounded-md px-4 py-2 text-xs font-mono text-zinc-300">
+          <ScrollArea ref={scrollRef} className="h-62.5 w-full rounded-md px-4 py-2 text-xs font-mono text-zinc-300">
             {logs.length === 0 ? (
               <div className="text-zinc-500 italic">Waiting for logs...</div>
             ) : (
               logs.map((log, index) => (
-                <div key={index} className="pb-1 leading-relaxed">
+                <div key={index} className="pb-1 leading-relaxed whitespace-pre-wrap">
                   {log}
                 </div>
               ))
