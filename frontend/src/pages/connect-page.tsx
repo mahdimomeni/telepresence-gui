@@ -1,5 +1,4 @@
 import { ConnectForm } from "@/components/connect-form";
-import { LogPanel } from "@/components/log-panel";
 
 interface ConnectPageProps {
     onConnectSuccess: () => void
