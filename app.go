@@ -53,10 +53,11 @@ type TelepresenceResponse struct {
 }
 
 type KubeInfo struct {
-	CurrentContext string   `json:"currentContext"`
-	Contexts       []string `json:"contexts"`
-	Namespace      string   `json:"namespace"`
-	KubeconfigPath string   `json:"kubeconfigPath"`
+	CurrentContext string         `json:"currentContext"`
+	Contexts       []string       `json:"contexts"`
+	Namespace      string         `json:"namespace"`
+	KubeconfigPath string         `json:"kubeconfigPath"`
+	SavedConfig    *ConnectConfig `json:"savedConfig"`
 }
 
 // App struct
@@ -84,7 +85,47 @@ func (a *App) shutdown(ctx context.Context) {
 	}
 }
 
-func (a *App) GetKubeInfo() (KubeInfo, error) {
+func (a *App) getConfigFilePath() (string, error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	appDir := filepath.Join(configDir, "telepresence-gui")
+	if err := os.MkdirAll(appDir, 0755); err != nil {
+		return "", err
+	}
+	return filepath.Join(appDir, "config.json"), nil
+}
+
+func (a *App) SaveConnectConfig(config ConnectConfig) error {
+	filePath, err := a.getConfigFilePath()
+	if err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filePath, data, 0644)
+}
+
+func (a *App) LoadConnectConfig() (*ConnectConfig, error) {
+	filePath, err := a.getConfigFilePath()
+	if err != nil {
+		return nil, err
+	}
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err // Returns nil if file doesn't exist yet
+	}
+	var config ConnectConfig
+	if err := json.Unmarshal(data, &config); err != nil {
+		return nil, err
+	}
+	return &config, nil
+}
+
+func (a *App) GetKubeInfo(kubeConfigPath string) (KubeInfo, error) {
 	ctx, cancel := context.WithTimeout(a.ctx, 60*time.Second)
 	defer cancel()
 
@@ -94,18 +135,25 @@ func (a *App) GetKubeInfo() (KubeInfo, error) {
 		Namespace: "default",
 	}
 
-	// 1. Get Kubeconfig Path from ENV or default to ~/.kube/config
-	envPath := os.Getenv("KUBECONFIG")
-	if envPath != "" {
-		info.KubeconfigPath = envPath
+	// 1. Fetch saved config from local disk and attach to info
+	if saved, err := a.LoadConnectConfig(); err == nil {
+		info.SavedConfig = saved
+	}
+
+	// 2. Kubeconfig Path: check ENV or default to ~/.kube/config
+	if kubeConfigPath != "" {
+		info.KubeconfigPath = kubeConfigPath
 	} else {
-		if home, err := os.UserHomeDir(); err == nil {
+		envPath := os.Getenv("KUBECONFIG")
+		if envPath != "" {
+			info.KubeconfigPath = envPath
+		} else if home, err := os.UserHomeDir(); err == nil {
 			info.KubeconfigPath = filepath.Join(home, ".kube", "config")
 		}
 	}
 
-	// 2. Get ALL available contexts
-	cmdAll := exec.CommandContext(ctx, "kubectl", "config", "get-contexts", "-o", "name")
+	// 3. Get ALL available contexts
+	cmdAll := exec.CommandContext(ctx, "kubectl", "config", "get-contexts", "-o", "name", "--kubeconfig="+info.KubeconfigPath)
 	outAll, err := cmdAll.Output()
 	if err == nil {
 		lines := strings.Split(string(outAll), "\n")
@@ -117,15 +165,15 @@ func (a *App) GetKubeInfo() (KubeInfo, error) {
 		}
 	}
 
-	// 3. Get the current context
-	cmdCtx := exec.CommandContext(ctx, "kubectl", "config", "current-context")
+	// 4. Get the current context
+	cmdCtx := exec.CommandContext(ctx, "kubectl", "config", "current-context", "--kubeconfig="+info.KubeconfigPath)
 	outCtx, err := cmdCtx.Output()
 	if err == nil {
 		info.CurrentContext = strings.TrimSpace(string(outCtx))
 	}
 
-	// 4. Get the namespace for the current context (if set)
-	cmdNs := exec.CommandContext(ctx, "kubectl", "config", "view", "--minify", "--output", "jsonpath={..namespace}")
+	// 5. Get the namespace for the current context (if set)
+	cmdNs := exec.CommandContext(ctx, "kubectl", "config", "view", "--minify", "--output", "jsonpath={..namespace}", "--kubeconfig="+info.KubeconfigPath)
 	outNs, err := cmdNs.Output()
 	if err == nil {
 		ns := strings.TrimSpace(string(outNs))
