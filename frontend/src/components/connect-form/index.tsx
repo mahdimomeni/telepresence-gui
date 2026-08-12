@@ -169,7 +169,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                     values={connectConfig}
                                     onChange={handleFieldChange}
                                     onBrowse={handleBrowseFile}
-                                    loading
+                                    loading={loading}
                                 />
                             </TabsContent>
 
@@ -178,7 +178,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                     values={connectConfig}
                                     onChange={handleFieldChange}
                                     onBrowse={handleBrowseFile}
-                                    loading
+                                    loading={loading}
                                 />
                             </TabsContent>
 
@@ -188,7 +188,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                     onChange={handleFieldChange}
                                     onBrowse={handleBrowseFile}
                                     availableContexts={availableContexts}
-                                    loading
+                                    loading={loading}
                                 />
                             </TabsContent>
 
@@ -197,7 +197,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                     values={connectConfig}
                                     onChange={handleFieldChange}
                                     onBrowse={handleBrowseFile}
-                                    loading
+                                    loading={loading}
                                 />
                             </TabsContent>
                         </Tabs>
