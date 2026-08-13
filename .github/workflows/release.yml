@@ -24,6 +24,7 @@ jobs:
           # macOS targets
           - { name: macOS amd64, platform: darwin/amd64, os: macos-latest }
           - { name: macOS arm64, platform: darwin/arm64, os: macos-latest }
+          - {name: macOS universal, platform: darwin/universal, os: macos-latest}
 
     steps:
       - name: Checkout Code
