@@ -20,7 +20,7 @@ inputs:
   # Node/npm
   node-version:
     required: false
-    default: "18.x"
+    default: "20.x"
   npm-working-directory:
     required: false
     default: "."

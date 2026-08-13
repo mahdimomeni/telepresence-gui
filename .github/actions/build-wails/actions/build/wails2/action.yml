@@ -51,7 +51,7 @@ inputs:
   node-version:
     description: "Node js version (unused by pipeline but kept for compatibility)"
     required: false
-    default: "18.x"
+    default: "20.x"
   deno-build:
     description: "Deno command to run (optional, ENV-first)"
     required: false

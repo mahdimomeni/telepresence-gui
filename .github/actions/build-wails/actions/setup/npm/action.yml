@@ -3,7 +3,7 @@ description: "Installs Node.js and optionally installs dependencies (npm ci) in 
 inputs:
   node-version:
     required: false
-    default: "18.x"
+    default: "20.x"
   working-directory:
     required: false
     default: "."
