@@ -198,6 +198,11 @@ func (a *App) onReady() {
 	systray.SetTitle("Telepresence")
 	systray.SetTooltip("Telepresence GUI Client")
 
+	systray.SetOnDClick(func(menu systray.IMenu) {
+		runtime.WindowUnminimise(a.ctx)
+		runtime.WindowShow(a.ctx)
+	})
+
 	mShow := systray.AddMenuItem("Show App", "Restore the window")
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Disconnect and exit")
