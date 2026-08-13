@@ -27,7 +27,11 @@ runs:
       env:
         BUILD_OPTIONS: ${{ inputs.build-options }}
       working-directory: ${{ inputs.app-working-directory }}
-      run: wails build --platform ${{ inputs.build-platform }} -webview2 ${{ inputs.wails-build-webview2 }} -o ${{ inputs.build-name }} $BUILD_OPTIONS
+      run: |
+        if [ "${{ runner.os }}" = "Linux" ] && [ "${{ inputs.build-platform }}" = "linux/arm64" ]; then
+          export CC=aarch64-linux-gnu-gcc
+        fi
+        wails build --platform ${{ inputs.build-platform }} -webview2 ${{ inputs.wails-build-webview2 }} -o ${{ inputs.build-name }} $BUILD_OPTIONS
       shell: bash
     - name: Add macOS perms
       if: inputs.build == 'true' && runner.os == 'macOS'
