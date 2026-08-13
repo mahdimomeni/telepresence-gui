@@ -30,6 +30,8 @@ runs:
       run: |
         if [ "${{ runner.os }}" = "Linux" ] && [ "${{ inputs.build-platform }}" = "linux/arm64" ]; then
           export CC=aarch64-linux-gnu-gcc
+          export CXX=aarch64-linux-gnu-g++
+          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
         fi
         wails build --platform ${{ inputs.build-platform }} -webview2 ${{ inputs.wails-build-webview2 }} -o ${{ inputs.build-name }} $BUILD_OPTIONS
       shell: bash

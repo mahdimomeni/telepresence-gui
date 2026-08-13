@@ -15,6 +15,7 @@ runs:
       run: |
         set -euo pipefail
         export DEBIAN_FRONTEND=noninteractive
+        sudo dpkg --add-architecture arm64
         tries=0
         until sudo apt-get -yq update; do
           tries=$((tries+1))
@@ -22,12 +23,10 @@ runs:
           echo "Retrying apt-get update ($tries)"; sleep 2
         done
         DISTRO=$(lsb_release -rs)
-        if [[ "$DISTRO" == "20.04" ]]; then
-          sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.0-dev gcc-aarch64-linux-gnu
-        elif [[ "$DISTRO" == "22.04" ]]; then
-          sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.0-dev gcc-aarch64-linux-gnu
+        if [[ "$DISTRO" == "20.04" || "$DISTRO" == "22.04" ]]; then
+          sudo apt-get -yq install libgtk-3-dev libgtk-3-dev:arm64 libwebkit2gtk-4.0-dev libwebkit2gtk-4.0-dev:arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
         elif [[ "$DISTRO" == "24.04" ]]; then
-          sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
+          sudo apt-get -yq install libgtk-3-dev libgtk-3-dev:arm64 libwebkit2gtk-4.1-dev libwebkit2gtk-4.1-dev:arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
         else
           echo "Unsupported Linux distribution: $DISTRO"
           exit 1
