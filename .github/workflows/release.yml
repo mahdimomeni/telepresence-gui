@@ -5,6 +5,10 @@ on:
       - "v*" # Triggers a release when a version tag (e.g., v1.0.0) is pushed
   pull_request:
 
+# Grant write permissions to create releases and upload assets
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build ${{ matrix.build.name }}
