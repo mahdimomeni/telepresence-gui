@@ -10,6 +10,7 @@ import { ListWorkloads, Notify, StopTelepresence } from "@/../wailsjs/go/main/Ap
 import { main as models } from "@/../wailsjs/go/models"
 import { getColumns } from "./columns"
 import { DataTable } from "./data-table"
+import { EventsOff, EventsOn } from "../../../wailsjs/runtime/runtime"
 
 
 
@@ -17,6 +18,16 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
   const [workloads, setWorkloads] = useState<models.Workload[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    const unsubscribeConnectionPending = EventsOn("connection-pending", (status: boolean) => {
+      setLoading(status)
+    })
+
+    return () => {
+      EventsOff("connection-pending")
+    }
+  }, [])
 
   const fetchWorkloads = async () => {
     setLoading(true)
@@ -35,12 +46,15 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
   }
 
   const handleDisconnect = async () => {
+    setLoading(true)
+    
     try {
       await StopTelepresence()
-      Notify("Telepresence Disconnected", "Disconnected successfully.")
       onDisconnect()
     } catch (err) {
       Notify("Telepresence Disconnection Error", `Failed to disconnect: ${String(err)}`)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -63,7 +77,7 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
             <RefreshCw className={loading ? "animate-spin" : ""} />
           </Button>
           <ModeToggle />
-          <Button variant="destructive" onClick={handleDisconnect}>
+          <Button variant="destructive" onClick={handleDisconnect} disabled={loading}>
             Disconnect
           </Button>
         </div>

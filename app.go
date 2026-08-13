@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/energye/systray"
@@ -194,31 +195,79 @@ func (a *App) Notify(title string, body string) error {
 	})
 }
 
+var (
+	mConnectToggle *systray.MenuItem
+	isConnected    bool
+	statusMutex    sync.Mutex
+)
+
 func (a *App) onReady() {
 	systray.SetIcon(appIconIco)
 	systray.SetTemplateIcon(appIconIco, appIconPng)
 	systray.SetTitle("Telepresence")
 	systray.SetTooltip("Telepresence GUI Client")
 
-	systray.SetOnDClick(func(menu systray.IMenu) {
+	systray.SetOnClick(func(menu systray.IMenu) {
 		runtime.WindowUnminimise(a.ctx)
 		runtime.WindowShow(a.ctx)
 	})
 
-	mShow := systray.AddMenuItem("Show App", "Restore the window")
-	systray.AddSeparator()
-	mQuit := systray.AddMenuItem("Quit", "Disconnect and exit")
+	mConnectToggle = systray.AddMenuItem("Connect", "Connect to Kubernetes cluster")
+	mConnectToggle.Click(func() {
+		statusMutex.Lock()
+		currentlyConnected := isConnected
+		statusMutex.Unlock()
 
-	mShow.Click(func() {
-		runtime.WindowShow(a.ctx)
+		if currentlyConnected {
+			runtime.EventsEmit(a.ctx, "connection-pending", true)
+			if err := a.StopTelepresence(); err != nil {
+				_ = a.Notify("Disconnect Failed", fmt.Sprintf("Error: %v", err))
+			} else {
+				a.updateConnectionStatus(false)
+				runtime.EventsEmit(a.ctx, "connection-pending", false)
+			}
+		} else {
+			config, err := a.LoadConnectConfig()
+			if err != nil || config == nil {
+				config = &ConnectConfig{Namespace: "default"}
+			}
+
+			runtime.EventsEmit(a.ctx, "daemon-log", "[Tray] Connecting to cluster...")
+			runtime.EventsEmit(a.ctx, "connection-pending", true)
+			if err := a.StartTelepresence(*config); err != nil {
+				_ = a.Notify("Connection Failed", fmt.Sprintf("Error: %v", err))
+			} else {
+				a.updateConnectionStatus(true)
+				runtime.EventsEmit(a.ctx, "connection-pending", false)
+			}
+		}
 	})
 
+	mQuit := systray.AddMenuItem("Quit", "Disconnect and exit")
 	mQuit.Click(func() {
 		_ = a.StopTelepresence()
-
 		systray.Quit()
 		runtime.Quit(a.ctx)
 	})
+}
+
+func (a *App) updateConnectionStatus(connected bool) {
+	statusMutex.Lock()
+	defer statusMutex.Unlock()
+
+	isConnected = connected
+	if connected {
+		_ = a.Notify("Telepresence Connected", "Connected to cluster successfully.")
+		mConnectToggle.SetTitle("Disconnect")
+		mConnectToggle.SetTooltip("Disconnect Telepresence daemon")
+	} else {
+		_ = a.Notify("Telepresence Disconnected", "Daemon stopped successfully.")
+		mConnectToggle.SetTitle("Connect")
+		mConnectToggle.SetTooltip("Connect to Kubernetes cluster")
+	}
+
+	// Sync state with React frontend
+	runtime.EventsEmit(a.ctx, "connection-changed", isConnected)
 }
 
 func (a *App) onExit() {
@@ -457,20 +506,18 @@ func (a *App) StartTelepresence(config ConnectConfig) error {
 		return err
 	}
 
-	if len(rawStdout) == 0 {
-		return nil
+	if len(rawStdout) != 0 {
+		var res TelepresenceResponse
+		err = json.Unmarshal(rawStdout, &res)
+		if err != nil {
+			return err
+		}
+		if res.Error != "" {
+			return errors.New(res.Error)
+		}
 	}
 
-	var res TelepresenceResponse
-	err = json.Unmarshal(rawStdout, &res)
-	if err != nil {
-		return err
-	}
-
-	if res.Error != "" {
-		return errors.New(res.Error)
-	}
-
+	a.updateConnectionStatus(true)
 	return nil
 }
 
@@ -492,6 +539,7 @@ func (a *App) StopTelepresence() error {
 		return err
 	}
 	runtime.EventsEmit(a.ctx, "daemon-log", "[Telepresence Disconnected]")
+	a.updateConnectionStatus(false)
 	return nil
 }
 

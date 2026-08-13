@@ -21,6 +21,7 @@ import { NetworkTab } from "@/components/connect-form/tabs/network-tab"
 import { ClusterAuthTab } from "@/components/connect-form/tabs/cluster-auth-tab"
 import { AdvancedTab } from "@/components/connect-form/tabs/advanced-tab"
 import { ConnectFormProps, DEFAULT_VALUES } from "@/components/connect-form/types"
+import { EventsOff, EventsOn } from "../../../wailsjs/runtime/runtime"
 
 export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
     const formRef = useRef<HTMLFormElement>(null)
@@ -30,6 +31,16 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
 
     const [connectConfig, setConnectConfig] = useState(new models.ConnectConfig(DEFAULT_VALUES))
     const [availableContexts, setAvailableContexts] = useState<string[]>([])
+
+    useEffect(() => {
+        const unsubscribeConnectionPending = EventsOn("connection-pending", (status: boolean) => {
+            setLoading(status)
+        })
+
+        return () => {
+            EventsOff("connection-pending")
+        }
+    }, [])
 
     useEffect(() => {
         // Guard: Prevent double-fetching and infinite state-update loops
@@ -129,8 +140,6 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
         try {
             await SaveConnectConfig(connectConfig)
             await StartTelepresence(connectConfig)
-            Notify("Telepresence Connected", "Started successfully.")
-
             onConnectSuccess()
         } catch (error) {
             setApiError(String(error))
