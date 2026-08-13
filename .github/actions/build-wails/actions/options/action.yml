@@ -48,11 +48,12 @@ runs:
           raw="${raw//,/ }"
           # collapse multiple spaces
           raw=$(echo "$raw" | tr -s ' ')
-          declare -A seen=()
           for t in $raw; do
-            if [[ -n "$t" && -z "${seen[$t]:-}" ]]; then
-              seen[$t]=1
-              norm_tags+=" $t"
+            if [[ -n "$t" ]]; then
+              case " $norm_tags " in
+                *" $t "*) ;; # already present
+                *) norm_tags+=" $t" ;;
+              esac
             fi
           done
         fi
