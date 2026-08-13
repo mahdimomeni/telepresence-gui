@@ -32,7 +32,7 @@ jobs:
           submodules: recursive
 
       - name: Build Wails App
-        uses: dAppServer/wails-build-action@v2.2
+        uses: dAppServer/wails-build-action@v3
         id: build
         with:
           build-name: telepresence-gui
