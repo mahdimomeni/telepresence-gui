@@ -45,7 +45,7 @@ runs:
   using: "composite"
   steps:
     - name: Setup Go
-      uses: ./actions/setup/go
+      uses: ./.github/actions/build-wails/actions/setup/go
       with:
         go-version: ${{ inputs.go-version }}
         build-cache: ${{ inputs.build-cache }}
@@ -53,17 +53,17 @@ runs:
         wails-version: ${{ inputs.wails-version }}
         wails-dev-build: ${{ inputs.wails-dev-build }}
     - name: Setup Node/npm
-      uses: ./actions/setup/npm
+      uses: ./.github/actions/build-wails/actions/setup/npm
       with:
         node-version: ${{ inputs.node-version }}
         working-directory: ${{ inputs.npm-working-directory }}
         install: ${{ inputs.npm-install }}
     - name: Setup Deno (optional)
-      uses: ./actions/setup/deno
+      uses: ./.github/actions/build-wails/actions/setup/deno
       with:
         deno-build: ${{ inputs.deno-build }}
         deno-version: ${{ inputs.deno-version }}
         deno-working-directory: ${{ inputs.deno-working-directory }}
     - name: Setup Conan (optional)
       if: inputs.conan-enable == 'true'
-      uses: ./actions/setup/conan
+      uses: ./.github/actions/build-wails/actions/setup/conan

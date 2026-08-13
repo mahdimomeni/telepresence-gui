@@ -45,13 +45,13 @@ runs:
   steps:
     - name: Discovery
       id: discovery
-      uses: ./actions/discovery
+      uses: ./.github/actions/build-wails/actions/discovery
       with:
         working-directory: ${{ inputs.app-working-directory }}
 
     - name: Delegate to directory orchestrator
       id: dir_orch
-      uses: ./actions
+      uses: ./.github/actions/build-wails/actions
       with:
         build: ${{ inputs.build }}
         sign: ${{ inputs.sign }}
@@ -70,7 +70,7 @@ runs:
       run: echo "[DEBUG_LOG] (root) Orchestrator selected stack=${{ steps.dir_orch.outputs.SELECTED_STACK }}"
 
     - name: Package & release
-      uses: ./actions/package
+      uses: ./.github/actions/build-wails/actions/package
       with:
         package: ${{ inputs.package }}
         build-name: ${{ inputs.build-name }}

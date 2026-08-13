@@ -72,7 +72,7 @@ runs:
 
     - name: Call Wails v2 wrapper
       if: steps.sel.outputs.SELECTED_STACK == 'wails2'
-      uses: ./actions/build/wails2
+      uses: ./.github/actions/build-wails/actions/build/wails2
       with:
         build: ${{ inputs.build }}
         sign: ${{ inputs.sign }}
