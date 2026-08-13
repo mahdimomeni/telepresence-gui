@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,8 +9,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	goRuntime "runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/energye/systray"
@@ -352,6 +353,12 @@ func (a *App) GetKubeInfo(kubeConfigPath string) (KubeInfo, error) {
 
 	// 3. Get ALL available contexts
 	cmdAll := exec.CommandContext(ctx, "kubectl", "config", "get-contexts", "-o", "name", "--kubeconfig="+info.KubeconfigPath)
+	if goRuntime.GOOS == "windows" {
+		cmdAll.SysProcAttr = &syscall.SysProcAttr{
+			HideWindow:    true,
+			CreationFlags: 0x08000000,
+		}
+	}
 	outAll, err := cmdAll.Output()
 	if err == nil {
 		lines := strings.Split(string(outAll), "\n")
@@ -365,6 +372,12 @@ func (a *App) GetKubeInfo(kubeConfigPath string) (KubeInfo, error) {
 
 	// 4. Get the current context
 	cmdCtx := exec.CommandContext(ctx, "kubectl", "config", "current-context", "--kubeconfig="+info.KubeconfigPath)
+	if goRuntime.GOOS == "windows" {
+		cmdCtx.SysProcAttr = &syscall.SysProcAttr{
+			HideWindow:    true,
+			CreationFlags: 0x08000000,
+		}
+	}
 	outCtx, err := cmdCtx.Output()
 	if err == nil {
 		info.CurrentContext = strings.TrimSpace(string(outCtx))
@@ -372,6 +385,12 @@ func (a *App) GetKubeInfo(kubeConfigPath string) (KubeInfo, error) {
 
 	// 5. Get the namespace for the current context (if set)
 	cmdNs := exec.CommandContext(ctx, "kubectl", "config", "view", "--minify", "--output", "jsonpath={..namespace}", "--kubeconfig="+info.KubeconfigPath)
+	if goRuntime.GOOS == "windows" {
+		cmdNs.SysProcAttr = &syscall.SysProcAttr{
+			HideWindow:    true,
+			CreationFlags: 0x08000000,
+		}
+	}
 	outNs, err := cmdNs.Output()
 	if err == nil {
 		ns := strings.TrimSpace(string(outNs))
@@ -384,8 +403,6 @@ func (a *App) GetKubeInfo(kubeConfigPath string) (KubeInfo, error) {
 }
 
 func (a *App) StartTelepresence(config ConnectConfig) error {
-	fmt.Println("telepresence connect triggered")
-
 	args := []string{"connect"}
 
 	// Core Flags
@@ -492,23 +509,15 @@ func (a *App) StartTelepresence(config ConnectConfig) error {
 	ctx, cancel := context.WithTimeout(a.ctx, 60*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "telepresence", args...)
-
-	var stdoutBuf, stderrBuf bytes.Buffer
-	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
-	cmd.Stdin = nil
-
-	err := cmd.Run()
-	rawStdout := bytes.TrimSpace(stdoutBuf.Bytes())
-
-	if err != nil && len(rawStdout) == 0 {
+	output, err := runCommand(ctx, "telepresence", args...)
+	if err != nil {
+		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Error stopping daemon]: %s", string(output)))
 		return err
 	}
 
-	if len(rawStdout) != 0 {
+	if len(output) != 0 {
 		var res TelepresenceResponse
-		err = json.Unmarshal(rawStdout, &res)
+		err = json.Unmarshal([]byte(output), &res)
 		if err != nil {
 			return err
 		}
@@ -532,12 +541,15 @@ func (a *App) SelectFile(title string) (string, error) {
 }
 
 func (a *App) StopTelepresence() error {
-	cmd := exec.Command("telepresence", "quit")
-	output, err := cmd.CombinedOutput()
+	ctx, cancel := context.WithTimeout(a.ctx, 60*time.Second)
+	defer cancel()
+
+	output, err := runCommand(ctx, "telepresence", "quit")
 	if err != nil {
 		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Error stopping daemon]: %s", string(output)))
 		return err
 	}
+
 	runtime.EventsEmit(a.ctx, "daemon-log", "[Telepresence Disconnected]")
 	a.updateConnectionStatus(false)
 	return nil
@@ -547,9 +559,7 @@ func (a *App) ListWorkloads() ([]Workload, error) {
 	ctx, cancel := context.WithTimeout(a.ctx, 60*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "telepresence", "list", "--format", "json")
-
-	output, err := cmd.CombinedOutput()
+	output, err := runCommand(ctx, "telepresence", "list", "--format", "json")
 	if err != nil {
 		errorMessage := fmt.Sprintf("Failed to list workloads: %s\n%s", err.Error(), string(output))
 		fmt.Println(errorMessage)
@@ -557,7 +567,7 @@ func (a *App) ListWorkloads() ([]Workload, error) {
 	}
 
 	var workloads []Workload
-	err = json.Unmarshal(output, &workloads)
+	err = json.Unmarshal([]byte(output), &workloads)
 	if err != nil {
 		errorMessage := fmt.Sprintf("Failed to list workloads: %s\n%s", err.Error(), string(output))
 		fmt.Println(errorMessage)
@@ -615,6 +625,14 @@ func (a *App) InterceptWorkload(config InterceptConfig) error {
 
 func runCommand(ctx context.Context, name string, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, name, args...)
+
+	if goRuntime.GOOS == "windows" {
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			HideWindow:    true,
+			CreationFlags: 0x08000000,
+		}
+	}
+
 	output, err := cmd.CombinedOutput()
 
 	strOut := strings.TrimSpace(string(output))
