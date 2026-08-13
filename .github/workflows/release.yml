@@ -28,12 +28,10 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
+        uses: actions/checkout@v4
 
       - name: Build Wails App
-        uses: dAppServer/wails-build-action@v3
+        uses: ./.github/actions/build-wails
         id: build
         with:
           build-name: telepresence-gui
