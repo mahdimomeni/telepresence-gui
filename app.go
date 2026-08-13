@@ -60,6 +60,86 @@ type KubeInfo struct {
 	SavedConfig    *ConnectConfig `json:"savedConfig"`
 }
 
+type Workload struct {
+	Name                   string          `json:"name"`
+	Namespace              string          `json:"namespace"`
+	WorkloadResourceType   string          `json:"workload_resource_type"`
+	UID                    string          `json:"uid"`
+	DesiredReplicas        int             `json:"desired_replicas"`
+	ReadyReplicas          int             `json:"ready_replicas"`
+	AgentVersion           string          `json:"agent_version,omitempty"`
+	NotInterceptableReason string          `json:"not_interceptable_reason,omitempty"`
+	InterceptInfo          []InterceptInfo `json:"intercept_info,omitempty"`
+}
+
+type InterceptInfo struct {
+	Spec              InterceptSpec     `json:"spec"`
+	ID                string            `json:"id"`
+	ClientSession     ClientSession     `json:"client_session"`
+	Disposition       int               `json:"disposition"`
+	PodName           string            `json:"pod_name"`
+	APIPort           int               `json:"api_port"`
+	PodIP             string            `json:"pod_ip"`
+	SFTPPort          int               `json:"sftp_port"`
+	FTPPort           int               `json:"ftp_port"`
+	MountPoint        string            `json:"mount_point"`
+	MechanismArgsDesc string            `json:"mechanism_args_desc"`
+	Environment       map[string]string `json:"environment"`
+	Mounts            map[string]int    `json:"mounts"`
+	ModifiedAt        Timestamp         `json:"modified_at"`
+}
+
+type InterceptSpec struct {
+	Name             string            `json:"name"`
+	Client           string            `json:"client"`
+	Agent            string            `json:"agent"`
+	WorkloadKind     string            `json:"workload_kind"`
+	Namespace        string            `json:"namespace"`
+	Mechanism        string            `json:"mechanism"`
+	TargetHost       string            `json:"target_host"`
+	PortIdentifier   string            `json:"port_identifier"`
+	ServicePortName  string            `json:"service_port_name"`
+	ServicePort      int               `json:"service_port"`
+	ServiceUID       string            `json:"service_uid"`
+	Protocol         string            `json:"protocol"`
+	ContainerName    string            `json:"container_name"`
+	ContainerPort    int               `json:"container_port"`
+	TargetPort       int               `json:"target_port"`
+	RoundtripLatency int64             `json:"roundtrip_latency"`
+	DialTimeout      int64             `json:"dial_timeout"`
+	Replace          bool              `json:"replace"`
+	Wiretap          bool              `json:"wiretap"`
+	NoDefaultPort    bool              `json:"no_default_port"`
+	HeaderFilters    map[string]string `json:"header_filters"`
+	Plaintext        bool              `json:"plaintext"`
+	NodeAgent        bool              `json:"node_agent"`
+}
+
+type ClientSession struct {
+	SessionID        string `json:"session_id"`
+	ManagerInstallID string `json:"manager_install_id"`
+	InstallID        string `json:"install_id"`
+}
+
+type Timestamp struct {
+	Seconds int64 `json:"seconds"`
+	Nanos   int32 `json:"nanos"`
+}
+
+type InterceptConfig struct {
+	Workload   string `json:"workload"`
+	Port       string `json:"port"`
+	EnvFile    string `json:"env_file"`
+	EnvJSON    string `json:"env_json"`
+	EnvSyntax  string `json:"env_syntax"`
+	HTTPHeader string `json:"http_header"`
+	Mount      string `json:"mount"`
+	Container  string `json:"container"`
+	Service    string `json:"service"`
+	DockerRun  bool   `json:"docker_run"`
+	DockerArgs string `json:"docker_args"`
+}
+
 // App struct
 type App struct {
 	ctx context.Context
@@ -346,7 +426,7 @@ func (a *App) StopTelepresence() error {
 	return nil
 }
 
-func (a *App) ListWorkloads() (string, error) {
+func (a *App) ListWorkloads() ([]Workload, error) {
 	ctx, cancel := context.WithTimeout(a.ctx, 60*time.Second)
 	defer cancel()
 
@@ -356,8 +436,73 @@ func (a *App) ListWorkloads() (string, error) {
 	if err != nil {
 		errorMessage := fmt.Sprintf("Failed to list workloads: %s\n%s", err.Error(), string(output))
 		fmt.Println(errorMessage)
-		return "", errors.New(errorMessage)
+		return []Workload{}, errors.New(errorMessage)
 	}
 
-	return string(output), nil
+	var workloads []Workload
+	err = json.Unmarshal(output, &workloads)
+	if err != nil {
+		errorMessage := fmt.Sprintf("Failed to list workloads: %s\n%s", err.Error(), string(output))
+		fmt.Println(errorMessage)
+		return []Workload{}, errors.New(errorMessage)
+	}
+
+	return workloads, nil
+}
+
+func (a *App) InterceptWorkload(config InterceptConfig) error {
+	ctx, cancel := context.WithTimeout(a.ctx, 30*time.Second)
+	defer cancel()
+
+	args := []string{"intercept", config.Workload, "--port", config.Port}
+
+	// Environment options
+	if config.EnvFile != "" {
+		args = append(args, "--env-file", config.EnvFile)
+	}
+	if config.EnvJSON != "" {
+		args = append(args, "--env-json", config.EnvJSON)
+	}
+	if config.EnvSyntax != "" {
+		args = append(args, "--env-syntax", config.EnvSyntax)
+	}
+
+	// Advanced routing options
+	if config.HTTPHeader != "" {
+		args = append(args, "--http-header", config.HTTPHeader)
+	}
+	if config.Mount != "" {
+		args = append(args, "--mount", config.Mount)
+	}
+	if config.Container != "" {
+		args = append(args, "--container", config.Container)
+	}
+	if config.Service != "" {
+		args = append(args, "--service", config.Service)
+	}
+
+	// Docker integration
+	if config.DockerRun {
+		args = append(args, "--docker-run", "--")
+		if config.DockerArgs != "" {
+			args = append(args, strings.Fields(config.DockerArgs)...)
+		}
+	}
+
+	_, err := runCommand(ctx, "telepresence", args...)
+	if err != nil {
+		return fmt.Errorf("failed to intercept %s: %v", config.Workload, err)
+	}
+	return nil
+}
+
+func runCommand(ctx context.Context, name string, args ...string) (string, error) {
+	cmd := exec.CommandContext(ctx, name, args...)
+	output, err := cmd.CombinedOutput()
+
+	strOut := strings.TrimSpace(string(output))
+	if err != nil {
+		return strOut, fmt.Errorf("%w: %s", err, strOut)
+	}
+	return strOut, nil
 }

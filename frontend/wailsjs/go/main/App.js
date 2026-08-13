@@ -6,6 +6,10 @@ export function GetKubeInfo(arg1) {
   return window['go']['main']['App']['GetKubeInfo'](arg1);
 }
 
+export function InterceptWorkload(arg1) {
+  return window['go']['main']['App']['InterceptWorkload'](arg1);
+}
+
 export function ListWorkloads() {
   return window['go']['main']['App']['ListWorkloads']();
 }

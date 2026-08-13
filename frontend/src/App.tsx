@@ -3,7 +3,7 @@ import './App.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ConnectPage } from './pages/connect-page';
 import { useState } from 'react';
-import { ListPage } from './pages/list-page';
+import { ListPage } from './pages/list';
 
 function App() {
     const [isConnected, setIsConnected] = useState(false)

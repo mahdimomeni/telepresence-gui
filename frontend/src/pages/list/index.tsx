@@ -7,43 +7,25 @@ import { toast } from "@/components/ui/toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ModeToggle } from "@/components/mode-toggle"
 import { InterceptDialog } from "@/components/intercept-dialog"
-import { ListWorkloads, StopTelepresence } from "../../wailsjs/go/main/App"
+import { ListWorkloads, StopTelepresence } from "@/../wailsjs/go/main/App"
+import { main as models } from "@/../wailsjs/go/models"
+import { getColumns } from "./columns"
+import { DataTable } from "./data-table"
 
-// Telepresence JSON structure often looks like a map or array of workloads.
-// Adjust this interface based on the exact shape of your telepresence version's JSON output.
-interface Workload {
-  name: string
-  kind: string
-  namespace: string
-  // If a workload is already intercepted, it might contain intercept info
-  intercepted?: boolean 
-}
+
 
 export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
-  const [workloads, setWorkloads] = useState<Workload[]>([])
+  const [workloads, setWorkloads] = useState<models.Workload[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
   const fetchWorkloads = async () => {
     setLoading(true)
     setError("")
-    
+
     try {
-      const rawJson = await ListWorkloads()
-      if (rawJson) {
-        // Parse the JSON string returned from Go
-        const data = JSON.parse(rawJson)
-        
-        // Note: 'telepresence list' JSON output varies by version. 
-        // If it returns an object of objects, map it to an array:
-        const parsedWorkloads = Array.isArray(data) 
-            ? data 
-            : Object.values(data)
-            
-        setWorkloads(parsedWorkloads as Workload[])
-      } else {
-        setWorkloads([])
-      }
+      const data = await ListWorkloads()
+      setWorkloads(data)
     } catch (err) {
       console.error(err)
       setError(String(err))
@@ -96,7 +78,7 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
           </Button>
         </div>
       </CardHeader>
-      
+
       <CardContent className="flex-1 overflow-auto">
         {error && (
           <Alert variant="destructive" className="mb-4">
@@ -104,7 +86,7 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        
+
         {loading && workloads.length === 0 ? (
           <div className="flex justify-center items-center h-40">
             <Spinner className="size-32" />
@@ -116,36 +98,7 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
             <p>No interceptable workloads found in this namespace.</p>
           </div>
         ) : (
-          <div className="grid gap-3">
-            {workloads.map((workload, index) => (
-              <div 
-                key={`${workload.name}-${index}`} 
-                className="flex items-center justify-between p-4 border rounded-lg bg-card text-card-foreground shadow-sm transition-colors hover:bg-accent/50"
-              >
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-lg">{workload.name}</h4>
-                    {workload.intercepted && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-green-500/10 text-green-500 rounded-full border border-green-500/20">
-                        Active Intercept
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-sm text-muted-foreground flex gap-3">
-                    <span>Kind: {workload.kind || "Unknown"}</span>
-                    <span>Namespace: {workload.namespace || "default"}</span>
-                  </div>
-                </div>
-
-                <div>
-                  <InterceptDialog 
-                    workloadName={workload.name} 
-                    onSuccess={fetchWorkloads} 
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+          <DataTable columns={getColumns(fetchWorkloads)} data={workloads} />
         )}
       </CardContent>
     </Card>

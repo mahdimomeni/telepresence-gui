@@ -4,7 +4,9 @@ import {main} from '../models';
 
 export function GetKubeInfo(arg1:string):Promise<main.KubeInfo>;
 
-export function ListWorkloads():Promise<string>;
+export function InterceptWorkload(arg1:main.InterceptConfig):Promise<void>;
+
+export function ListWorkloads():Promise<Array<main.Workload>>;
 
 export function LoadConnectConfig():Promise<main.ConnectConfig>;
 
