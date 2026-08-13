@@ -32,8 +32,7 @@ jobs:
           submodules: recursive
 
       - name: Build Wails App
-        uses: dAppCore/build/actions/build/wails2@v4.0.0
+        uses: snider/build@v3
         with:
-          build-name: telepresence-gui # Replace with your app's actual executable name
+          build-name: telepresence-gui
           build-platform: ${{ matrix.build.platform }}
-          package: true # Automatically uploads artifacts and creates a GitHub Release on tags
