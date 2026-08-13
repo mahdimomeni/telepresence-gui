@@ -26,11 +26,6 @@ jobs:
           - { name: macOS arm64, platform: darwin/arm64, os: macos-latest }
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
       - name: Build Wails App
         uses: snider/build@v3
         with:
