@@ -1,0 +1,39 @@
+name: Wails Release Build
+on:
+  push:
+    tags:
+      - "v*" # Triggers a release when a version tag (e.g., v1.0.0) is pushed
+  pull_request:
+
+jobs:
+  build:
+    name: Build ${{ matrix.build.name }}
+    runs-on: ${{ matrix.build.os }}
+    strategy:
+      fail-fast: false # Prevents cancelling all builds if just one platform fails
+      matrix:
+        build:
+          # Linux targets
+          - { name: Linux amd64, platform: linux/amd64, os: ubuntu-latest }
+          - { name: Linux arm64, platform: linux/arm64, os: ubuntu-latest }
+
+          # Windows targets
+          - { name: Windows amd64, platform: windows/amd64, os: windows-latest }
+          - { name: Windows arm64, platform: windows/arm64, os: windows-latest }
+
+          # macOS targets
+          - { name: macOS amd64, platform: darwin/amd64, os: macos-latest }
+          - { name: macOS arm64, platform: darwin/arm64, os: macos-latest }
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build Wails App
+        uses: dAppServer/wails-build-action@v2
+        with:
+          build-name: telepresence-gui # Replace with your app's actual executable name
+          build-platform: ${{ matrix.build.platform }}
+          package: true # Automatically uploads artifacts and creates a GitHub Release on tags
