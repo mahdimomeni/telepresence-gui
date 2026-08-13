@@ -26,8 +26,14 @@ jobs:
           - { name: macOS arm64, platform: darwin/arm64, os: macos-latest }
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
       - name: Build Wails App
-        uses: snider/build@v3
+        uses: dAppServer/wails-build-action@v2.2
+        id: build
         with:
           build-name: telepresence-gui
           build-platform: ${{ matrix.build.platform }}
