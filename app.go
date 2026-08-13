@@ -9,10 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	goRuntime "runtime"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/energye/systray"
@@ -353,12 +351,7 @@ func (a *App) GetKubeInfo(kubeConfigPath string) (KubeInfo, error) {
 
 	// 3. Get ALL available contexts
 	cmdAll := exec.CommandContext(ctx, "kubectl", "config", "get-contexts", "-o", "name", "--kubeconfig="+info.KubeconfigPath)
-	if goRuntime.GOOS == "windows" {
-		cmdAll.SysProcAttr = &syscall.SysProcAttr{
-			HideWindow:    true,
-			CreationFlags: 0x08000000,
-		}
-	}
+	cmdAll.SysProcAttr = getSysProcAttr()
 	outAll, err := cmdAll.Output()
 	if err == nil {
 		lines := strings.Split(string(outAll), "\n")
@@ -372,12 +365,7 @@ func (a *App) GetKubeInfo(kubeConfigPath string) (KubeInfo, error) {
 
 	// 4. Get the current context
 	cmdCtx := exec.CommandContext(ctx, "kubectl", "config", "current-context", "--kubeconfig="+info.KubeconfigPath)
-	if goRuntime.GOOS == "windows" {
-		cmdCtx.SysProcAttr = &syscall.SysProcAttr{
-			HideWindow:    true,
-			CreationFlags: 0x08000000,
-		}
-	}
+	cmdCtx.SysProcAttr = getSysProcAttr()
 	outCtx, err := cmdCtx.Output()
 	if err == nil {
 		info.CurrentContext = strings.TrimSpace(string(outCtx))
@@ -385,12 +373,7 @@ func (a *App) GetKubeInfo(kubeConfigPath string) (KubeInfo, error) {
 
 	// 5. Get the namespace for the current context (if set)
 	cmdNs := exec.CommandContext(ctx, "kubectl", "config", "view", "--minify", "--output", "jsonpath={..namespace}", "--kubeconfig="+info.KubeconfigPath)
-	if goRuntime.GOOS == "windows" {
-		cmdNs.SysProcAttr = &syscall.SysProcAttr{
-			HideWindow:    true,
-			CreationFlags: 0x08000000,
-		}
-	}
+	cmdNs.SysProcAttr = getSysProcAttr()
 	outNs, err := cmdNs.Output()
 	if err == nil {
 		ns := strings.TrimSpace(string(outNs))
@@ -626,12 +609,7 @@ func (a *App) InterceptWorkload(config InterceptConfig) error {
 func runCommand(ctx context.Context, name string, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, name, args...)
 
-	if goRuntime.GOOS == "windows" {
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			HideWindow:    true,
-			CreationFlags: 0x08000000,
-		}
-	}
+	cmd.SysProcAttr = getSysProcAttr()
 
 	output, err := cmd.CombinedOutput()
 
