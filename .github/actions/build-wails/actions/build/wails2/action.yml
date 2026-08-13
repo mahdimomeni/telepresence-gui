@@ -147,7 +147,10 @@ runs:
         # helper to pick first non-empty
         pick() { if [ -n "$1" ] && [ "$1" != "false" ]; then echo "$1"; else echo "$2"; fi }
         # booleans normalize
-        tobool() { val=$(echo "${1:-}" | tr '[:upper:]' '[:lower:]') case "$val" in true|1|yes|on) echo "true";; *) echo "false";; esac }
+        tobool() {
+          val=$(echo "${1:-}" | tr '[:upper:]' '[:lower:]')
+          case "$val" in true|1|yes|on) echo "true";; *) echo "false";; esac
+        }
         BUILD_TAGS=$(pick "${IN_BUILD_TAGS:-}" "${EV_BUILD_TAGS:-}")
         OBFUSCATE=$(tobool "$(pick "${IN_OBFUSCATE:-}" "${EV_OBFUSCATE:-}")")
         NSIS=$(tobool "$(pick "${IN_NSIS:-}" "${EV_NSIS:-}")")
