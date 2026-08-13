@@ -1,39 +1,70 @@
 name: Wails Release Build
+
 on:
   push:
     tags:
-      - "v*" # Triggers a release when a version tag (e.g., v1.0.0) is pushed
-  pull_request:
+      - 'v*'
 
 jobs:
   build:
     name: Build ${{ matrix.build.name }}
     runs-on: ${{ matrix.build.os }}
     strategy:
-      fail-fast: false # Prevents cancelling all builds if just one platform fails
+      fail-fast: false
       matrix:
         build:
-          # Linux targets
           - { name: Linux amd64, platform: linux/amd64, os: ubuntu-latest }
           - { name: Linux arm64, platform: linux/arm64, os: ubuntu-latest }
-
-          # Windows targets
           - { name: Windows amd64, platform: windows/amd64, os: windows-latest }
           - { name: Windows arm64, platform: windows/arm64, os: windows-latest }
-
-          # macOS targets
           - { name: macOS amd64, platform: darwin/amd64, os: macos-latest }
           - { name: macOS arm64, platform: darwin/arm64, os: macos-latest }
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
-      - name: Build Wails App
-        uses: host-uk/build@v4.0.0
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          build-name: telepresence-gui # Replace with your app's actual executable name
-          build-platform: ${{ matrix.build.platform }}
-          package: true # Automatically uploads artifacts and creates a GitHub Release on tags
+          go-version: '1.22'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Install Linux dependencies required by Wails / WebKit GTK
+      - name: Install Linux Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev build-essential pkg-config
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build Application
+        run: wails build -platform ${{ matrix.build.platform }} -clean
+
+      # Package Linux & macOS build outputs as zip archives for clean distribution
+      - name: Package Binary (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          cd build/bin
+          zip -r "../../${{ matrix.build.name }}.zip" ./*
+
+      # Package Windows executables
+      - name: Package Binary (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Compress-Archive -Path build/bin/* -DestinationPath "${{ matrix.build.name }}.zip"
+
+      # Automatically publish compiled binaries to the GitHub Release
+      - name: Upload Release Assets
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "*.zip"
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
