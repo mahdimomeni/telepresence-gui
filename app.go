@@ -195,6 +195,8 @@ func (a *App) Notify(title string, body string) error {
 }
 
 func (a *App) onReady() {
+	systray.SetIcon(appIconIco)
+	systray.SetTemplateIcon(appIconIco, appIconPng)
 	systray.SetTitle("Telepresence")
 	systray.SetTooltip("Telepresence GUI Client")
 
