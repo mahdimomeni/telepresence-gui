@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/energye/systray"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -154,6 +155,32 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+
+	go systray.Run(a.onReady, a.onExit)
+}
+
+func (a *App) onReady() {
+	systray.SetTitle("Telepresence")
+	systray.SetTooltip("Telepresence GUI Client")
+
+	mShow := systray.AddMenuItem("Show App", "Restore the window")
+	systray.AddSeparator()
+	mQuit := systray.AddMenuItem("Quit", "Disconnect and exit")
+
+	mShow.Click(func() {
+		runtime.WindowShow(a.ctx)
+	})
+
+	mQuit.Click(func() {
+		_ = a.StopTelepresence()
+
+		systray.Quit()
+		runtime.Quit(a.ctx)
+	})
+}
+
+func (a *App) onExit() {
+	// Cleanup logic if needed
 }
 
 func (a *App) shutdown(ctx context.Context) {

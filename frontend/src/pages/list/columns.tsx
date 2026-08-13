@@ -6,6 +6,7 @@ import { type DataTableFeatures } from "./data-table-features"
 
 import { main as models } from "@/../wailsjs/go/models"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 // Use `accessor` for data columns and `display` for columns without one.
 const columnHelper = createColumnHelper<DataTableFeatures, models.Workload>()
@@ -17,8 +18,16 @@ export const getColumns = (fetchWorkloads: () => void) => columnHelper.columns([
     columnHelper.accessor("namespace", {
         header: "Namespace",
     }),
-    columnHelper.accessor("workload_resource_type", {
+    columnHelper.display({
+        id: "workload_resource_type",
         header: "Resource Type",
+        cell: ({ row }) => {
+            const workload = row.original
+
+            return (
+                <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">{workload.workload_resource_type}</Badge>
+            )
+        }
     }),
     columnHelper.display({
         id: "intercept",
