@@ -9,5 +9,10 @@
   "author": {
     "name": "Mohammad Mahdi Momeni",
     "email": "mahdimomeni012@gmail.com"
+  },
+  "info": {
+    "companyName": "Telepresence GUI",
+    "productName": "Telepresence GUI",
+    "productVersion": "1.0.0"
   }
 }
