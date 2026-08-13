@@ -10,6 +10,8 @@ export function ListWorkloads():Promise<Array<main.Workload>>;
 
 export function LoadConnectConfig():Promise<main.ConnectConfig>;
 
+export function Notify(arg1:string,arg2:string):Promise<void>;
+
 export function SaveConnectConfig(arg1:main.ConnectConfig):Promise<void>;
 
 export function SelectFile(arg1:string):Promise<string>;

@@ -6,7 +6,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { toast } from "@/components/ui/toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ModeToggle } from "@/components/mode-toggle"
-import { ListWorkloads, StopTelepresence } from "@/../wailsjs/go/main/App"
+import { ListWorkloads, Notify, StopTelepresence } from "@/../wailsjs/go/main/App"
 import { main as models } from "@/../wailsjs/go/models"
 import { getColumns } from "./columns"
 import { DataTable } from "./data-table"
@@ -28,10 +28,7 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
     } catch (err) {
       console.error(err)
       setError(String(err))
-      toast.add({
-        type: "error",
-        description: "Failed to fetch workloads.",
-      })
+      Notify("Telepresence Workloads Fetch Error", `Failed to fetch workloads: ${err}`)
     } finally {
       setLoading(false)
     }
@@ -40,16 +37,10 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
   const handleDisconnect = async () => {
     try {
       await StopTelepresence()
-      toast.add({
-        type: "success",
-        description: "Disconnected successfully.",
-      })
+      Notify("Telepresence Disconnected", "Disconnected successfully.")
       onDisconnect()
     } catch (err) {
-      toast.add({
-        type: "error",
-        description: `Failed to disconnect: ${String(err)}`,
-      })
+      Notify("Telepresence Disconnection Error", `Failed to disconnect: ${String(err)}`)
     }
   }
 

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ModeToggle } from "@/components/mode-toggle"
-import { SelectFile, StartTelepresence, GetKubeInfo, SaveConnectConfig } from "@/../wailsjs/go/main/App"
+import { SelectFile, StartTelepresence, GetKubeInfo, SaveConnectConfig, Notify } from "@/../wailsjs/go/main/App"
 import { main as models } from "@/../wailsjs/go/models"
 import { SyntheticEvent, useEffect, useRef, useState, type SubmitEvent } from "react"
 import { Spinner } from "@/components/ui/spinner"
@@ -78,10 +78,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
 
     const handleReset = async (event: SyntheticEvent<HTMLFormElement>) => {
         setConnectConfig(new models.ConnectConfig(DEFAULT_VALUES))
-        toast.add({
-            type: "success",
-            description: "Options reseted successfully."
-        })
+        Notify("Telepresence Config Reset", "Options reseted successfully.")
 
         setLoading(true)
 
@@ -132,10 +129,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
         try {
             await SaveConnectConfig(connectConfig)
             await StartTelepresence(connectConfig)
-            toast.add({
-                type: "success",
-                description: "Telepresence started successfully."
-            })
+            Notify("Telepresence Connected", "Started successfully.")
 
             onConnectSuccess()
         } catch (error) {

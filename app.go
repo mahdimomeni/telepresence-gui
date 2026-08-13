@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -157,6 +158,40 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
 	go systray.Run(a.onReady, a.onExit)
+
+	err := runtime.InitializeNotifications(a.ctx)
+	if err != nil {
+		log.Printf("Failed to initialize notifications: %v", err)
+		return
+	}
+
+	if runtime.IsNotificationAvailable(a.ctx) {
+		authorized, err := runtime.CheckNotificationAuthorization(a.ctx)
+		if err != nil {
+			log.Printf("Failed to authorize notifications: %v", err)
+			return
+		}
+
+		if !authorized {
+			authorized, err = runtime.RequestNotificationAuthorization(a.ctx)
+			if err != nil || !authorized {
+				log.Printf("Failed to authorize notifications: %v", err)
+				return
+			}
+		}
+	}
+}
+
+func (a *App) Notify(title string, body string) error {
+	if !runtime.IsNotificationAvailable(a.ctx) {
+		return nil
+	}
+
+	return runtime.SendNotification(a.ctx, runtime.NotificationOptions{
+		ID:    "telepresence-gui-alert",
+		Title: title,
+		Body:  body,
+	})
 }
 
 func (a *App) onReady() {

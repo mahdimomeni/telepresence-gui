@@ -18,6 +18,10 @@ export function LoadConnectConfig() {
   return window['go']['main']['App']['LoadConnectConfig']();
 }
 
+export function Notify(arg1, arg2) {
+  return window['go']['main']['App']['Notify'](arg1, arg2);
+}
+
 export function SaveConnectConfig(arg1) {
   return window['go']['main']['App']['SaveConnectConfig'](arg1);
 }
