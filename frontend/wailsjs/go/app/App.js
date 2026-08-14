@@ -26,6 +26,10 @@ export function Notify(arg1, arg2) {
   return window['go']['app']['App']['Notify'](arg1, arg2);
 }
 
+export function OnSecondInstanceLaunch(arg1) {
+  return window['go']['app']['App']['OnSecondInstanceLaunch'](arg1);
+}
+
 export function SaveConnectConfig(arg1) {
   return window['go']['app']['App']['SaveConnectConfig'](arg1);
 }

@@ -63,6 +63,10 @@ func main() {
 			DisableWebViewDrop: true,
 		},
 		EnableDefaultContextMenu: true,
+		SingleInstanceLock: &options.SingleInstanceLock{
+			UniqueId:               "ca6a3d2a-9307-43ee-9fc3-dff845cb175a",
+			OnSecondInstanceLaunch: application.OnSecondInstanceLaunch,
+		},
 	})
 
 	if err != nil {

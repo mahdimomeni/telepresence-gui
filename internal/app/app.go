@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"telepresence-gui/internal/models"
 	"telepresence-gui/internal/services"
 
+	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -65,6 +67,16 @@ func (a *App) Shutdown(ctx context.Context) {
 	} else {
 		fmt.Println("Telepresence daemon stopped successfully.")
 	}
+}
+
+func (a *App) OnSecondInstanceLaunch(secondInstanceData options.SecondInstanceData) {
+	secondInstanceArgs := secondInstanceData.Args
+
+	println("user opened second instance", strings.Join(secondInstanceData.Args, ","))
+	println("user opened second from", secondInstanceData.WorkingDirectory)
+	runtime.WindowUnminimise(a.ctx)
+	runtime.Show(a.ctx)
+	go runtime.EventsEmit(a.ctx, "launchArgs", secondInstanceArgs)
 }
 
 func (a *App) Notify(title string, body string) error {
