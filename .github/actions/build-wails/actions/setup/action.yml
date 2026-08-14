@@ -44,6 +44,9 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Install NSIS (Windows)
+      if: runner.os == 'Windows'
+      uses: negrutiu/nsis-install@v2
     - name: Setup Go
       uses: ./.github/actions/build-wails/actions/setup/go
       with:
