@@ -2,6 +2,9 @@ package main
 
 import (
 	"embed"
+	"telepresence-gui/internal/app"
+	"telepresence-gui/internal/cli"
+	"telepresence-gui/internal/services"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -19,8 +22,20 @@ var appIconPng []byte
 var appIconIco []byte
 
 func main() {
-	// Create an instance of the app structure
-	app := NewApp()
+	// Instantiate Core Infrastructure & Services
+	runner := cli.NewCommandRunner()
+	configService := services.NewConfigService()
+	kubeService := services.NewKubeService(runner, configService)
+	teleService := services.NewTelepresenceService(runner)
+
+	// Instantiate the Presentation App Layer
+	application := app.NewApp(
+		teleService,
+		kubeService,
+		configService,
+		appIconIco,
+		appIconPng,
+	)
 
 	// Create application with options
 	err := wails.Run(&options.App{
@@ -32,10 +47,10 @@ func main() {
 			Assets: assets,
 		},
 		BackgroundColour: options.NewRGBA(0, 0, 0, 128),
-		OnStartup:        app.startup,
-		OnShutdown:       app.shutdown,
+		OnStartup:        application.Startup,
+		OnShutdown:       application.Shutdown,
 		Bind: []interface{}{
-			app,
+			application,
 		},
 		MinWidth:  1024,
 		MinHeight: 768,

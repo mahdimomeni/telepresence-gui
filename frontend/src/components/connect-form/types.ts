@@ -1,4 +1,4 @@
-import { main as models } from "@/../wailsjs/go/models"
+import { models } from "@/../wailsjs/go/models"
 
 export interface ConnectFormProps {
     onConnectSuccess: () => void

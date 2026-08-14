@@ -1,10 +1,9 @@
 //go:build !windows
 
-package main
+package cli
 
 import "syscall"
 
-// getSysProcAttr returns default execution attributes for non-Windows platforms.
 func getSysProcAttr() *syscall.SysProcAttr {
 	return &syscall.SysProcAttr{}
 }

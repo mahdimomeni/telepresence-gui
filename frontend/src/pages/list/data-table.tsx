@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/table"
 
 import { features, type DataTableFeatures } from "./data-table-features"
-import { main } from "../../../wailsjs/go/models"
 import React from "react"
 import { Input } from "@/components/ui/input"
 

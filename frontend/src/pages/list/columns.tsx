@@ -4,7 +4,7 @@ import { InterceptDialog } from "@/components/intercept-dialog"
 
 import { type DataTableFeatures } from "./data-table-features"
 
-import { main as models } from "@/../wailsjs/go/models"
+import { models } from "@/../wailsjs/go/models"
 import { Badge } from "@/components/ui/badge"
 import { DetachButton } from "./detach-button"
 

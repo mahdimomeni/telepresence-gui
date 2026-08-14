@@ -1,6 +1,6 @@
 import { useLoadingStore } from "@/stores/useLoadingStore";
-import { DetachWorkload, Notify } from "../../../wailsjs/go/main/App";
-import { main as models } from "../../../wailsjs/go/models";
+import { DetachWorkload, Notify } from "../../../wailsjs/go/app/App";
+import { models } from "../../../wailsjs/go/models";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 

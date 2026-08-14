@@ -17,8 +17,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { InterceptWorkload, Notify } from "../../wailsjs/go/main/App"
-import { main as models } from "../../wailsjs/go/models"
+import { InterceptWorkload, Notify } from "../../wailsjs/go/app/App"
+import { models } from "../../wailsjs/go/models"
 import { useLoadingStore } from "@/stores/useLoadingStore"
 
 interface InterceptDialogProps {

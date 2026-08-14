@@ -1,10 +1,9 @@
 //go:build windows
 
-package main
+package cli
 
 import "syscall"
 
-// getSysProcAttr returns Windows-specific execution attributes.
 func getSysProcAttr() *syscall.SysProcAttr {
 	return &syscall.SysProcAttr{
 		HideWindow:    true,
