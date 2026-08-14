@@ -50,9 +50,8 @@ runs:
         if [ -z "$OS_IN" ]; then
           OS_IN="${{ runner.os }}"
         fi
-        # Resolve ARCH (prefer input)
+        # Resolve ARCH
         if [ -z "$ARCH_IN" ]; then
-          # Try uname -m; fallback to envs on Windows if needed
           if command -v uname >/dev/null 2>&1; then
             M=$(uname -m || echo unknown)
           else
@@ -65,7 +64,7 @@ runs:
             *) ARCH_IN="$M";;
           esac
         fi
-        # Resolve revision label (prefer tag)
+        # Resolve revision label
         if [ -n "$TAG_IN" ]; then
           REV="$TAG_IN"
         else
@@ -77,81 +76,76 @@ runs:
         fi
         NAME="${{ inputs.build-name }}_${OS_IN}_${ARCH_IN}_${REV}"
         echo "ARTIFACT_NAME=$NAME" >> "$GITHUB_OUTPUT"
-    - name: Debug echo artifact name
-      shell: bash
-      run: |
-        echo "[DEBUG_LOG] ARTIFACT_NAME=${{ steps.meta.outputs.ARTIFACT_NAME }}"
+        echo "OS_RESOLVED=$OS_IN" >> "$GITHUB_OUTPUT"
+        echo "ARCH_RESOLVED=$ARCH_IN" >> "$GITHUB_OUTPUT"
+
     - name: Write artifact_meta.json
       if: inputs.package == 'true' && inputs.include-meta == 'true'
       shell: bash
       env:
         IN_BUILD_NAME: ${{ inputs.build-name }}
-        IN_OS: ${{ inputs.os }}
-        IN_ARCH: ${{ inputs.arch }}
+        IN_OS: ${{ steps.meta.outputs.OS_RESOLVED }}
+        IN_ARCH: ${{ steps.meta.outputs.ARCH_RESOLVED }}
         IN_REF: ${{ inputs.ref }}
         IN_TAG: ${{ inputs.tag }}
         IN_SHORT_SHA: ${{ inputs.short-sha }}
       run: |
         set -euo pipefail
-        build_name="$IN_BUILD_NAME"
-        os_val="$IN_OS"
-        arch_val="$IN_ARCH"
         ref_val="$IN_REF"
-        tag_val="$IN_TAG"
-        short_sha="$IN_SHORT_SHA"
-        # Resolve OS from runner if not provided
-        if [ -z "$os_val" ]; then os_val="${RUNNER_OS:-}"; fi
-        # Resolve ARCH if not provided (best-effort)
-        if [ -z "$arch_val" ]; then
-          if command -v uname >/dev/null 2>&1; then
-            m=$(uname -m || echo unknown)
-            case "$m" in
-              x86_64|amd64) arch_val="amd64";;
-              aarch64|arm64) arch_val="arm64";;
-              armv7l) arch_val="armv7";;
-              *) arch_val="$m";;
-            esac
-          else
-            arch_val="${PROCESSOR_ARCHITECTURE:-}"
-          fi
-        fi
-        # Resolve REF/BRANCH
-        if [ -z "$ref_val" ]; then ref_val="${GITHUB_REF:-}"; fi
         branch_val=""
         case "$ref_val" in
           refs/heads/*) branch_val="${ref_val#refs/heads/}" ;;
         esac
-        # Resolve SHORT SHA
-        if [ -z "$short_sha" ]; then
-          ghsha="${GITHUB_SHA:-}"
-          short_sha="${ghsha:0:7}"
-        fi
         cat > artifact_meta.json <<JSON
         {
-          "build_name": "${build_name}",
-          "os": "${os_val}",
-          "arch": "${arch_val}",
+          "build_name": "${IN_BUILD_NAME}",
+          "os": "${IN_OS}",
+          "arch": "${IN_ARCH}",
           "ref": "${ref_val}",
           "branch": "${branch_val}",
-          "tag": "${tag_val}",
-          "short_sha": "${short_sha}"
+          "tag": "${IN_TAG}",
+          "short_sha": "${IN_SHORT_SHA}"
         }
         JSON
-        echo "[DEBUG_LOG] Wrote artifact_meta.json"
+
+    - name: Stage unique dist assets
+      if: inputs.package == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p dist
+        suffix="${{ steps.meta.outputs.OS_RESOLVED }}_${{ steps.meta.outputs.ARCH_RESOLVED }}"
+
+        shopt -s nullglob
+        for f in build/bin/*; do
+          if [ -f "$f" ]; then
+            filename=$(basename "$f")
+            ext=""
+            base="$filename"
+            if [[ "$filename" == *.* ]]; then
+              ext=".${filename#*.}"
+              base="${filename%%.*}"
+            fi
+            new_name="${base}_${suffix}${ext}"
+            cp "$f" "dist/${new_name}"
+            echo "[DEBUG_LOG] Staged dist/${new_name}"
+          fi
+        done
+
+        if [ -f "artifact_meta.json" ]; then
+          cp artifact_meta.json "dist/artifact_meta_${suffix}.json"
+        fi
+
     - uses: actions/upload-artifact@v4
       if: inputs.package == 'true'
       with:
         overwrite: 'true'
         name: ${{ steps.meta.outputs.ARTIFACT_NAME }}
-        path: |
-          */bin/
-          *\bin\*
-          artifact_meta.json
+        path: dist/*
+
     - name: Release
       uses: softprops/action-gh-release@v1
       if: inputs.package == 'true' && startsWith(github.ref, 'refs/tags/')
       with:
-        name: ${{ steps.meta.outputs.ARTIFACT_NAME }}
-        files: |
-          */bin/*
-          artifact_meta.json
+        name: Release ${{ inputs.tag }}
+        files: dist/*

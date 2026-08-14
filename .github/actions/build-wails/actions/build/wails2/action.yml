@@ -261,18 +261,6 @@ runs:
         sign-macos-installer-cert-password: ${{ steps.wcfg.outputs.SIGN_MACOS_INSTALLER_CERT_PASSWORD }}
         sign-windows-cert: ${{ steps.wcfg.outputs.SIGN_WINDOWS_CERT }}
         sign-windows-cert-password: ${{ steps.wcfg.outputs.SIGN_WINDOWS_CERT_PASSWORD }}
-
-    - name: Package & release
-      uses: ./.github/actions/build-wails/actions/package
-      with:
-        package: ${{ inputs.package }}
-        build-name: ${{ inputs.build-name }}
-        os: ${{ steps.discovery.outputs.OS }}
-        arch: ${{ steps.discovery.outputs.ARCH }}
-        tag: ${{ steps.discovery.outputs.TAG }}
-        is-tag: ${{ steps.discovery.outputs.IS_TAG }}
-        short-sha: ${{ steps.discovery.outputs.SHORT_SHA }}
-        ref: ${{ steps.discovery.outputs.REF }}
 outputs:
   BUILD_TAGS:
     description: "Resolved build tags (after env/input precedence)"
