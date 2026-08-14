@@ -37,24 +37,22 @@ runs:
               sudo sed -i 's/^Components:/Architectures: amd64\nComponents:/' /etc/apt/sources.list.d/ubuntu.sources
             fi
 
-            cat <<EOF | sudo tee /etc/apt/sources.list.d/arm64-ports.sources
-          Types: deb
-          URIs: http://ports.ubuntu.com/ubuntu-ports
-          Suites: ${CODENAME} ${CODENAME}-updates ${CODENAME}-backports ${CODENAME}-security
-          Components: main restricted universe multiverse
-          Architectures: arm64
-          EOF
+            printf '%s\n' \
+              "Types: deb" \
+              "URIs: http://ports.ubuntu.com/ubuntu-ports" \
+              "Suites: ${CODENAME} ${CODENAME}-updates ${CODENAME}-backports ${CODENAME}-security" \
+              "Components: main restricted universe multiverse" \
+              "Architectures: arm64" | sudo tee /etc/apt/sources.list.d/arm64-ports.sources
           else
             # Ubuntu 20.04 / 22.04 (traditional format)
             sudo sed -i 's/^deb http/deb [arch=amd64] http/' /etc/apt/sources.list
             sudo sed -i 's/^deb https/deb [arch=amd64] https/' /etc/apt/sources.list
 
-            cat <<EOF | sudo tee /etc/apt/sources.list.d/arm64-ports.list
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports ${CODENAME} main restricted universe multiverse
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports ${CODENAME}-updates main restricted universe multiverse
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports ${CODENAME}-security main restricted universe multiverse
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports ${CODENAME}-backports main restricted universe multiverse
-          EOF
+            printf '%s\n' \
+              "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports ${CODENAME} main restricted universe multiverse" \
+              "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports ${CODENAME}-updates main restricted universe multiverse" \
+              "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports ${CODENAME}-security main restricted universe multiverse" \
+              "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports ${CODENAME}-backports main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/arm64-ports.list
           fi
 
           # 3. Update package index
