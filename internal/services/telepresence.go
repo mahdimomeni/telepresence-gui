@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"telepresence-gui/internal/cli"
 	"telepresence-gui/internal/models"
 	"time"
@@ -14,6 +15,7 @@ import (
 type TelepresenceService struct {
 	runner  cli.Runner
 	timeout time.Duration
+	mu      sync.Mutex
 }
 
 func NewTelepresenceService(runner cli.Runner) *TelepresenceService {
@@ -23,7 +25,18 @@ func NewTelepresenceService(runner cli.Runner) *TelepresenceService {
 	}
 }
 
+func (s *TelepresenceService) TryLock() bool {
+	return s.mu.TryLock()
+}
+
+func (s *TelepresenceService) Unlock() {
+	s.mu.Unlock()
+}
+
 func (s *TelepresenceService) Start(ctx context.Context, config models.ConnectConfig) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	args := []string{"connect"}
 
 	// Core Flags
@@ -148,16 +161,28 @@ func (s *TelepresenceService) Start(ctx context.Context, config models.ConnectCo
 }
 
 func (s *TelepresenceService) Stop(ctx context.Context) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 	return s.runner.Run(ctx, "telepresence", "quit")
 }
 
 func (s *TelepresenceService) QuitSync(ctx context.Context) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	return s.runner.Run(ctx, "telepresence", "quit", "-s")
 }
 
 func (s *TelepresenceService) ListWorkloads(ctx context.Context) ([]models.Workload, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.ListWorkloadsNoLock(ctx)
+}
+
+func (s *TelepresenceService) ListWorkloadsNoLock(ctx context.Context) ([]models.Workload, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
@@ -166,15 +191,27 @@ func (s *TelepresenceService) ListWorkloads(ctx context.Context) ([]models.Workl
 		return nil, fmt.Errorf("failed to list workloads: %w (output: %s)", err, output)
 	}
 
+	trimmed := strings.TrimSpace(output)
+	if trimmed == "" || strings.Contains(trimmed, "No workloads") || trimmed == "null" {
+		return []models.Workload{}, nil
+	}
+
 	var workloads []models.Workload
 	if err := json.Unmarshal([]byte(output), &workloads); err != nil {
 		return nil, fmt.Errorf("failed to decode workloads: %w (output: %s)", err, output)
+	}
+
+	if workloads == nil {
+		workloads = []models.Workload{}
 	}
 
 	return workloads, nil
 }
 
 func (s *TelepresenceService) Intercept(ctx context.Context, config models.InterceptConfig) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
@@ -218,6 +255,9 @@ func (s *TelepresenceService) Intercept(ctx context.Context, config models.Inter
 }
 
 func (s *TelepresenceService) Detach(ctx context.Context, config models.DetachConfig) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
@@ -232,6 +272,12 @@ func (s *TelepresenceService) Detach(ctx context.Context, config models.DetachCo
 }
 
 func (s *TelepresenceService) Status(ctx context.Context) (string, *models.TelepresenceStatusOutput, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.StatusNoLock(ctx)
+}
+
+func (s *TelepresenceService) StatusNoLock(ctx context.Context) (string, *models.TelepresenceStatusOutput, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 

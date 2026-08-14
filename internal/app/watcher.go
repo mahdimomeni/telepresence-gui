@@ -27,7 +27,12 @@ func (a *App) checkTelepresenceChanges() {
 	}
 	defer a.pollMu.Unlock()
 
-	rawStatus, status, err := a.teleService.Status(a.ctx)
+	if !a.teleService.TryLock() {
+		return
+	}
+	defer a.teleService.Unlock()
+
+	rawStatus, status, err := a.teleService.StatusNoLock(a.ctx)
 	if err == nil && rawStatus != "" && rawStatus != a.lastStatusRaw {
 		a.lastStatusRaw = rawStatus
 		if status != nil {
@@ -50,7 +55,7 @@ func (a *App) checkTelepresenceChanges() {
 	a.statusMu.Unlock()
 
 	if connected {
-		workloads, err := a.teleService.ListWorkloads(a.ctx)
+		workloads, err := a.teleService.ListWorkloadsNoLock(a.ctx)
 		if err == nil {
 			runtime.EventsEmit(a.ctx, "workloads-changed", workloads)
 		}
