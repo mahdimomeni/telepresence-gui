@@ -38,9 +38,7 @@ func (a *App) checkTelepresenceChanges() {
 		if status != nil {
 			connected := status.UserDaemon.Running && strings.EqualFold(status.UserDaemon.Status, "Connected")
 
-			a.statusMu.Lock()
 			prevConnected := a.isConnected
-			a.statusMu.Unlock()
 
 			if connected != prevConnected {
 				a.updateConnectionStatus(connected)
@@ -50,9 +48,7 @@ func (a *App) checkTelepresenceChanges() {
 		}
 	}
 
-	a.statusMu.Lock()
 	connected := a.isConnected
-	a.statusMu.Unlock()
 
 	if connected {
 		workloads, err := a.teleService.ListWorkloadsNoLock(a.ctx)

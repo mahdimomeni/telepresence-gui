@@ -15,11 +15,14 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-//go:embed build/appIcon.png
-var appIconPng []byte
+//go:embed build/darwin/tray-icon.png
+var darwinTrayIcon []byte
 
-//go:embed build/windows/icon.ico
-var appIconIco []byte
+//go:embed build/windows/tray-icon.png
+var linuxTrayIcon []byte
+
+//go:embed build/linux/tray-icon.png
+var windowsTrayIcon []byte
 
 func main() {
 	// Instantiate Core Infrastructure & Services
@@ -33,8 +36,9 @@ func main() {
 		teleService,
 		kubeService,
 		configService,
-		appIconIco,
-		appIconPng,
+		linuxTrayIcon,
+		darwinTrayIcon,
+		windowsTrayIcon,
 	)
 
 	// Create application with options

@@ -25,30 +25,31 @@ type App struct {
 	lastStatusRaw string
 	lastListRaw   string
 
-	appIconIco []byte
-	appIconPng []byte
+	linuxTrayIcon   []byte
+	darwinTrayIcon  []byte
+	windowsTrayIcon []byte
 }
 
 func NewApp(
 	teleService *services.TelepresenceService,
 	kubeService *services.KubeService,
 	configService *services.ConfigService,
-	appIconIco []byte,
-	appIconPng []byte,
+	linuxTrayIcon []byte,
+	darwinTrayIcon []byte,
+	windowsTrayIcon []byte,
 ) *App {
 	return &App{
-		teleService:   teleService,
-		kubeService:   kubeService,
-		configService: configService,
-		appIconIco:    appIconIco,
-		appIconPng:    appIconPng,
+		teleService:     teleService,
+		kubeService:     kubeService,
+		configService:   configService,
+		linuxTrayIcon:   linuxTrayIcon,
+		darwinTrayIcon:  darwinTrayIcon,
+		windowsTrayIcon: windowsTrayIcon,
 	}
 }
 
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
-
-	a.setupSystemTray()
 
 	if err := runtime.InitializeNotifications(a.ctx); err != nil {
 		log.Printf("Failed to initialize notifications: %v", err)
@@ -59,6 +60,8 @@ func (a *App) Startup(ctx context.Context) {
 	}
 
 	go a.startBackgroundWatcher()
+
+	a.setupSystemTray()
 }
 
 func (a *App) Shutdown(ctx context.Context) {

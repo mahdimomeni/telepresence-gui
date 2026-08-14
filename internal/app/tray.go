@@ -4,88 +4,78 @@ import (
 	"fmt"
 	"telepresence-gui/internal/models"
 
-	"fyne.io/systray"
+	"github.com/gogpu/systray"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 var mConnectToggle *systray.MenuItem
+var tray *systray.SystemTray
 
 func (a *App) setupSystemTray() {
-	go systray.Run(a.onTrayReady, a.onTrayExit)
-}
+	tray = systray.New()
 
-func (a *App) onTrayReady() {
-	systray.SetIcon(a.appIconIco)
-	systray.SetTitle("Telepresence")
-	systray.SetTooltip("Telepresence GUI Client")
-	systray.SetOnTapped(func() {
+	menu := systray.NewMenu()
+	mConnectToggle = menu.Add("Connect", func() {
+		currentlyConnected := a.isConnected
+
+		if currentlyConnected {
+			runtime.EventsEmit(a.ctx, "connection-pending", true)
+			if err := a.StopTelepresence(); err != nil {
+				_ = a.Notify("Disconnect Failed", fmt.Sprintf("Error: %v", err))
+			} else {
+				a.updateConnectionStatus(false)
+				runtime.EventsEmit(a.ctx, "connection-pending", false)
+			}
+		} else {
+			config, err := a.configService.LoadConnectConfig()
+			if err != nil || config == nil {
+				config = &models.ConnectConfig{Namespace: "default"}
+			}
+
+			runtime.EventsEmit(a.ctx, "daemon-log", "[Tray] Connecting to cluster...")
+			runtime.EventsEmit(a.ctx, "connection-pending", true)
+			if err := a.StartTelepresence(*config); err != nil {
+				_ = a.Notify("Connection Failed", fmt.Sprintf("Error: %v", err))
+			} else {
+				a.updateConnectionStatus(true)
+				runtime.EventsEmit(a.ctx, "connection-pending", false)
+			}
+		}
+	})
+	menu.AddSeparator()
+	menu.Add("Quit", func() {
+		_ = a.StopTelepresence()
+		tray.Remove()
+		runtime.Quit(a.ctx)
+	})
+
+	a.setTrayIcon()
+
+	tray.SetTooltip("Telepresence GUI").
+		SetMenu(menu)
+	tray.OnClick(func() {
 		runtime.WindowUnminimise(a.ctx)
 		runtime.WindowShow(a.ctx)
 	})
+	tray.Show()
 
-	mConnectToggle := systray.AddMenuItem("Connect", "Connect to Kubernetes cluster")
-	systray.AddSeparator()
-	mQuit := systray.AddMenuItem("Quit", "Disconnect and exit")
-
-	go func() {
-		for range mConnectToggle.ClickedCh {
-			a.statusMu.Lock()
-			currentlyConnected := a.isConnected
-			a.statusMu.Unlock()
-
-			if currentlyConnected {
-				runtime.EventsEmit(a.ctx, "connection-pending", true)
-				if err := a.StopTelepresence(); err != nil {
-					_ = a.Notify("Disconnect Failed", fmt.Sprintf("Error: %v", err))
-				} else {
-					a.updateConnectionStatus(false)
-					runtime.EventsEmit(a.ctx, "connection-pending", false)
-				}
-			} else {
-				config, err := a.configService.LoadConnectConfig()
-				if err != nil || config == nil {
-					config = &models.ConnectConfig{Namespace: "default"}
-				}
-
-				runtime.EventsEmit(a.ctx, "daemon-log", "[Tray] Connecting to cluster...")
-				runtime.EventsEmit(a.ctx, "connection-pending", true)
-				if err := a.StartTelepresence(*config); err != nil {
-					_ = a.Notify("Connection Failed", fmt.Sprintf("Error: %v", err))
-				} else {
-					a.updateConnectionStatus(true)
-					runtime.EventsEmit(a.ctx, "connection-pending", false)
-				}
-			}
-		}
-	}()
-
-	go func() {
-		for range mQuit.ClickedCh {
-			_ = a.StopTelepresence()
-			systray.Quit()
-			runtime.Quit(a.ctx)
-		}
-	}()
+	if err := tray.Run(); err != nil {
+		fmt.Println("error:", err)
+	}
 }
 
-func (a *App) onTrayExit() {}
-
 func (a *App) updateConnectionStatus(connected bool) {
-	a.statusMu.Lock()
-	defer a.statusMu.Unlock()
 
 	a.isConnected = connected
 	if connected {
 		_ = a.Notify("Telepresence Connected", "Connected to cluster successfully.")
 		if mConnectToggle != nil {
-			mConnectToggle.SetTitle("Disconnect")
-			mConnectToggle.SetTooltip("Disconnect Telepresence daemon")
+			mConnectToggle.SetLabel("Disconnect")
 		}
 	} else {
 		_ = a.Notify("Telepresence Disconnected", "Daemon stopped successfully.")
 		if mConnectToggle != nil {
-			mConnectToggle.SetTitle("Connect")
-			mConnectToggle.SetTooltip("Connect to Kubernetes cluster")
+			mConnectToggle.SetLabel("Connect")
 		}
 	}
 
