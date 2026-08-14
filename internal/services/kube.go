@@ -30,7 +30,7 @@ func (s *KubeService) GetKubeInfo(ctx context.Context, kubeConfigPath string) (m
 
 	info := models.KubeInfo{
 		Contexts:  []string{},
-		Namespace: "default",
+		Namespace: "",
 	}
 
 	if saved, err := s.configService.LoadConnectConfig(); err == nil {

@@ -12,7 +12,7 @@ export interface TabProps {
 }
 
 export const DEFAULT_VALUES: models.ConnectConfig = {
-    namespace: "default",
+    namespace: "",
     name: "",
     "manager-namespace": "",
     docker: false,
