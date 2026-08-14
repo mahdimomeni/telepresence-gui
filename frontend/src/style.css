@@ -128,3 +128,25 @@
     @apply font-sans;
     }
 }
+
+/* Disable selection across the entire app */
+*,
+*::before,
+*::after {
+  -webkit-user-select: none; /* Safari / WebKit */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* IE / Edge */
+  user-select: none;         /* Standard */
+  -webkit-user-drag: none;   /* Prevent dragging images/elements */
+}
+
+/* Allow text selection inside input fields and textareas */
+input,
+textarea,
+[contenteditable="true"],
+.selectable {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
