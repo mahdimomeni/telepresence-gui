@@ -74,7 +74,7 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
   }, [])
 
   return (
-    <Card className="w-full max-w-4xl m-5 min-h-125 flex flex-col">
+    <Card className="w-full max-w-4xl m-5 min-h-125 flex flex-col bg-card/80 backdrop-blur-md border-border/50 shadow-2xl shadow-black/20">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Active Connection</CardTitle>

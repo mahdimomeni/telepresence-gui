@@ -158,7 +158,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
     }
 
     return (
-        <Card className="w-2xl m-5">
+        <Card className="w-2xl m-5 bg-card/80 backdrop-blur-md border-border/50 shadow-2xl shadow-black/20">
             <CardHeader>
                 <CardTitle>Start a Connection</CardTitle>
                 <CardAction>
