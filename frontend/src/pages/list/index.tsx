@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ModeToggle } from "@/components/mode-toggle"
-import { ListWorkloads, Notify, StopTelepresence } from "@/../wailsjs/go/app/App"
 import { models } from "@/../wailsjs/go/models"
 import { getColumns } from "./columns"
 import { DataTable } from "./data-table"
 import { EventsOff, EventsOn } from "../../../wailsjs/runtime/runtime"
 import { useLoadingStore } from "@/stores/useLoadingStore"
+import { TelepresenceService } from "@/services/telepresence"
+import { CoreService } from "@/services/core"
 
 
 
@@ -31,12 +32,12 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
     setError("")
 
     try {
-      const data = await ListWorkloads()
+      const data = await TelepresenceService.listWorkloads()
       setWorkloads(data)
     } catch (err) {
       console.error(err)
       setError(String(err))
-      Notify("Telepresence Workloads Fetch Error", `Failed to fetch workloads: ${err}`)
+      CoreService.notify("Telepresence Workloads Fetch Error", String(err))
     } finally {
       stopLoading("workloads")
     }
@@ -46,10 +47,10 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
     startLoading("connection")
     
     try {
-      await StopTelepresence()
+      await TelepresenceService.disconnect()
       onDisconnect()
     } catch (err) {
-      Notify("Telepresence Disconnection Error", `Failed to disconnect: ${String(err)}`)
+      CoreService.notify("Telepresence Disconnection Error", String(err))
     } finally {
       stopLoading("connection")
     }

@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ModeToggle } from "@/components/mode-toggle"
-import { SelectFile, StartTelepresence, GetKubeInfo, SaveConnectConfig, Notify } from "@/../wailsjs/go/app/App"
 import { models } from "@/../wailsjs/go/models"
 import { SyntheticEvent, useEffect, useRef, useState, type SubmitEvent } from "react"
 import { Spinner } from "@/components/ui/spinner"
@@ -23,6 +22,9 @@ import { AdvancedTab } from "@/components/connect-form/tabs/advanced-tab"
 import { ConnectFormProps, DEFAULT_VALUES } from "@/components/connect-form/types"
 import { EventsOff, EventsOn } from "../../../wailsjs/runtime/runtime"
 import { useLoadingStore } from "@/stores/useLoadingStore"
+import { KubeService } from "@/services/kube"
+import { CoreService } from "@/services/core"
+import { TelepresenceService } from "@/services/telepresence"
 
 export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
     const formRef = useRef<HTMLFormElement>(null)
@@ -60,7 +62,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
             startLoading("kube-info")
             try {
                 // Fetch using the current state's path (starts as "" on mount)
-                const info = await GetKubeInfo(connectConfig.kubeconfig)
+                const info = await KubeService.getInfo(connectConfig.kubeconfig)
 
                 // 1. Update our ref so we don't fetch this exact path again
                 lastLoadedKubeconfig.current = info.kubeconfigPath
@@ -97,14 +99,14 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
 
     const handleReset = async (event: SyntheticEvent<HTMLFormElement>) => {
         setConnectConfig(new models.ConnectConfig(DEFAULT_VALUES))
-        Notify("Telepresence Config Reset", "Options reseted successfully.")
+        CoreService.notify("Telepresence Config Reset", "Options reseted successfully.")
 
         startLoading("kube-info")
 
         setConnectConfig(new models.ConnectConfig(DEFAULT_VALUES))
 
         try {
-            const info = await GetKubeInfo("")
+            const info = await KubeService.getInfo("")
 
             if (info.contexts && info.contexts.length > 0) {
                 setAvailableContexts(info.contexts)
@@ -129,7 +131,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
 
     const handleBrowseFile = (key: keyof models.ConnectConfig, message: string) => {
         const browseFile = async () => {
-            const path = await SelectFile(message)
+            const path = await CoreService.browseFile(message)
             if (path) {
                 setConnectConfig((prevData) => ({
                     ...prevData,
@@ -146,8 +148,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
         startLoading("connection")
 
         try {
-            await SaveConnectConfig(connectConfig)
-            await StartTelepresence(connectConfig)
+            await TelepresenceService.connect(connectConfig)
             onConnectSuccess()
         } catch (error) {
             setApiError(String(error))

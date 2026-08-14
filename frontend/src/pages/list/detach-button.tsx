@@ -1,8 +1,9 @@
 import { useLoadingStore } from "@/stores/useLoadingStore";
-import { DetachWorkload, Notify } from "../../../wailsjs/go/app/App";
 import { models } from "../../../wailsjs/go/models";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { CoreService } from "@/services/core";
+import { TelepresenceService } from "@/services/telepresence";
 
 export function DetachButton({ workload, onFetchWorkloads }: { workload: models.Workload; onFetchWorkloads: () => void }) {
   const isDetaching = useLoadingStore((state) => state.isLoading(`detach-${workload.name}`))
@@ -12,14 +13,14 @@ export function DetachButton({ workload, onFetchWorkloads }: { workload: models.
   const handleDetach = async () => {
     startLoading(`detach-${workload.name}`)
     try {
-      await DetachWorkload({
+      await TelepresenceService.detachWorkload({
         attachment_name: workload.name,
         namespace: workload.namespace
       })
-      Notify("Telepresence Detach Active", `Successfully detached ${workload.name}`)
+      CoreService.notify("Telepresence Detach Active", `Successfully detached ${workload.name}`)
       onFetchWorkloads()
     } catch (error) {
-      Notify("Telepresence Detach Error", `Detach failed: ${String(error)}`)
+      CoreService.notify("Telepresence Detach Error", `Detach failed: ${String(error)}`)
     } finally {
       stopLoading(`detach-${workload.name}`)
     }

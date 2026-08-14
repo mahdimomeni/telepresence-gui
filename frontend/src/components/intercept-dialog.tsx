@@ -17,9 +17,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { InterceptWorkload, Notify } from "../../wailsjs/go/app/App"
 import { models } from "../../wailsjs/go/models"
 import { useLoadingStore } from "@/stores/useLoadingStore"
+import { TelepresenceService } from "@/services/telepresence"
+import { CoreService } from "@/services/core"
 
 interface InterceptDialogProps {
   workloadName: string
@@ -69,9 +70,9 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
     startLoading(`intercept-${workloadName}`)
 
     try {
-      await InterceptWorkload(interceptConfig)
+      await TelepresenceService.interceptWorkload(interceptConfig)
 
-      Notify("Telepresence Intercept Active", `Successfully intercepted ${workloadName}`)
+      CoreService.notify("Telepresence Intercept Active", `Successfully intercepted ${workloadName}`)
       setOpen(false)
       if (onSuccess) onSuccess()
 
@@ -79,7 +80,7 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
       if (onSuccess) onSuccess()
 
     } catch (error) {
-      Notify("Telepresence Intercept Error", `Intercept failed: ${String(error)}`)
+      CoreService.notify("Telepresence Intercept Error", `Intercept failed: ${String(error)}`)
     } finally {
       stopLoading(`intercept-${workloadName}`)
     }
