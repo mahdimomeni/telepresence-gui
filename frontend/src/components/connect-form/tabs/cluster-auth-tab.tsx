@@ -1,11 +1,15 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { TabProps } from "../types";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useLoadingStore } from "@/stores/useLoadingStore";
+import { ContextInput } from "@/components/context-input";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { Folder } from "lucide-react";
+import { BrowseInput } from "@/components/browse-input";
 
 export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts = [] }: TabProps) {
     const isConnecting = useLoadingStore((state) => state.isLoading("connection"))
@@ -23,23 +27,15 @@ export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts =
             <CardContent className="text-sm text-muted-foreground">
                 <div className="grid grid-cols-2 gap-6">
                     <div className="col-span-2 grid gap-2">
-                        <div className="flex gap-2">
-                            <Input
-                                id="kubeconfig"
-                                name="kubeconfig"
-                                type="text"
-                                placeholder="/path/to/kubeconfig"
-                                value={values.kubeconfig}
-                                onChange={(e) => onChange("kubeconfig", e.target.value)}
-                            />
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={(_) => onBrowse("kubeconfig", "Select Kubeconfig File")}
-                            >
-                                Browse
-                            </Button>
-                        </div>
+                        <BrowseInput
+                            id="kubeconfig"
+                            label="Kubeconfig"
+                            name="kubeconfig"
+                            placeholder="/path/to/kubeconfig"
+                            value={values.kubeconfig}
+                            onChange={(e) => onChange("kubeconfig", e.target.value)}
+                            onBrowse={(_) => onBrowse("kubeconfig", "Select Kubeconfig File")}
+                        />
                     </div>
 
                     <div className="grid gap-2">
@@ -61,7 +57,7 @@ export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts =
                                 </SelectContent>
                             </Select>
                         ) : (
-                            <Input
+                            <ContextInput
                                 id="context"
                                 placeholder="e.g., minikube"
                                 value={values.context}
@@ -71,7 +67,7 @@ export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts =
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="cluster">Cluster</Label>
-                        <Input
+                        <ContextInput
                             id="cluster"
                             name="cluster"
                             placeholder="Cluster name"
@@ -82,7 +78,7 @@ export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts =
 
                     <div className="grid gap-2">
                         <Label htmlFor="server">API Server</Label>
-                        <Input
+                        <ContextInput
                             id="server"
                             name="server"
                             placeholder="https://..." type="url"
@@ -92,7 +88,7 @@ export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts =
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="token">Bearer Token</Label>
-                        <Input
+                        <ContextInput
                             id="token"
                             name="token"
                             type="password"
@@ -104,7 +100,7 @@ export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts =
 
                     <div className="grid gap-2">
                         <Label htmlFor="user">User</Label>
-                        <Input
+                        <ContextInput
                             id="user"
                             name="user"
                             placeholder="Kubeconfig user"
@@ -114,7 +110,7 @@ export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts =
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="as">Impersonate User (--as)</Label>
-                        <Input
+                        <ContextInput
                             id="as"
                             name="as"
                             placeholder="Username or service account"
@@ -125,7 +121,7 @@ export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts =
 
                     <div className="grid gap-2">
                         <Label htmlFor="as-group">Impersonate Group</Label>
-                        <Input
+                        <ContextInput
                             id="as-group"
                             name="as-group"
                             placeholder="Comma-separated groups"
@@ -135,7 +131,7 @@ export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts =
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="as-uid">Impersonate UID</Label>
-                        <Input
+                        <ContextInput
                             id="as-uid"
                             name="as-uid"
                             placeholder="UID"
@@ -145,44 +141,26 @@ export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts =
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="client-certificate">Client Certificate</Label>
-                        <div className="flex gap-2">
-                            <Input
-                                id="client-certificate"
-                                name="client-certificate"
-                                type="text"
-                                value={values["client-certificate"]}
-                                onChange={(e) => onChange("client-certificate", e.target.value)}
-                                placeholder="/path/to/client/certificate"
-                            />
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={(_) => onBrowse("client-certificate", "Select Client Certificate File")}
-                            >
-                                Browse
-                            </Button>
-                        </div>
+                        <BrowseInput
+                            id="client-certificate"
+                            label="Client Certificate"
+                            name="client-certificate"
+                            placeholder="/path/to/client/certificate"
+                            value={values["client-certificate"]}
+                            onChange={(e) => onChange("client-certificate", e.target.value)}
+                            onBrowse={(_) => onBrowse("client-certificate", "Select Client Certificate File")}
+                        />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="client-key">Client Key</Label>
-                        <div className="flex gap-2">
-                            <Input
-                                id="client-key"
-                                name="client-key"
-                                type="text"
-                                value={values["client-key"]}
-                                onChange={(e) => onChange("client-key", e.target.value)}
-                                placeholder="/path/to/client/key"
-                            />
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={(_) => onBrowse("client-key", "Select Client Key File")}
-                            >
-                                Browse
-                            </Button>
-                        </div>
+                        <BrowseInput
+                            id="client-key"
+                            label="Client Key"
+                            name="client-key"
+                            placeholder="/path/to/client/key"
+                            value={values["client-key"]}
+                            onChange={(e) => onChange("client-key", e.target.value)}
+                            onBrowse={(_) => onBrowse("client-key", "Select Client Key File")}
+                        />
                     </div>
 
                     <div className="flex items-center space-x-2 pt-6">
@@ -197,7 +175,7 @@ export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts =
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="tls-server-name">TLS Server Name</Label>
-                        <Input
+                        <ContextInput
                             id="tls-server-name"
                             name="tls-server-name"
                             placeholder="Server name for validation"

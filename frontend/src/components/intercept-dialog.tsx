@@ -9,7 +9,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { toast } from "@/components/ui/toast"
@@ -21,6 +20,7 @@ import { models } from "../../wailsjs/go/models"
 import { useLoadingStore } from "@/stores/useLoadingStore"
 import { TelepresenceService } from "@/services/telepresence"
 import { CoreService } from "@/services/core"
+import { ContextInput } from "@/components/context-input"
 
 interface InterceptDialogProps {
   workloadName: string
@@ -120,7 +120,7 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="port" className="text-right font-semibold">Port <span className="text-destructive">*</span></Label>
-                <Input
+                <ContextInput
                   id="port"
                   value={interceptConfig.port}
                   onChange={(e) => handleFieldChange("port", e.target.value)}
@@ -132,7 +132,7 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
 
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="httpHeader" className="text-right text-xs">HTTP Header</Label>
-                <Input 
+                <ContextInput 
                 id="httpHeader" 
                 value={interceptConfig.http_header}
                 onChange={(e) => handleFieldChange("http_header", e.target.value)}
@@ -147,7 +147,7 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="envFile" className="text-right text-xs">Env Output</Label>
                   <div className="col-span-3 flex gap-2">
-                    <Input
+                    <ContextInput
                     id="envFile" 
                     value={envFile} 
                     onChange={(e) => setEnvFile(e.target.value)} 
@@ -172,7 +172,7 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
               <TabsContent value="docker" className="space-y-4 m-0">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="dockerArgs" className="text-right text-xs font-semibold">Docker Args <span className="text-destructive">*</span></Label>
-                  <Input id="dockerArgs" value="" className="col-span-3 h-8 text-sm" placeholder="-it --rm ubuntu:20.04 /bin/bash" required={interceptConfig.docker_run} disabled={loading} />
+                  <ContextInput id="dockerArgs" value="" className="col-span-3 h-8 text-sm" placeholder="-it --rm ubuntu:20.04 /bin/bash" required={interceptConfig.docker_run} disabled={loading} />
                 </div>
               </TabsContent>
 
@@ -187,11 +187,11 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
                 <CollapsibleContent className="space-y-4 pt-4 border-t mt-2">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="mount" className="text-right text-xs">Mount Point</Label>
-                    <Input id="mount" value="" className="col-span-3 h-8 text-xs" placeholder="true, false, or /absolute/path" disabled={loading} />
+                    <ContextInput id="mount" value="" className="col-span-3 h-8 text-xs" placeholder="true, false, or /absolute/path" disabled={loading} />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="container" className="text-right text-xs">Container</Label>
-                    <Input id="container" value="" className="col-span-3 h-8 text-xs" placeholder="Overrides auto-detection" disabled={loading} />
+                    <ContextInput id="container" value="" className="col-span-3 h-8 text-xs" placeholder="Overrides auto-detection" disabled={loading} />
                   </div>
                 </CollapsibleContent>
               </Collapsible>

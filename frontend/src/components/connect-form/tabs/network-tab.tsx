@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { TabProps } from "../types";
+import { ContextInput } from "@/components/context-input";
 
 export function NetworkTab({ values, onChange }: TabProps) {
     return (
@@ -16,7 +16,7 @@ export function NetworkTab({ values, onChange }: TabProps) {
                 <div className="grid grid-cols-2 gap-6">
                     <div className="grid gap-2">
                         <Label htmlFor="mapped-namespaces">Mapped Namespaces</Label>
-                        <Input
+                        <ContextInput
                             id="mapped-namespaces"
                             name="mapped-namespaces"
                             placeholder="comma, separated, namespaces"
@@ -26,7 +26,7 @@ export function NetworkTab({ values, onChange }: TabProps) {
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="proxy-via">Proxy Via</Label>
-                        <Input
+                        <ContextInput
                             id="proxy-via"
                             name="proxy-via"
                             placeholder="CIDR=WORKLOAD"
@@ -37,7 +37,7 @@ export function NetworkTab({ values, onChange }: TabProps) {
 
                     <div className="grid gap-2">
                         <Label htmlFor="also-proxy">Also Proxy</Label>
-                        <Input
+                        <ContextInput
                             id="also-proxy"
                             name="also-proxy"
                             placeholder="Comma-separated CIDRs"
@@ -47,7 +47,7 @@ export function NetworkTab({ values, onChange }: TabProps) {
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="never-proxy">Never Proxy</Label>
-                        <Input
+                        <ContextInput
                             id="never-proxy"
                             name="never-proxy"
                             placeholder="Comma-separated CIDRs"
@@ -58,7 +58,7 @@ export function NetworkTab({ values, onChange }: TabProps) {
 
                     <div className="grid gap-2">
                         <Label htmlFor="reroute-local">Reroute Local</Label>
-                        <Input
+                        <ContextInput
                             id="reroute-local"
                             name="reroute-local"
                             placeholder="<local port>:<host>:<port>"
@@ -68,7 +68,7 @@ export function NetworkTab({ values, onChange }: TabProps) {
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="reroute-remote">Reroute Remote</Label>
-                        <Input
+                        <ContextInput
                             id="reroute-remote"
                             name="reroute-remote"
                             placeholder="<host>:<port>:<new port>"
@@ -79,7 +79,7 @@ export function NetworkTab({ values, onChange }: TabProps) {
 
                     <div className="grid gap-2">
                         <Label htmlFor="vnat">Virtual NAT (vnat)</Label>
-                        <Input
+                        <ContextInput
                             id="vnat"
                             name="vnat"
                             placeholder="Comma-separated CIDRs or symbolic names"
@@ -89,7 +89,7 @@ export function NetworkTab({ values, onChange }: TabProps) {
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="allow-conflicting-subnets">Allow Conflicting Subnets</Label>
-                        <Input
+                        <ContextInput
                             id="allow-conflicting-subnets"
                             name="allow-conflicting-subnets"
                             placeholder="Comma-separated CIDRs"
@@ -100,7 +100,7 @@ export function NetworkTab({ values, onChange }: TabProps) {
 
                     <div className="grid gap-2">
                         <Label htmlFor="expose">Expose Ports</Label>
-                        <Input
+                        <ContextInput
                             id="expose"
                             name="expose"
                             placeholder="e.g., 8080:80"
@@ -110,7 +110,7 @@ export function NetworkTab({ values, onChange }: TabProps) {
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="hostname">Hostname</Label>
-                        <Input
+                        <ContextInput
                             id="hostname"
                             name="hostname"
                             placeholder="Containerized daemon hostname"

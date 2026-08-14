@@ -11,7 +11,7 @@ import {
 
 import { features, type DataTableFeatures } from "./data-table-features"
 import React from "react"
-import { Input } from "@/components/ui/input"
+import { ContextInput } from "@/components/context-input"
 
 interface DataTableProps<TData extends RowData> {
   columns: ColumnDef<DataTableFeatures, TData>[]
@@ -39,7 +39,7 @@ export function DataTable<TData extends RowData>({
   return (
     <div>
       <div className="flex items-center py-4">
-        <Input
+        <ContextInput
           placeholder="Filter names..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>

@@ -1,10 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { TabProps } from "../types";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useLoadingStore } from "@/stores/useLoadingStore";
+import { ContextInput } from "@/components/context-input";
+import { BrowseInput } from "@/components/browse-input";
 
 export function AdvancedTab({ values, onChange, onBrowse }: TabProps) {
     const isConnecting = useLoadingStore((state) => state.isLoading("connection"))
@@ -22,29 +23,20 @@ export function AdvancedTab({ values, onChange, onBrowse }: TabProps) {
             <CardContent className="text-sm text-muted-foreground">
                 <div className="grid grid-cols-2 gap-6">
                     <div className="col-span-2 grid gap-2">
-                        <Label htmlFor="config">Telepresence Config Path</Label>
-                        <div className="flex gap-2">
-                            <Input
-                                id="config"
-                                name="config"
-                                type="text"
-                                value={values.config}
-                                onChange={(e) => onChange("config", e.target.value)}
-                                placeholder="/path/to/telepresence/config"
-                            />
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={(_) => onBrowse("config", "Select Telepresence Config File")}
-                            >
-                                Browse
-                            </Button>
-                        </div>
+                        <BrowseInput
+                            id="config"
+                            label="Telepresence Config Path"
+                            name="config"
+                            placeholder="/path/to/telepresence/config"
+                            value={values.config}
+                            onChange={(e) => onChange("config", e.target.value)}
+                            onBrowse={(_) => onBrowse("config", "Select Telepresence Config File")}
+                        />
                     </div>
 
                     <div className="grid gap-2">
                         <Label htmlFor="request-timeout">Request Timeout</Label>
-                        <Input
+                        <ContextInput
                             id="request-timeout"
                             name="request-timeout"
                             placeholder="e.g., 2m, 3h"

@@ -15,8 +15,30 @@ function App() {
             setIsConnected(status)
         })
 
+        console.log("ENV ", import.meta.env.PROD)
+
+        if (!import.meta.env.PROD) {
+            return () => {
+                EventsOff("connection-changed", "connection-pending")
+            }
+        }
+
+        const handleContextMenu = (e: MouseEvent) => {
+            const target = e.target as HTMLElement | null
+            const isInputField =
+                target?.tagName === 'INPUT' ||
+                target?.tagName === 'TEXTAREA' ||
+                target?.isContentEditable
+
+            if (!isInputField) {
+                e.preventDefault()
+            }
+        }
+        window.addEventListener('contextmenu', handleContextMenu)
+
         return () => {
-            EventsOff("connection-changed", "connection-pending")
+            EventsOff("connection-changed", "connection-pending"),
+            window.removeEventListener('contextmenu', handleContextMenu)
         }
     }, [])
 

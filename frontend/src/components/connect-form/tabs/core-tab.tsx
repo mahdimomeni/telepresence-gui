@@ -1,9 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { TabProps } from "../types";
 import { useLoadingStore } from "@/stores/useLoadingStore";
+import { ContextInput } from "@/components/context-input";
 
 export function CoreTab({ values, onChange }: TabProps) {
     const isConnecting = useLoadingStore((state) => state.isLoading("connection"))
@@ -23,7 +23,7 @@ export function CoreTab({ values, onChange }: TabProps) {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="namespace">Namespace</Label>
-                            <Input
+                            <ContextInput
                                 id="namespace"
                                 name="namespace"
                                 placeholder="default"
@@ -33,7 +33,7 @@ export function CoreTab({ values, onChange }: TabProps) {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="name">Connection Name</Label>
-                            <Input
+                            <ContextInput
                                 id="name"
                                 name="name"
                                 placeholder="my-connection"
@@ -46,7 +46,7 @@ export function CoreTab({ values, onChange }: TabProps) {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="manager-namespace">Manager Namespace</Label>
-                            <Input
+                            <ContextInput
                                 id="manager-namespace"
                                 name="manager-namespace"
                                 placeholder="Override default manager namespace"

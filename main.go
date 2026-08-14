@@ -62,6 +62,7 @@ func main() {
 		DragAndDrop: &options.DragAndDrop{
 			DisableWebViewDrop: true,
 		},
+		EnableDefaultContextMenu: true,
 	})
 
 	if err != nil {
