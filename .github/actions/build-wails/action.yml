@@ -48,6 +48,7 @@ runs:
       uses: ./.github/actions/build-wails/actions/discovery
       with:
         working-directory: ${{ inputs.app-working-directory }}
+        build-platform: ${{ inputs.build-platform }}
 
     - name: Delegate to directory orchestrator
       id: dir_orch
