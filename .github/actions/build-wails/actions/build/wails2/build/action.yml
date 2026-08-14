@@ -32,6 +32,7 @@ runs:
           export CC=aarch64-linux-gnu-gcc
           export CXX=aarch64-linux-gnu-g++
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
+          export PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig
         fi
         wails build --platform ${{ inputs.build-platform }} -webview2 ${{ inputs.wails-build-webview2 }} -o ${{ inputs.build-name }} $BUILD_OPTIONS
       shell: bash
