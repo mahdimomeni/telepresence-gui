@@ -8,7 +8,6 @@ import (
 	"telepresence-gui/internal/models"
 	"telepresence-gui/internal/services"
 
-	"github.com/energye/systray"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -47,7 +46,7 @@ func NewApp(
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 
-	go systray.Run(a.onTrayReady, a.onTrayExit)
+	a.setupSystemTray()
 
 	if err := runtime.InitializeNotifications(a.ctx); err != nil {
 		log.Printf("Failed to initialize notifications: %v", err)

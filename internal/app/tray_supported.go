@@ -1,3 +1,5 @@
+//go:build windows || linux
+
 package app
 
 import (
@@ -10,9 +12,12 @@ import (
 
 var mConnectToggle *systray.MenuItem
 
+func (a *App) setupSystemTray() {
+	go systray.Run(a.onTrayReady, a.onTrayExit)
+}
+
 func (a *App) onTrayReady() {
 	systray.SetIcon(a.appIconIco)
-	systray.SetTemplateIcon(a.appIconIco, a.appIconPng)
 	systray.SetTitle("Telepresence")
 	systray.SetTooltip("Telepresence GUI Client")
 
