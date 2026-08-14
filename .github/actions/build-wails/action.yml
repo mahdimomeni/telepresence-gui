@@ -75,6 +75,7 @@ runs:
       with:
         package: ${{ inputs.package }}
         build-name: ${{ inputs.build-name }}
+        build-platform: ${{ inputs.build-platform }}
         os: ${{ steps.discovery.outputs.OS }}
         arch: ${{ steps.discovery.outputs.ARCH }}
         tag: ${{ steps.discovery.outputs.TAG }}

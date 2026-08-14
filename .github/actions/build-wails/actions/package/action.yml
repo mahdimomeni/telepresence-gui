@@ -6,6 +6,10 @@ inputs:
     default: "true"
   build-name:
     required: true
+  build-platform:
+    description: "Build platform (e.g., linux/amd64, windows/arm64, darwin/universal)"
+    required: false
+    default: ""
   os:
     description: "OS name (optional, from discovery). Defaults to runner.os"
     required: false
@@ -42,28 +46,35 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        OS_IN="${{ inputs.os }}"
-        ARCH_IN="${{ inputs.arch }}"
+        PLATFORM_IN="${{ inputs.build-platform }}"
         TAG_IN="${{ inputs.tag }}"
         SHORT_SHA_IN="${{ inputs.short-sha }}"
-        # Resolve OS
-        if [ -z "$OS_IN" ]; then
-          OS_IN="${{ runner.os }}"
+
+        # Parse target OS & ARCH from build-platform (e.g. linux/arm64 -> linux, arm64)
+        TARGET_OS=""
+        TARGET_ARCH=""
+        if [ -n "$PLATFORM_IN" ]; then
+          TARGET_OS="${PLATFORM_IN%%/*}"
+          TARGET_ARCH="${PLATFORM_IN#*/}"
         fi
-        # Resolve ARCH
-        if [ -z "$ARCH_IN" ]; then
-          if command -v uname >/dev/null 2>&1; then
-            M=$(uname -m || echo unknown)
-          else
-            M="$PROCESSOR_ARCHITECTURE"
-          fi
-          case "$M" in
-            x86_64|amd64) ARCH_IN="amd64";;
-            aarch64|arm64) ARCH_IN="arm64";;
-            armv7l) ARCH_IN="armv7";;
-            *) ARCH_IN="$M";;
-          esac
+
+        # Fallbacks if build-platform is not provided
+        if [ -z "$TARGET_OS" ]; then
+          TARGET_OS="${{ inputs.os }}"
+          if [ -z "$TARGET_OS" ]; then TARGET_OS="${RUNNER_OS:-}"; fi
         fi
+        if [ -z "$TARGET_ARCH" ]; then
+          TARGET_ARCH="${{ inputs.arch }}"
+        fi
+
+        # Normalize OS representation for asset naming
+        case "$(echo "$TARGET_OS" | tr '[:upper:]' '[:lower:]')" in
+          darwin|macos) NORM_OS="macOS" ;;
+          windows) NORM_OS="Windows" ;;
+          linux) NORM_OS="Linux" ;;
+          *) NORM_OS="$TARGET_OS" ;;
+        esac
+
         # Resolve revision label
         if [ -n "$TAG_IN" ]; then
           REV="$TAG_IN"
@@ -74,18 +85,20 @@ runs:
           fi
           REV="$SHORT_SHA_IN"
         fi
-        NAME="${{ inputs.build-name }}_${OS_IN}_${ARCH_IN}_${REV}"
+
+        NAME="${{ inputs.build-name }}_${NORM_OS}_${TARGET_ARCH}_${REV}"
         echo "ARTIFACT_NAME=$NAME" >> "$GITHUB_OUTPUT"
-        echo "OS_RESOLVED=$OS_IN" >> "$GITHUB_OUTPUT"
-        echo "ARCH_RESOLVED=$ARCH_IN" >> "$GITHUB_OUTPUT"
+        echo "TARGET_OS=$TARGET_OS" >> "$GITHUB_OUTPUT"
+        echo "TARGET_ARCH=$TARGET_ARCH" >> "$GITHUB_OUTPUT"
+        echo "NORM_OS=$NORM_OS" >> "$GITHUB_OUTPUT"
 
     - name: Write artifact_meta.json
       if: inputs.package == 'true' && inputs.include-meta == 'true'
       shell: bash
       env:
         IN_BUILD_NAME: ${{ inputs.build-name }}
-        IN_OS: ${{ steps.meta.outputs.OS_RESOLVED }}
-        IN_ARCH: ${{ steps.meta.outputs.ARCH_RESOLVED }}
+        IN_OS: ${{ steps.meta.outputs.NORM_OS }}
+        IN_ARCH: ${{ steps.meta.outputs.TARGET_ARCH }}
         IN_REF: ${{ inputs.ref }}
         IN_TAG: ${{ inputs.tag }}
         IN_SHORT_SHA: ${{ inputs.short-sha }}
@@ -114,18 +127,35 @@ runs:
       run: |
         set -euo pipefail
         mkdir -p dist
-        suffix="${{ steps.meta.outputs.OS_RESOLVED }}_${{ steps.meta.outputs.ARCH_RESOLVED }}"
+
+        target_os="$(echo "${{ steps.meta.outputs.TARGET_OS }}" | tr '[:upper:]' '[:lower:]')"
+        norm_os="${{ steps.meta.outputs.NORM_OS }}"
+        target_arch="${{ steps.meta.outputs.TARGET_ARCH }}"
+        suffix="${norm_os}_${target_arch}"
 
         shopt -s nullglob
         for f in build/bin/*; do
           if [ -f "$f" ]; then
             filename=$(basename "$f")
+
             ext=""
             base="$filename"
-            if [[ "$filename" == *.* ]]; then
-              ext=".${filename#*.}"
-              base="${filename%%.*}"
+
+            if [[ "$filename" == *.app.zip ]]; then
+              ext=".app.zip"
+              base="${filename%.app.zip}"
+            elif [[ "$filename" == *.* ]]; then
+              ext=".${filename##*.}"
+              base="${filename%.*}"
             fi
+
+            # Guarantee .exe for Windows binaries
+            if [ "$target_os" = "windows" ]; then
+              if [ -z "$ext" ]; then
+                ext=".exe"
+              fi
+            fi
+
             new_name="${base}_${suffix}${ext}"
             cp "$f" "dist/${new_name}"
             echo "[DEBUG_LOG] Staged dist/${new_name}"
