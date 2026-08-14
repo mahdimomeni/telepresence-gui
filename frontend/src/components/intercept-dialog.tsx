@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { InterceptWorkload, Notify } from "../../wailsjs/go/main/App"
 import { main as models } from "../../wailsjs/go/models"
+import { useLoadingStore } from "@/stores/useLoadingStore"
 
 interface InterceptDialogProps {
   workloadName: string
@@ -27,8 +28,12 @@ interface InterceptDialogProps {
 
 export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProps) {
   const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false)
+
+  const loading = useLoadingStore((state) => state.isLoading(`intercept-${workloadName}`))
+  const startLoading = useLoadingStore((state) => state.startLoading)
+  const stopLoading = useLoadingStore((state) => state.stopLoading)
+
   const [interceptConfig, setInterceptConfig] = useState(new models.InterceptConfig({
     workload: workloadName,
     port: "8080",
@@ -61,7 +66,7 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
 
   const handleIntercept = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setLoading(true)
+    startLoading(`intercept-${workloadName}`)
 
     try {
       await InterceptWorkload(interceptConfig)
@@ -76,7 +81,7 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
     } catch (error) {
       Notify("Telepresence Intercept Error", `Intercept failed: ${String(error)}`)
     } finally {
-      setLoading(false)
+      stopLoading(`intercept-${workloadName}`)
     }
   }
 
@@ -85,7 +90,7 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={setOpen} disablePointerDismissal={loading}>
       <DialogTrigger>
         <Button variant="default" size="sm">
           Intercept

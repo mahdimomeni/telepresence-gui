@@ -8,7 +8,6 @@ export interface TabProps {
   values: models.ConnectConfig
   onChange: (key: keyof models.ConnectConfig, value: any) => void
   onBrowse: (key: keyof models.ConnectConfig, message: string) => void
-  loading: boolean
   availableContexts?: string[]
 }
 

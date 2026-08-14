@@ -86,6 +86,20 @@ export namespace main {
 	        this["disable-compression"] = source["disable-compression"];
 	    }
 	}
+	export class DetachConfig {
+	    attachment_name: string;
+	    namespace: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new DetachConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.attachment_name = source["attachment_name"];
+	        this.namespace = source["namespace"];
+	    }
+	}
 	export class InterceptConfig {
 	    workload: string;
 	    port: string;

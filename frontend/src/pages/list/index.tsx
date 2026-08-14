@@ -3,7 +3,6 @@ import { RefreshCw, ServerOff } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
-import { toast } from "@/components/ui/toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ModeToggle } from "@/components/mode-toggle"
 import { ListWorkloads, Notify, StopTelepresence } from "@/../wailsjs/go/main/App"
@@ -11,26 +10,24 @@ import { main as models } from "@/../wailsjs/go/models"
 import { getColumns } from "./columns"
 import { DataTable } from "./data-table"
 import { EventsOff, EventsOn } from "../../../wailsjs/runtime/runtime"
+import { useLoadingStore } from "@/stores/useLoadingStore"
 
 
 
 export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
   const [workloads, setWorkloads] = useState<models.Workload[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
-  useEffect(() => {
-    const unsubscribeConnectionPending = EventsOn("connection-pending", (status: boolean) => {
-      setLoading(status)
-    })
+  const isScanning = useLoadingStore((state) => state.isLoading("workloads"))
+  const isDisconnecting = useLoadingStore((state) => state.isLoading("connection"))
+  const loading = isScanning || isDisconnecting
 
-    return () => {
-      EventsOff("connection-pending")
-    }
-  }, [])
+  const startLoading = useLoadingStore((state) => state.startLoading)
+  const stopLoading = useLoadingStore((state) => state.stopLoading)
+  const setLoading = useLoadingStore((state) => state.setLoading)
 
   const fetchWorkloads = async () => {
-    setLoading(true)
+    startLoading("workloads")
     setError("")
 
     try {
@@ -41,12 +38,12 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
       setError(String(err))
       Notify("Telepresence Workloads Fetch Error", `Failed to fetch workloads: ${err}`)
     } finally {
-      setLoading(false)
+      stopLoading("workloads")
     }
   }
 
   const handleDisconnect = async () => {
-    setLoading(true)
+    startLoading("connection")
     
     try {
       await StopTelepresence()
@@ -54,13 +51,20 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
     } catch (err) {
       Notify("Telepresence Disconnection Error", `Failed to disconnect: ${String(err)}`)
     } finally {
-      setLoading(false)
+      stopLoading("connection")
     }
   }
 
-  // Fetch data on initial component mount
   useEffect(() => {
+    const unsubscribeConnectionPending = EventsOn("connection-pending", (status: boolean) => {
+      setLoading("connection", status)
+    })
+
     fetchWorkloads()
+
+    return () => {
+      EventsOff("connection-pending")
+    }
   }, [])
 
   return (

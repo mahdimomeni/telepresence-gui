@@ -142,6 +142,11 @@ type InterceptConfig struct {
 	DockerArgs string `json:"docker_args"`
 }
 
+type DetachConfig struct {
+	AttachmentName string `json:"attachment_name"`
+	Namespace      string `json:"namespace"`
+}
+
 // App struct
 type App struct {
 	ctx context.Context
@@ -602,6 +607,23 @@ func (a *App) InterceptWorkload(config InterceptConfig) error {
 	_, err := runCommand(ctx, "telepresence", args...)
 	if err != nil {
 		return fmt.Errorf("failed to intercept %s: %v", config.Workload, err)
+	}
+	return nil
+}
+
+func (a *App) DetachWorkload(config DetachConfig) error {
+	ctx, cancel := context.WithTimeout(a.ctx, 15*time.Second)
+	defer cancel()
+
+	args := []string{"detach"}
+	if config.Namespace != "" {
+		args = append(args, "--namespace", config.Namespace)
+	}
+	args = append(args, config.AttachmentName)
+
+	_, err := runCommand(ctx, "telepresence", args...)
+	if err != nil {
+		return fmt.Errorf("failed to detach %s: %v", config.AttachmentName, err)
 	}
 	return nil
 }

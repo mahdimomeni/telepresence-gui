@@ -22,19 +22,27 @@ import { ClusterAuthTab } from "@/components/connect-form/tabs/cluster-auth-tab"
 import { AdvancedTab } from "@/components/connect-form/tabs/advanced-tab"
 import { ConnectFormProps, DEFAULT_VALUES } from "@/components/connect-form/types"
 import { EventsOff, EventsOn } from "../../../wailsjs/runtime/runtime"
+import { useLoadingStore } from "@/stores/useLoadingStore"
 
 export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
     const formRef = useRef<HTMLFormElement>(null)
     const lastLoadedKubeconfig = useRef<string | null>(null)
-    const [loading, setLoading] = useState(false)
     const [apiError, setApiError] = useState("")
+
+    const isConnecting = useLoadingStore((state) => state.isLoading("connection"))
+    const isFetchingKube = useLoadingStore((state) => state.isLoading("kube-info"))
+    const loading = isConnecting || isFetchingKube
+
+    const startLoading = useLoadingStore((state) => state.startLoading)
+    const stopLoading = useLoadingStore((state) => state.stopLoading)
+    const setLoading = useLoadingStore((state) => state.setLoading)
 
     const [connectConfig, setConnectConfig] = useState(new models.ConnectConfig(DEFAULT_VALUES))
     const [availableContexts, setAvailableContexts] = useState<string[]>([])
 
     useEffect(() => {
         const unsubscribeConnectionPending = EventsOn("connection-pending", (status: boolean) => {
-            setLoading(status)
+            setLoading("connection", status)
         })
 
         return () => {
@@ -49,7 +57,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
         }
 
         const fetchKubeData = async () => {
-            setLoading(true)
+            startLoading("kube-info")
             try {
                 // Fetch using the current state's path (starts as "" on mount)
                 const info = await GetKubeInfo(connectConfig.kubeconfig)
@@ -80,7 +88,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
             } catch (error) {
                 console.warn("Could not load kubeconfig defaults:", error)
             } finally {
-                setLoading(false)
+                stopLoading("kube-info")
             }
         }
 
@@ -91,7 +99,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
         setConnectConfig(new models.ConnectConfig(DEFAULT_VALUES))
         Notify("Telepresence Config Reset", "Options reseted successfully.")
 
-        setLoading(true)
+        startLoading("kube-info")
 
         setConnectConfig(new models.ConnectConfig(DEFAULT_VALUES))
 
@@ -111,7 +119,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
         } catch (error) {
             console.warn("Could not load kubeconfig defaults:", error)
         } finally {
-            setLoading(false)
+            stopLoading("kube-info")
         }
     }
 
@@ -135,7 +143,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
     const handleConnect = async (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault()
         setApiError("")
-        setLoading(true)
+        startLoading("connection")
 
         try {
             await SaveConnectConfig(connectConfig)
@@ -144,7 +152,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
         } catch (error) {
             setApiError(String(error))
         } finally {
-            setLoading(false)
+            stopLoading("connection")
         }
     }
 
@@ -172,7 +180,6 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                     values={connectConfig}
                                     onChange={handleFieldChange}
                                     onBrowse={handleBrowseFile}
-                                    loading={loading}
                                 />
                             </TabsContent>
 
@@ -181,7 +188,6 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                     values={connectConfig}
                                     onChange={handleFieldChange}
                                     onBrowse={handleBrowseFile}
-                                    loading={loading}
                                 />
                             </TabsContent>
 
@@ -191,7 +197,6 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                     onChange={handleFieldChange}
                                     onBrowse={handleBrowseFile}
                                     availableContexts={availableContexts}
-                                    loading={loading}
                                 />
                             </TabsContent>
 
@@ -200,7 +205,6 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                     values={connectConfig}
                                     onChange={handleFieldChange}
                                     onBrowse={handleBrowseFile}
-                                    loading={loading}
                                 />
                             </TabsContent>
                         </Tabs>

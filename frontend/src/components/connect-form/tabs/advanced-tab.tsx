@@ -4,8 +4,13 @@ import { Input } from "@/components/ui/input";
 import { TabProps } from "../types";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { useLoadingStore } from "@/stores/useLoadingStore";
 
-export function AdvancedTab({ values, onChange, loading, onBrowse }: TabProps) {
+export function AdvancedTab({ values, onChange, onBrowse }: TabProps) {
+    const isConnecting = useLoadingStore((state) => state.isLoading("connection"))
+    const isFetchingKube = useLoadingStore((state) => state.isLoading("kube-info"))
+    const loading = isConnecting || isFetchingKube
+
     return (
         <Card>
             <CardHeader>

@@ -5,8 +5,13 @@ import { TabProps } from "../types";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useLoadingStore } from "@/stores/useLoadingStore";
 
-export function ClusterAuthTab({ values, onChange, onBrowse, loading, availableContexts = [] }: TabProps) {
+export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts = [] }: TabProps) {
+    const isConnecting = useLoadingStore((state) => state.isLoading("connection"))
+    const isFetchingKube = useLoadingStore((state) => state.isLoading("kube-info"))
+    const loading = isConnecting || isFetchingKube
+
     return (
         <Card>
             <CardHeader>

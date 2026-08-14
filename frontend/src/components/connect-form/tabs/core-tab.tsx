@@ -3,8 +3,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { TabProps } from "../types";
+import { useLoadingStore } from "@/stores/useLoadingStore";
 
-export function CoreTab({ values, onChange, loading }: TabProps) {
+export function CoreTab({ values, onChange }: TabProps) {
+    const isConnecting = useLoadingStore((state) => state.isLoading("connection"))
+    const isFetchingKube = useLoadingStore((state) => state.isLoading("kube-info"))
+    const loading = isConnecting || isFetchingKube
+    
     return (
         <Card>
             <CardHeader>
