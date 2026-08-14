@@ -13,6 +13,9 @@ inputs:
     required: false
     default: "true"
     description: ""
+  nsis:
+    required: false
+    default: "false"
   build-name:
     required: true
     description: ""
@@ -77,6 +80,7 @@ runs:
         build: ${{ inputs.build }}
         sign: ${{ inputs.sign }}
         package: ${{ inputs.package }}
+        nsis: ${{ inputs.nsis }}
         build-name: ${{ inputs.build-name }}
         build-platform: ${{ inputs.build-platform }}
         app-working-directory: ${{ inputs.app-working-directory }}

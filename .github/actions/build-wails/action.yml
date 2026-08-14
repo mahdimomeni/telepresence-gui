@@ -16,6 +16,10 @@ inputs:
     description: "Upload artifacts and publish release on tags"
     required: false
     default: "true"
+  nsis:
+    description: "Build a Windows Installer"
+    required: false
+    default: "false"
   build-name:
     description: "The name of the binary/app bundle"
     required: true
@@ -59,6 +63,7 @@ runs:
         package: ${{ inputs.package }}
         build-name: ${{ inputs.build-name }}
         build-platform: ${{ inputs.build-platform }}
+        nsis: ${{ inputs.nsis }}
         app-working-directory: ${{ inputs.app-working-directory }}
         AUTO_STACK: ${{ inputs.AUTO_STACK }}
         AUTO_SETUP: ${{ inputs.AUTO_SETUP }}
