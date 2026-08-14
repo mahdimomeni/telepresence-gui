@@ -56,13 +56,18 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
   }
 
   useEffect(() => {
-    const unsubscribeConnectionPending = EventsOn("connection-pending", (status: boolean) => {
+    fetchWorkloads()
+
+    EventsOn("workloads-changed", (updatedWorkloads: models.Workload[]) => {
+      setWorkloads(updatedWorkloads)
+    })
+
+    EventsOn("connection-pending", (status: boolean) => {
       setLoading("connection", status)
     })
 
-    fetchWorkloads()
-
     return () => {
+      EventsOff("workloads-changed")
       EventsOff("connection-pending")
     }
   }, [])

@@ -147,9 +147,31 @@ type DetachConfig struct {
 	Namespace      string `json:"namespace"`
 }
 
+type TelepresenceStatusOutput struct {
+	UserDaemon struct {
+		Running           bool   `json:"running"`
+		Status            string `json:"status"`
+		KubernetesContext string `json:"kubernetes_context"`
+		Namespace         string `json:"namespace"`
+		ManagerNamespace  string `json:"manager_namespace"`
+	} `json:"user_daemon"`
+	RootDaemon struct {
+		Running bool   `json:"running"`
+		Name    string `json:"name"`
+		Version string `json:"version"`
+	} `json:"root_daemon"`
+	TrafficManager struct {
+		Name    string `json:"name"`
+		Version string `json:"version"`
+	} `json:"traffic_manager"`
+}
+
 // App struct
 type App struct {
-	ctx context.Context
+	ctx           context.Context
+	pollMu        sync.Mutex
+	lastStatusRaw string
+	lastListRaw   string
 }
 
 // NewApp creates a new App application struct
@@ -184,6 +206,76 @@ func (a *App) startup(ctx context.Context) {
 				return
 			}
 		}
+	}
+
+	go a.startBackgroundWatcher()
+}
+
+func (a *App) startBackgroundWatcher() {
+	ticker := time.NewTicker(4 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-a.ctx.Done():
+			return
+		case <-ticker.C:
+			a.checkTelepresenceChanges()
+		}
+	}
+}
+
+func (a *App) checkTelepresenceChanges() {
+	if !a.pollMu.TryLock() {
+		return
+	}
+	defer a.pollMu.Unlock()
+
+	ctx, cancel := context.WithTimeout(a.ctx, 6*time.Second)
+	defer cancel()
+
+	// 1. Telepresence Status Check
+	statusOut, err := runCommand(ctx, "telepresence", "status", "--format", "json")
+	if err == nil && statusOut != "" {
+		if statusOut != a.lastStatusRaw {
+			a.lastStatusRaw = statusOut
+
+			var status TelepresenceStatusOutput
+			if err := json.Unmarshal([]byte(statusOut), &status); err == nil {
+				// Connected if user daemon is running and status is explicitly "Connected"
+				connected := status.UserDaemon.Running && strings.EqualFold(status.UserDaemon.Status, "Connected")
+
+				statusMutex.Lock()
+				prevConnected := isConnected
+				statusMutex.Unlock()
+
+				if connected != prevConnected {
+					a.updateConnectionStatus(connected)
+				}
+
+				// Emit full parsed status struct to frontend
+				runtime.EventsEmit(a.ctx, "telepresence-status-changed", status)
+			}
+		}
+	}
+
+	// 2. Telepresence List Check (Only check list when connected)
+	statusMutex.Lock()
+	connected := isConnected
+	statusMutex.Unlock()
+
+	if connected {
+		listOut, err := runCommand(ctx, "telepresence", "list", "--format", "json")
+		if err == nil && listOut != "" && listOut != a.lastListRaw {
+			a.lastListRaw = listOut
+
+			var workloads []Workload
+			if err := json.Unmarshal([]byte(listOut), &workloads); err == nil {
+				runtime.EventsEmit(a.ctx, "workloads-changed", workloads)
+			}
+		}
+	} else {
+		a.lastListRaw = ""
 	}
 }
 
