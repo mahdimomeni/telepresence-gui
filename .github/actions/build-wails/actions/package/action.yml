@@ -185,3 +185,4 @@ runs:
       with:
         name: Release ${{ inputs.tag }}
         files: dist/*
+        body_path: CHANGELOG.md
