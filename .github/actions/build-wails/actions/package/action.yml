@@ -130,7 +130,7 @@ runs:
         build_name="${{ inputs.build-name }}"
         tag="${{ inputs.tag }}"
 
-        # go-selfupdate supports <cmd>_<version>_<os>_<arch> or <cmd>_<os>_<arch>
+        # Format: <name>_<version>_<os>_<arch> or <name>_<os>_<arch>
         if [ -n "$tag" ]; then
           clean_tag="${tag#v}"
           base_archive="${build_name}_${clean_tag}_${target_os}_${target_arch}"
@@ -139,14 +139,17 @@ runs:
         fi
 
         bin_dir="build/bin"
+
         if [ "$target_os" = "windows" ]; then
           archive_name="${base_archive}.zip"
+          
+          # Use PowerShell Compress-Archive for standard PKZip compliance
           if [ -f "${bin_dir}/${build_name}.exe" ]; then
-            tar.exe -acf "dist/${archive_name}" -C "$bin_dir" "${build_name}.exe"
+            powershell.exe -NoProfile -Command "Compress-Archive -Path '${bin_dir}/${build_name}.exe' -DestinationPath 'dist/${archive_name}' -Force"
           else
-            tar.exe -acf "dist/${archive_name}" -C "$bin_dir" .
+            powershell.exe -NoProfile -Command "Compress-Archive -Path '${bin_dir}/*' -DestinationPath 'dist/${archive_name}' -Force"
           fi
-          echo "[DEBUG_LOG] Packaged dist/${archive_name}"
+          echo "[DEBUG_LOG] Successfully packaged dist/${archive_name}"
         else
           archive_name="${base_archive}.tar.gz"
           if [ "$target_os" = "darwin" ] && [ -d "${bin_dir}/${build_name}.app" ]; then
@@ -156,7 +159,7 @@ runs:
           else
             tar -czf "dist/${archive_name}" -C "$bin_dir" .
           fi
-          echo "[DEBUG_LOG] Packaged dist/${archive_name}"
+          echo "[DEBUG_LOG] Successfully packaged dist/${archive_name}"
         fi
 
         # Include installers (e.g. NSIS / PKG) in dist as secondary assets if present
