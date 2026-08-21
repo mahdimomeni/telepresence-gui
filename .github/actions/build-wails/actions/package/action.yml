@@ -67,13 +67,10 @@ runs:
           TARGET_ARCH="${{ inputs.arch }}"
         fi
 
-        # Normalize OS representation for asset naming
-        case "$(echo "$TARGET_OS" | tr '[:upper:]' '[:lower:]')" in
-          darwin|macos) NORM_OS="macOS" ;;
-          windows) NORM_OS="Windows" ;;
-          linux) NORM_OS="Linux" ;;
-          *) NORM_OS="$TARGET_OS" ;;
-        esac
+        # Normalize OS & ARCH according to go-selfupdate (GOOS / GOARCH standard lowercase)
+        TARGET_OS=$(echo "$TARGET_OS" | tr '[:upper:]' '[:lower:]')
+        if [ "$TARGET_OS" = "macos" ]; then TARGET_OS="darwin"; fi
+        TARGET_ARCH=$(echo "$TARGET_ARCH" | tr '[:upper:]' '[:lower:]')
 
         # Resolve revision label
         if [ -n "$TAG_IN" ]; then
@@ -86,18 +83,18 @@ runs:
           REV="$SHORT_SHA_IN"
         fi
 
-        NAME="${{ inputs.build-name }}_${NORM_OS}_${TARGET_ARCH}_${REV}"
+        NAME="${{ inputs.build-name }}_${TARGET_OS}_${TARGET_ARCH}_${REV}"
         echo "ARTIFACT_NAME=$NAME" >> "$GITHUB_OUTPUT"
         echo "TARGET_OS=$TARGET_OS" >> "$GITHUB_OUTPUT"
         echo "TARGET_ARCH=$TARGET_ARCH" >> "$GITHUB_OUTPUT"
-        echo "NORM_OS=$NORM_OS" >> "$GITHUB_OUTPUT"
+        echo "REV=$REV" >> "$GITHUB_OUTPUT"
 
     - name: Write artifact_meta.json
       if: inputs.package == 'true' && inputs.include-meta == 'true'
       shell: bash
       env:
         IN_BUILD_NAME: ${{ inputs.build-name }}
-        IN_OS: ${{ steps.meta.outputs.NORM_OS }}
+        IN_OS: ${{ steps.meta.outputs.TARGET_OS }}
         IN_ARCH: ${{ steps.meta.outputs.TARGET_ARCH }}
         IN_REF: ${{ inputs.ref }}
         IN_TAG: ${{ inputs.tag }}
@@ -121,44 +118,54 @@ runs:
         }
         JSON
 
-    - name: Stage unique dist assets
+    - name: Package archive assets
       if: inputs.package == 'true'
       shell: bash
       run: |
         set -euo pipefail
         mkdir -p dist
 
-        target_os="$(echo "${{ steps.meta.outputs.TARGET_OS }}" | tr '[:upper:]' '[:lower:]')"
-        norm_os="${{ steps.meta.outputs.NORM_OS }}"
+        target_os="${{ steps.meta.outputs.TARGET_OS }}"
         target_arch="${{ steps.meta.outputs.TARGET_ARCH }}"
-        suffix="${norm_os}_${target_arch}"
+        build_name="${{ inputs.build-name }}"
+        tag="${{ inputs.tag }}"
 
+        # go-selfupdate supports <cmd>_<version>_<os>_<arch> or <cmd>_<os>_<arch>
+        if [ -n "$tag" ]; then
+          clean_tag="${tag#v}"
+          base_archive="${build_name}_${clean_tag}_${target_os}_${target_arch}"
+        else
+          base_archive="${build_name}_${target_os}_${target_arch}"
+        fi
+
+        # Find the primary executable or .app bundle inside build/bin
+        bin_dir="build/bin"
+        if [ "$target_os" = "windows" ]; then
+          archive_name="${base_archive}.zip"
+          if [ -f "${bin_dir}/${build_name}.exe" ]; then
+            (cd "$bin_dir" && zip -9 "../../dist/${archive_name}" "${build_name}.exe")
+          else
+            (cd "$bin_dir" && zip -9 -r "../../dist/${archive_name}" .)
+          fi
+          echo "[DEBUG_LOG] Packaged dist/${archive_name}"
+        else
+          archive_name="${base_archive}.tar.gz"
+          if [ "$target_os" = "darwin" ] && [ -d "${bin_dir}/${build_name}.app" ]; then
+            tar -czf "dist/${archive_name}" -C "$bin_dir" "${build_name}.app"
+          elif [ -f "${bin_dir}/${build_name}" ]; then
+            tar -czf "dist/${archive_name}" -C "$bin_dir" "${build_name}"
+          else
+            tar -czf "dist/${archive_name}" -C "$bin_dir" .
+          fi
+          echo "[DEBUG_LOG] Packaged dist/${archive_name}"
+        fi
+
+        # Include installers (e.g. NSIS / PKG) in dist as secondary assets if present
         shopt -s nullglob
-        for f in build/bin/*; do
-          if [ -f "$f" ]; then
-            filename=$(basename "$f")
-
-            ext=""
-            base="$filename"
-
-            if [[ "$filename" == *.app.zip ]]; then
-              ext=".app.zip"
-              base="${filename%.app.zip}"
-            elif [[ "$filename" == *.* ]]; then
-              ext=".${filename##*.}"
-              base="${filename%.*}"
-            fi
-
-            # Guarantee .exe for Windows binaries
-            if [ "$target_os" = "windows" ]; then
-              if [ -z "$ext" ]; then
-                ext=".exe"
-              fi
-            fi
-
-            new_name="${base}_${suffix}${ext}"
-            cp "$f" "dist/${new_name}"
-            echo "[DEBUG_LOG] Staged dist/${new_name}"
+        for inst in "${bin_dir}"/*installer*.exe "${bin_dir}"/*.pkg; do
+          if [ -f "$inst" ]; then
+            cp "$inst" dist/
+            echo "[DEBUG_LOG] Copied installer: $(basename "$inst")"
           fi
         done
 
