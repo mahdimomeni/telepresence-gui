@@ -12,12 +12,14 @@ import { EventsOff, EventsOn } from "../../../wailsjs/runtime/runtime"
 import { useLoadingStore } from "@/stores/useLoadingStore"
 import { TelepresenceService } from "@/services/telepresence"
 import { CoreService } from "@/services/core"
+import { InterceptDialog } from "@/components/intercept-dialog"
 
 
 
 export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
   const [workloads, setWorkloads] = useState<models.Workload[]>([])
   const [error, setError] = useState("")
+  const [interceptTarget, setInterceptTarget] = useState<string | null>(null)
 
   const isScanning = useLoadingStore((state) => state.isLoading("workloads"))
   const isDisconnecting = useLoadingStore((state) => state.isLoading("connection"))
@@ -112,7 +114,16 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
             <p>No interceptable workloads found in this namespace.</p>
           </div>
         ) : (
-          <DataTable columns={getColumns(fetchWorkloads)} data={workloads} />
+          <DataTable columns={getColumns(fetchWorkloads, (name) => setInterceptTarget(name))} data={workloads} />
+        )}
+
+        {interceptTarget && (
+          <InterceptDialog
+            workloadName={interceptTarget}
+            open={Boolean(interceptTarget)}
+            onOpenChange={(isOpen) => !isOpen && setInterceptTarget(null)}
+            onSuccess={fetchWorkloads}
+          />
         )}
       </CardContent>
     </Card>

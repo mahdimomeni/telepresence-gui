@@ -23,31 +23,38 @@ import { CoreService } from "@/services/core"
 import { ContextInput } from "@/components/context-input"
 
 interface InterceptDialogProps {
-  workloadName: string
+  workloadName: string,
+  open: boolean,
+  onOpenChange: (open: boolean) => void,
   onSuccess?: () => void
 }
 
-export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false)
-
+export function InterceptDialog({ workloadName, open, onOpenChange, onSuccess }: InterceptDialogProps) {
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(true)
   const loading = useLoadingStore((state) => state.isLoading(`intercept-${workloadName}`))
   const startLoading = useLoadingStore((state) => state.startLoading)
   const stopLoading = useLoadingStore((state) => state.stopLoading)
 
-  const [interceptConfig, setInterceptConfig] = useState(new models.InterceptConfig({
-    workload: workloadName,
-    port: "8080",
-    env_file: "",
-    env_json: "",
-    env_syntax: "",
-    http_header: "",
-    mount: "",
-    container: "",
-    service: "",
-    docker_run: false,
-    docker_args: "",
-  }))
+  const [interceptConfig, setInterceptConfig] = useState(
+    new models.InterceptConfig({
+      workload: workloadName,
+      port: "8080",
+      env_file: "",
+      env_json: "",
+      env_syntax: "",
+      http_header: "",
+      mount: "",
+      container: "",
+      service: "",
+      docker_run: false,
+      docker_args: "",
+    })
+  )
+
+  useEffect(() => {
+    setInterceptConfig((prev) => ({ ...prev, workload: workloadName }))
+  }, [workloadName])
+
   const [envFormat, setEnvFormat] = useState("docker")
   const [envFile, setEnvFile] = useState("")
 
@@ -71,14 +78,9 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
 
     try {
       await TelepresenceService.interceptWorkload(interceptConfig)
-
       CoreService.notify("Telepresence Intercept Active", `Successfully intercepted ${workloadName}`)
-      setOpen(false)
+      onOpenChange(false)
       if (onSuccess) onSuccess()
-
-      setOpen(false)
-      if (onSuccess) onSuccess()
-
     } catch (error) {
       CoreService.notify("Telepresence Intercept Error", `Intercept failed: ${String(error)}`)
     } finally {
@@ -91,7 +93,7 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen} disablePointerDismissal={loading}>
+    <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal={loading}>
       <DialogTrigger>
         <Button variant="default" size="sm">
           Intercept
@@ -199,7 +201,7 @@ export function InterceptDialog({ workloadName, onSuccess }: InterceptDialogProp
           </Tabs>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>

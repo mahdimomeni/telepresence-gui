@@ -7,11 +7,15 @@ import { type DataTableFeatures } from "./data-table-features"
 import { models } from "@/../wailsjs/go/models"
 import { Badge } from "@/components/ui/badge"
 import { DetachButton } from "./detach-button"
+import { Button } from "@/components/ui/button"
 
 // Use `accessor` for data columns and `display` for columns without one.
 const columnHelper = createColumnHelper<DataTableFeatures, models.Workload>()
 
-export const getColumns = (fetchWorkloads: () => void) => columnHelper.columns([
+export const getColumns = (
+    fetchWorkloads: () => void,
+    onOpenIntercept: (workloadName: string) => void
+) => columnHelper.columns([
     columnHelper.accessor("name", {
         header: "Name",
     }),
@@ -36,15 +40,19 @@ export const getColumns = (fetchWorkloads: () => void) => columnHelper.columns([
 
             return (
                 <>
-                {workload['intercept_info'] ?
-                    <DetachButton workload={workload} onFetchWorkloads={fetchWorkloads} /> :
-                    <InterceptDialog
-                        workloadName={workload.name}
-                        onSuccess={fetchWorkloads}
-                    />       
-                }
+                    {workload.intercept_info && workload.intercept_info.length > 0 ? (
+                        <DetachButton workload={workload} onFetchWorkloads={fetchWorkloads} />
+                    ) : (
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => onOpenIntercept(workload.name)}
+                        >
+                            Intercept
+                        </Button>
+                    )}
                 </>
-                
+
             )
         }
 
