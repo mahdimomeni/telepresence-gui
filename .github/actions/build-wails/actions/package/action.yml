@@ -138,14 +138,13 @@ runs:
           base_archive="${build_name}_${target_os}_${target_arch}"
         fi
 
-        # Find the primary executable or .app bundle inside build/bin
         bin_dir="build/bin"
         if [ "$target_os" = "windows" ]; then
           archive_name="${base_archive}.zip"
           if [ -f "${bin_dir}/${build_name}.exe" ]; then
-            (cd "$bin_dir" && zip -9 "../../dist/${archive_name}" "${build_name}.exe")
+            tar.exe -acf "dist/${archive_name}" -C "$bin_dir" "${build_name}.exe"
           else
-            (cd "$bin_dir" && zip -9 -r "../../dist/${archive_name}" .)
+            tar.exe -acf "dist/${archive_name}" -C "$bin_dir" .
           fi
           echo "[DEBUG_LOG] Packaged dist/${archive_name}"
         else
