@@ -146,13 +146,37 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
   body {
     @apply bg-background text-foreground;
-    }
+  }
   html {
     @apply font-sans;
-    }
+  }
+  
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-muted-foreground);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 /* Disable selection across the entire app */

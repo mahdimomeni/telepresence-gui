@@ -57,7 +57,7 @@ export function DataTable<TData extends RowData>({
         />
       </div>
       <div className="overflow-hidden rounded-md border">
-        <Table containerClassName="max-h-[50vh] overflow-y-auto">
+        <Table containerClassName="max-h-[50vh] overflow-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
           <TableHeader className="sticky top-0 z-10 bg-card border-b">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
