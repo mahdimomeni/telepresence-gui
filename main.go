@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"telepresence-gui/internal/app"
 	"telepresence-gui/internal/cli"
 	"telepresence-gui/internal/services"
@@ -11,6 +12,9 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
+
+//go:embed wails.json
+var wailsConfigJSON []byte
 
 //go:embed all:frontend/dist
 var assets embed.FS
@@ -24,18 +28,36 @@ var linuxTrayIcon []byte
 //go:embed build/linux/tray-icon.png
 var windowsTrayIcon []byte
 
+type wailsConfig struct {
+	Info struct {
+		ProductVersion string `json:"productVersion"`
+	} `json:"info"`
+}
+
+func getAppVersion() string {
+	var cfg wailsConfig
+	if err := json.Unmarshal(wailsConfigJSON, &cfg); err != nil || cfg.Info.ProductVersion == "" {
+		return "1.0.0"
+	}
+	return cfg.Info.ProductVersion
+}
+
 func main() {
+	appVersion := getAppVersion()
+
 	// Instantiate Core Infrastructure & Services
 	runner := cli.NewCommandRunner()
 	configService := services.NewConfigService()
 	kubeService := services.NewKubeService(runner, configService)
 	teleService := services.NewTelepresenceService(runner)
+	updateService := services.NewUpdateService("mahdimomeni", "telepresence-gui", appVersion)
 
 	// Instantiate the Presentation App Layer
 	application := app.NewApp(
 		teleService,
 		kubeService,
 		configService,
+		updateService,
 		linuxTrayIcon,
 		darwinTrayIcon,
 		windowsTrayIcon,

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"telepresence-gui/internal/models"
 	"telepresence-gui/internal/services"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -18,6 +19,7 @@ type App struct {
 	teleService   *services.TelepresenceService
 	kubeService   *services.KubeService
 	configService *services.ConfigService
+	updateService *services.UpdateService
 
 	pollMu        sync.Mutex
 	statusMu      sync.Mutex
@@ -34,6 +36,7 @@ func NewApp(
 	teleService *services.TelepresenceService,
 	kubeService *services.KubeService,
 	configService *services.ConfigService,
+	updateService *services.UpdateService,
 	linuxTrayIcon []byte,
 	darwinTrayIcon []byte,
 	windowsTrayIcon []byte,
@@ -42,6 +45,7 @@ func NewApp(
 		teleService:     teleService,
 		kubeService:     kubeService,
 		configService:   configService,
+		updateService:   updateService,
 		linuxTrayIcon:   linuxTrayIcon,
 		darwinTrayIcon:  darwinTrayIcon,
 		windowsTrayIcon: windowsTrayIcon,
@@ -62,6 +66,55 @@ func (a *App) Startup(ctx context.Context) {
 	go a.startBackgroundWatcher()
 
 	a.setupSystemTray()
+
+	go func() {
+		time.Sleep(2 * time.Second)
+		info, err := a.updateService.CheckForUpdate(a.ctx)
+		if err == nil && info != nil && info.Available {
+			runtime.EventsEmit(a.ctx, "update:available", info)
+		}
+	}()
+}
+
+func (a *App) CheckForUpdates() (*services.UpdateInfo, error) {
+	return a.updateService.CheckForUpdate(a.ctx)
+}
+
+func (a *App) DownloadAndInstallUpdate() error {
+	log.Println("[AutoUpdate] DownloadAndInstallUpdate requested from frontend")
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[AutoUpdate] Panic during update: %v\n", r)
+				runtime.EventsEmit(a.ctx, "update:progress", services.UpdateProgress{
+					Status: "error",
+					Error:  fmt.Sprintf("internal panic: %v", r),
+				})
+			}
+		}()
+
+		err := a.updateService.DownloadAndApply(a.ctx, func(p services.UpdateProgress) {
+			log.Printf("[AutoUpdate] Progress: %d%% (%s)\n", p.Percentage, p.Status)
+			runtime.EventsEmit(a.ctx, "update:progress", p)
+		})
+
+		if err != nil {
+			log.Printf("[AutoUpdate] Update failed: %v\n", err)
+			runtime.EventsEmit(a.ctx, "update:progress", services.UpdateProgress{
+				Status: "error",
+				Error:  err.Error(),
+			})
+		} else {
+			log.Println("[AutoUpdate] Update applied successfully!")
+		}
+	}()
+
+	return nil
+}
+
+func (a *App) RestartApp() error {
+	return a.updateService.RestartApp()
 }
 
 func (a *App) Shutdown(ctx context.Context) {

@@ -6,16 +6,16 @@ import { BrowserOpenURL, EventsOff, EventsOn } from '../wailsjs/runtime/runtime'
 import { Button } from './components/ui/button';
 import { AtSign } from 'lucide-react';
 import Github from './assets/images/github.svg?react';
+import { Toaster } from './components/ui/toast';
+import { UpdateToast } from './components/update-toast';
 
 function App() {
     const [isConnected, setIsConnected] = useState(false)
 
     useEffect(() => {
-        const unsubscribeConnectionChanged = EventsOn("connection-changed", (status: boolean) => {
+        EventsOn("connection-changed", (status: boolean) => {
             setIsConnected(status)
         })
-
-        console.log("ENV ", import.meta.env.PROD)
 
         if (!import.meta.env.PROD) {
             return () => {
@@ -81,6 +81,9 @@ function App() {
                     </div>
                     <span>Telepresence GUI v{__APP_VERSION__}</span>
                 </footer>
+
+                <Toaster />
+                <UpdateToast />
             </div>
         </ThemeProvider>
     )
