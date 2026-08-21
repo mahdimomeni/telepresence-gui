@@ -163,13 +163,14 @@ runs:
         fi
 
         # Include installers (e.g. NSIS / PKG) in dist as secondary assets if present
-        shopt -s nullglob
-        for inst in "${bin_dir}"/*installer*.exe "${bin_dir}"/*.pkg; do
-          if [ -f "$inst" ]; then
-            cp "$inst" dist/
-            echo "[DEBUG_LOG] Copied installer: $(basename "$inst")"
-          fi
-        done
+        # Remove or comment out installer copying if you never want installers included
+        # shopt -s nullglob
+        # for inst in "${bin_dir}"/*installer*.exe "${bin_dir}"/*.pkg; do
+        #   if [ -f "$inst" ]; then
+        #     cp "$inst" dist/
+        #     echo "[DEBUG_LOG] Copied installer: $(basename "$inst")"
+        #   fi
+        # done
 
     - uses: actions/upload-artifact@v4
       if: inputs.package == 'true'

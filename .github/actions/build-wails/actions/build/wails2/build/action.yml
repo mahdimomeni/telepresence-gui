@@ -34,15 +34,11 @@ runs:
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
           export PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig
         fi
-        wails build --platform ${{ inputs.build-platform }} -webview2 ${{ inputs.wails-build-webview2 }} -o ${{ inputs.build-name }} $BUILD_OPTIONS
-      shell: bash
-    - name: Add macOS perms
-      if: inputs.build == 'true' && runner.os == 'macOS'
-      working-directory: ${{ inputs.app-working-directory }}
-      run: chmod +x build/bin/*/Contents/MacOS/*
-      shell: bash
-    - name: Add Linux perms
-      if: inputs.build == 'true' && runner.os == 'Linux'
-      working-directory: ${{ inputs.app-working-directory }}
-      run: chmod +x build/bin/*
+
+        OUTPUT_NAME="${{ inputs.build-name }}"
+        if [[ "${{ inputs.build-platform }}" == windows/* ]] && [[ "$OUTPUT_NAME" != *.exe ]]; then
+          OUTPUT_NAME="${OUTPUT_NAME}.exe"
+        fi
+
+        wails build --platform ${{ inputs.build-platform }} -webview2 ${{ inputs.wails-build-webview2 }} -o "$OUTPUT_NAME" $BUILD_OPTIONS
       shell: bash

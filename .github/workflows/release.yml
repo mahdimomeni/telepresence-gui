@@ -22,8 +22,8 @@ jobs:
           - { name: Linux arm64, platform: linux/arm64, os: ubuntu-latest }
 
           # Windows targets
-          - { name: Windows amd64, platform: windows/amd64, os: windows-latest, nsis: true }
-          - { name: Windows arm64, platform: windows/arm64, os: windows-latest, nsis: true }
+          - { name: Windows amd64, platform: windows/amd64, os: windows-latest, nsis: false }
+          - { name: Windows arm64, platform: windows/arm64, os: windows-latest, nsis: false }
 
           # macOS targets
           - { name: macOS amd64, platform: darwin/amd64, os: macos-latest }
