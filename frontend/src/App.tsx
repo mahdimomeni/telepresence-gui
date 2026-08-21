@@ -1,5 +1,3 @@
-import './App.css';
-
 import { ThemeProvider } from '@/components/theme-provider';
 import { ConnectPage } from './pages/connect-page';
 import { useEffect, useState } from 'react';
