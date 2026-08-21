@@ -77,7 +77,7 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
 
   return (
     <Card className="w-full max-w-4xl m-5 min-h-125 flex flex-col bg-card/80 backdrop-blur-md border-border/50 shadow-2xl shadow-black/20">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between shrink-0">
         <div>
           <CardTitle>Active Connection</CardTitle>
           <CardDescription>
@@ -95,7 +95,7 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-auto">
+      <CardContent className="flex-1 min-h-0">
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertTitle>Error Loading Workloads</AlertTitle>
