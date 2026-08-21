@@ -1,4 +1,4 @@
-import { ColumnFiltersState, useTable, type ColumnDef, type RowData } from "@tanstack/react-table"
+import { ColumnFiltersState, PaginationState, useTable, type ColumnDef, type RowData } from "@tanstack/react-table"
 
 import {
   Table,
@@ -12,6 +12,7 @@ import {
 import { features, type DataTableFeatures } from "./data-table-features"
 import React from "react"
 import { ContextInput } from "@/components/context-input"
+import { DataTablePagination } from "./data-table-pagination"
 
 interface DataTableProps<TData extends RowData> {
   columns: ColumnDef<DataTableFeatures, TData>[]
@@ -25,14 +26,21 @@ export function DataTable<TData extends RowData>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  })
 
   const table = useTable({
     features,
     data,
     columns,
+    autoResetPageIndex: false,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     state: {
-      columnFilters
+      columnFilters,
+      pagination,
     }
   })
 
@@ -49,8 +57,8 @@ export function DataTable<TData extends RowData>({
         />
       </div>
       <div className="overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
+        <Table containerClassName="max-h-[50vh] overflow-y-auto">
+          <TableHeader className="sticky top-0 z-10 bg-card border-b">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -89,6 +97,7 @@ export function DataTable<TData extends RowData>({
           </TableBody>
         </Table>
       </div>
+      <DataTablePagination table={table} />
     </div>
   )
 }
