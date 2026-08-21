@@ -75,7 +75,7 @@ function App() {
                             size="icon"
                             onClick={() => BrowserOpenURL("mailto:mahdimomeni012@gmail.com")}
                             className="color cursor-pointer"
-                            title="View source on GitHub"
+                            title="Send an email"
                         >
                             <AtSign />
                             <span className="sr-only">GitHub</span>
