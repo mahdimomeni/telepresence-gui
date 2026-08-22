@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"sync"
 	"time"
 
@@ -44,7 +45,11 @@ func (s *UpdateService) CheckForUpdate(ctx context.Context) (*UpdateInfo, error)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	updater, err := selfupdate.NewUpdater(selfupdate.Config{})
+	updater, err := selfupdate.NewUpdater(selfupdate.Config{
+		Filters: []string{
+			`telepresence-gui_.*_` + runtime.GOOS + `_` + runtime.GOARCH + getAbiTag() + `\.(tar\.gz|zip)`,
+		},
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create updater: %w", err)
 	}
@@ -83,7 +88,11 @@ func (s *UpdateService) DownloadAndApply(ctx context.Context, onProgress func(Up
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	updater, err := selfupdate.NewUpdater(selfupdate.Config{})
+	updater, err := selfupdate.NewUpdater(selfupdate.Config{
+		Filters: []string{
+			`telepresence-gui_.*_` + runtime.GOOS + `_` + runtime.GOARCH + getAbiTag() + `\.(tar\.gz|zip)`,
+		},
+	})
 	if err != nil {
 		return fmt.Errorf("failed to initialize updater: %w", err)
 	}
