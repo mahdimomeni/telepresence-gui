@@ -180,13 +180,17 @@ runs:
 
             export APP_NAME="$build_name"
             export TARGET_ARCH="$target_arch"
-            export VERSION="$clean_tag"
+            # Ensure version string is Debian/RPM compliant (replace dashes with plus for non-tag builds)
+            export VERSION=$(echo "$clean_tag" | tr '-' '+')
+
+            echo "[DEBUG_LOG] Substituting environment variables in nfpm.yaml..."
+            envsubst < nfpm.yaml > dist/nfpm-resolved.yaml
 
             echo "[DEBUG_LOG] Generating Linux distribution packages..."
-            nfpm package --packager deb --target dist/
-            nfpm package --packager rpm --target dist/
-            nfpm package --packager apk --target dist/
-            nfpm package --packager archlinux --target dist/ || true
+            nfpm package -f dist/nfpm-resolved.yaml --packager deb --target dist/
+            nfpm package -f dist/nfpm-resolved.yaml --packager rpm --target dist/
+            nfpm package -f dist/nfpm-resolved.yaml --packager apk --target dist/
+            nfpm package -f dist/nfpm-resolved.yaml --packager archlinux --target dist/ || true
           fi
         fi
 
