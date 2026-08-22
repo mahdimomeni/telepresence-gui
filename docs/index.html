@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A modern, cross-platform graphical user interface for Telepresence, built with Wails.">
+    <link rel="icon" type="image/png" href="logo.png">
+    <title>Telepresence GUI</title>
+    <style>
+        :root {
+            --primary: #F06A1A; 
+            --primary-hover: #D95D15;
+            --bg-base: #09090b;
+            --bg-card: #18181b;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --border: #27272a;
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            text-align: center;
+            padding: 5rem 1.5rem 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo {
+            width: 140px;
+            height: 140px;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 2.5rem;
+            text-wrap: balance;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #ffffff;
+            border: 1px solid var(--primary);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--bg-card);
+            border-color: var(--text-muted);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            max-width: 1000px;
+            margin: 0 auto 5rem;
+            padding: 0 1.5rem;
+        }
+
+        .feature-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border);
+        }
+
+        footer a {
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 640px) {
+            h1 { font-size: 2.25rem; }
+            .button-group { flex-direction: column; width: 100%; max-width: 300px; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="logo.png" alt="Telepresence GUI Logo" class="logo">
+        <h1>Telepresence GUI</h1>
+        <p class="subtitle">A modern, cross-platform graphical user interface for Telepresence, built with Wails.</p>
+        
+        <div class="button-group">
+            <a href="https://github.com/mahdimomeni/telepresence-gui/releases/latest" class="btn btn-primary">
+                Download Latest Release
+            </a>
+            <a href="https://github.com/mahdimomeni/telepresence-gui" class="btn btn-outline" target="_blank" rel="noopener noreferrer">
+                View on GitHub
+            </a>
+        </div>
+    </header>
+
+    <section class="features">
+        <div class="feature-card">
+            <h3>Cluster Connection</h3>
+            <p>Connect to your Kubernetes clusters with a rich UI for configuring core settings, network routing, and advanced daemon settings.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Visual Intercepts</h3>
+            <p>Quickly intercept workloads to route traffic to your local environment with advanced routing and Docker container configurations.</p>
+        </div>
+        <div class="feature-card">
+            <h3>System Tray Integration</h3>
+            <p>Runs quietly in the background with a native system tray icon for quick connect/disconnect access without opening the full window.</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 Mohammad Mahdi Momeni. Released under the <a href="https://github.com/mahdimomeni/telepresence-gui/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>.</p>
+    </footer>
+
+</body>
+</html>
