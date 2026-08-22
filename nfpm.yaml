@@ -14,6 +14,10 @@ contents:
     dst: /usr/bin/${APP_NAME}
     file_info:
       mode: 0755
+  - src: ./build/linux/${APP_NAME}.desktop
+    dst: /usr/share/applications/${APP_NAME}.desktop
+  - src: ./build/linux/icon.png
+    dst: /usr/share/icons/hicolor/512x512/apps/${APP_NAME}.png
 
 depends:
   - libgtk-3-0

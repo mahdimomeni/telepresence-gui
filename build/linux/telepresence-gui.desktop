@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Telepresence GUI
+Comment=A modern, cross-platform graphical user interface for Telepresence
+Exec=/usr/bin/telepresence-gui
+Icon=telepresence-gui
+Terminal=false
+Categories=Development;Utility;
+StartupWMClass=telepresence-gui
