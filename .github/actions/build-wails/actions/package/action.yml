@@ -135,6 +135,7 @@ runs:
           clean_tag="${tag#v}"
           base_archive="${build_name}_${clean_tag}_${target_os}_${target_arch}"
         else
+          clean_tag="0.0.0-${{ steps.meta.outputs.REV }}"
           base_archive="${build_name}_${target_os}_${target_arch}"
         fi
 
@@ -142,17 +143,16 @@ runs:
 
         if [ "$target_os" = "windows" ]; then
           archive_name="${base_archive}.zip"
-          
-          # Use PowerShell Compress-Archive for standard PKZip compliance
           if [ -f "${bin_dir}/${build_name}.exe" ]; then
             powershell.exe -NoProfile -Command "Compress-Archive -Path '${bin_dir}/${build_name}.exe' -DestinationPath 'dist/${archive_name}' -Force"
           else
             powershell.exe -NoProfile -Command "Compress-Archive -Path '${bin_dir}/*' -DestinationPath 'dist/${archive_name}' -Force"
           fi
           echo "[DEBUG_LOG] Successfully packaged dist/${archive_name}"
-        else
+
+        elif [ "$target_os" = "darwin" ]; then
           archive_name="${base_archive}.tar.gz"
-          if [ "$target_os" = "darwin" ] && [ -d "${bin_dir}/${build_name}.app" ]; then
+          if [ -d "${bin_dir}/${build_name}.app" ]; then
             tar -czf "dist/${archive_name}" -C "$bin_dir" "${build_name}.app"
           elif [ -f "${bin_dir}/${build_name}" ]; then
             tar -czf "dist/${archive_name}" -C "$bin_dir" "${build_name}"
@@ -160,17 +160,35 @@ runs:
             tar -czf "dist/${archive_name}" -C "$bin_dir" .
           fi
           echo "[DEBUG_LOG] Successfully packaged dist/${archive_name}"
-        fi
 
-        # Include installers (e.g. NSIS / PKG) in dist as secondary assets if present
-        # Remove or comment out installer copying if you never want installers included
-        # shopt -s nullglob
-        # for inst in "${bin_dir}"/*installer*.exe "${bin_dir}"/*.pkg; do
-        #   if [ -f "$inst" ]; then
-        #     cp "$inst" dist/
-        #     echo "[DEBUG_LOG] Copied installer: $(basename "$inst")"
-        #   fi
-        # done
+        else
+          # Linux tar.gz packaging
+          archive_name="${base_archive}.tar.gz"
+          if [ -f "${bin_dir}/${build_name}" ]; then
+            tar -czf "dist/${archive_name}" -C "$bin_dir" "${build_name}"
+          else
+            tar -czf "dist/${archive_name}" -C "$bin_dir" .
+          fi
+          echo "[DEBUG_LOG] Successfully packaged dist/${archive_name}"
+
+          # Linux distro packaging via nfpm
+          if [ -f "nfpm.yaml" ]; then
+            echo "[DEBUG_LOG] Installing nfpm..."
+            if ! command -v nfpm >/dev/null 2>&1; then
+              go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+            fi
+
+            export APP_NAME="$build_name"
+            export TARGET_ARCH="$target_arch"
+            export VERSION="$clean_tag"
+
+            echo "[DEBUG_LOG] Generating Linux distribution packages..."
+            nfpm package --packager deb --target dist/
+            nfpm package --packager rpm --target dist/
+            nfpm package --packager apk --target dist/
+            nfpm package --packager archlinux --target dist/ || true
+          fi
+        fi
 
     - uses: actions/upload-artifact@v4
       if: inputs.package == 'true'

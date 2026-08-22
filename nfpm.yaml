@@ -1,0 +1,38 @@
+name: "${APP_NAME}"
+arch: "${TARGET_ARCH}"
+platform: "linux"
+version: "${VERSION}"
+section: "utils"
+priority: "optional"
+maintainer: "Mohammad Mahdi Momeni <mahdimomeni012@gmail.com>"
+description: "A modern, cross-platform graphical user interface for Telepresence"
+homepage: "https://github.com/mahdimomeni/telepresence-gui"
+license: "MIT"
+
+contents:
+  - src: ./build/bin/${APP_NAME}
+    dst: /usr/bin/${APP_NAME}
+    file_info:
+      mode: 0755
+
+depends:
+  - libgtk-3-0
+  - libwebkit2gtk-4.1-0
+
+overrides:
+  deb:
+    depends:
+      - libgtk-3-0
+      - libwebkit2gtk-4.1-0
+  rpm:
+    depends:
+      - gtk3
+      - webkit2gtk4.1
+  apk:
+    depends:
+      - gtk+3.0
+      - webkit2gtk
+  archlinux:
+    depends:
+      - gtk3
+      - webkit2gtk-4.1
