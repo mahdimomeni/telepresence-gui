@@ -17,18 +17,22 @@ jobs:
       fail-fast: false # Prevents cancelling all builds if just one platform fails
       matrix:
         build:
-          # Linux targets
-          - { name: Linux amd64, platform: linux/amd64, os: ubuntu-latest }
-          - { name: Linux arm64, platform: linux/arm64, os: ubuntu-latest }
+          # Linux WebKit 4.1 (Ubuntu 24.04+, Debian 12+, Fedora 40+, Arch)
+          - { name: Linux amd64 (WebKit 4.1), platform: linux/amd64, os: ubuntu-24.04 }
+          - { name: Linux arm64 (WebKit 4.1), platform: linux/arm64, os: ubuntu-24.04 }
+
+          # Linux WebKit 4.0 (Ubuntu 20.04/22.04, Debian 11, RHEL 8/9)
+          - { name: Linux amd64 (WebKit 4.0), platform: linux/amd64, os: ubuntu-22.04 }
+          - { name: Linux arm64 (WebKit 4.0), platform: linux/arm64, os: ubuntu-22.04 }
 
           # Windows targets
-          - { name: Windows amd64, platform: windows/amd64, os: windows-latest, nsis: false }
-          - { name: Windows arm64, platform: windows/arm64, os: windows-latest, nsis: false }
+          - { name: Windows amd64, platform: windows/amd64, os: windows-latest, nsis: true }
+          - { name: Windows arm64, platform: windows/arm64, os: windows-latest, nsis: true }
 
           # macOS targets
           - { name: macOS amd64, platform: darwin/amd64, os: macos-latest }
           - { name: macOS arm64, platform: darwin/arm64, os: macos-latest }
-          - {name: macOS universal, platform: darwin/universal, os: macos-latest}
+          - { name: macOS universal, platform: darwin/universal, os: macos-latest }
 
     steps:
       - name: Checkout Code
