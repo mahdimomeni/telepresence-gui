@@ -1,0 +1,7 @@
+{
+  "extends": "./node_modules/@docusaurus/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "react-jsx"
+  }
+}

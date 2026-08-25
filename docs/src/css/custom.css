@@ -1,0 +1,95 @@
+/**
+ * Telepresence GUI Custom Documentation Theme
+ */
+
+:root {
+  --ifm-color-primary: #F06A1A;
+  --ifm-color-primary-dark: #d95d15;
+  --ifm-color-primary-darker: #c25112;
+  --ifm-color-primary-darkest: #9e400c;
+  --ifm-color-primary-light: #f37d35;
+  --ifm-color-primary-lighter: #f59050;
+  --ifm-color-primary-lightest: #f9b88f;
+  --ifm-code-font-size: 92%;
+  --docusaurus-highlighted-code-line-bg: rgba(240, 106, 26, 0.1);
+  --ifm-font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --ifm-heading-font-weight: 700;
+  --ifm-navbar-background-color: #ffffff;
+  --ifm-footer-background-color: #0f1115;
+  --ifm-card-background-color: #f8fafc;
+  --ifm-table-border-color: #e2e8f0;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #F06A1A;
+  --ifm-color-primary-dark: #d95d15;
+  --ifm-color-primary-darker: #c25112;
+  --ifm-color-primary-darkest: #9e400c;
+  --ifm-color-primary-light: #f37d35;
+  --ifm-color-primary-lighter: #f59050;
+  --ifm-color-primary-lightest: #f9b88f;
+  --ifm-background-color: #09090b;
+  --ifm-background-surface-color: #121215;
+  --ifm-navbar-background-color: #09090b;
+  --ifm-footer-background-color: #09090b;
+  --ifm-card-background-color: #18181b;
+  --ifm-table-border-color: #27272a;
+  --docusaurus-highlighted-code-line-bg: rgba(240, 106, 26, 0.18);
+  --ifm-toc-border-color: #27272a;
+}
+
+/* Navbar Enhancements */
+.navbar {
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+  backdrop-filter: blur(8px);
+}
+
+.navbar__title {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.navbar__brand img {
+  height: 28px;
+  width: 28px;
+  border-radius: 6px;
+}
+
+/* Hero & Badges */
+.badge--primary {
+  background-color: var(--ifm-color-primary);
+}
+
+/* Sidebar styling */
+.menu__link--active:not(.menu__link--sublist) {
+  background-color: rgba(240, 106, 26, 0.12);
+  color: var(--ifm-color-primary);
+  font-weight: 600;
+  border-left: 3px solid var(--ifm-color-primary);
+}
+
+/* Admonitions styling */
+.alert--info {
+  --ifm-alert-background-color: rgba(240, 106, 26, 0.08);
+  --ifm-alert-border-color: var(--ifm-color-primary);
+}
+
+/* Tables */
+table {
+  display: table;
+  width: 100%;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th {
+  background-color: rgba(240, 106, 26, 0.08);
+  color: var(--ifm-color-primary);
+  font-weight: 700;
+}
+
+/* Code Blocks */
+pre code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}

@@ -1,6 +1,8 @@
 build/bin
 node_modules
 frontend/dist
+docs/build
+docs/.docusaurus
 build/windows/installer/tmp
 
 # Binaries for programs and plugins

@@ -1,70 +1,138 @@
 # Telepresence GUI
 
-A modern, cross-platform graphical user interface for [Telepresence](https://www.telepresence.io/), built with [Wails](https://wails.io). It simplifies connecting to Kubernetes clusters, viewing workloads, and managing traffic intercepts without needing to memorize complex CLI commands.
+<div align="center">
 
-## Features
+<img src="docs/static/logo.png" alt="Telepresence GUI Logo" width="128" height="128" />
 
-- **Cluster Connection Management**: Connect to your Kubernetes clusters with a rich UI for configuring core settings, network routing, cluster authentication, and advanced daemon settings.
-- **Workload Management**: View available workloads in your current namespace using a clean, filterable data table.
-- **Visual Intercepts**: Quickly intercept workloads to route traffic to your local environment (Local Process or Docker Container) with advanced routing configurations.
-- **System Tray Integration**: Runs quietly in the background with a system tray icon for quick connect/disconnect access without opening the full application window.
-- **Dark/Light Mode**: Full support for system themes using a beautiful UI powered by Tailwind CSS and shadcn/ui.
-- **Cross-Platform**: Built and packaged for Windows, macOS, and Linux.
+### A modern, cross-platform desktop interface for [Telepresence](https://www.telepresence.io/).
 
-## Tech Stack
+Connect to Kubernetes clusters, inspect workloads, and manage live traffic intercepts without memorizing complex CLI commands.
 
-- **Backend**: Go 1.25, Wails v2 Framework c
-- **Frontend**: React 19, TypeScript, Vite
-- **Styling**: Tailwind CSS v4, shadcn/ui
-- **State Management**: Zustand
-- **Data Tables**: TanStack React Table
+[![Release](https://img.shields.io/github/v/release/mahdimomeni/telepresence-gui?style=flat-square&color=F06A1A)](https://github.com/mahdimomeni/telepresence-gui/releases/latest)
+[![Documentation](https://img.shields.io/badge/docs-Docusaurus-F06A1A?style=flat-square&logo=docusaurus)](https://mahdimomeni.github.io/telepresence-gui/)
+[![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat-square&logo=go)](https://golang.org)
+[![React Version](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev)
+[![Wails Version](https://img.shields.io/badge/Wails-v2-DF1A2A?style=flat-square&logo=wails)](https://wails.io)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square)](https://mahdimomeni.github.io/telepresence-gui/download.html)
 
-## Prerequisites
+**[📖 Official Documentation](https://mahdimomeni.github.io/telepresence-gui/)** • **[📥 Download App](https://mahdimomeni.github.io/telepresence-gui/download.html)** • **[🚀 Quick Start](https://mahdimomeni.github.io/telepresence-gui/docs/getting-started/quick-start)** • **[✨ Features](#-key-features)** • **[💻 Developer Guide](#-local-development)**
 
-To build and run this project locally, you will need:
+</div>
 
-1. [Go](https://golang.org/dl/) 1.25 or later.
-2. [Node.js](https://nodejs.org/en/) 20 or later.
-3. [Wails CLI](https://wails.io/docs/gettingstarted/installation) (`go install github.com/wailsapp/wails/v2/cmd/wails@latest`).
-4. [Telepresence CLI](https://www.telepresence.io/docs/latest/install/) installed and available in your system's PATH.
-5. `kubectl` installed with a valid `kubeconfig`.
+---
 
-## Getting Started
+## 📖 Overview
 
-### Live Development
+**Telepresence GUI** brings the power of [Telepresence](https://www.telepresence.io/) (a CNCF graduated project by Ambassador Labs) to a lightning-fast, intuitive desktop application. 
 
-To run the application in live development mode with hot-reloading:
+Instead of juggling lengthy CLI flags for CIDR blocks, port forwardings, authentication parameters, and environment exports, Telepresence GUI gives developers a visual workflow for local Kubernetes development. Connect to remote clusters, route traffic to local microservices or Docker containers, and test code live in seconds.
 
+---
+
+## ✨ Key Features
+
+- 🌐 **Cluster Connection Management**: Auto-detects `~/.kube/config` contexts and namespaces. Supports custom Kubeconfig files, manager namespace overrides, proxy subnets (`--also-proxy`, `--never-proxy`), Virtual NAT (`--vnat`), and user impersonation.
+- 🎯 **Visual Workload Intercepts**: Real-time table of cluster workloads. Intercept traffic to local processes (`localhost:8080`) or Docker containers with HTTP header routing (`x-dev-user=mohammad`) and environment variable export (`.env`, Shell, JSON).
+- 🖥️ **Native Desktop Integration**: System tray menu on Windows, macOS, and Linux with 1-click connect/disconnect, live status polling, desktop notifications, and single-instance lock.
+- 🔄 **Built-in Auto Updates**: In-app updater checks for new GitHub releases and automatically downloads and applies platform-specific patches.
+- 🎨 **Modern UI**: Dark/Light mode with system theme sync, built with React 19, Tailwind CSS v4, and shadcn/ui.
+
+---
+
+## 📥 Downloads & Installation
+
+Pre-built binaries and native packages for all platforms are available on the [**Download Portal**](https://mahdimomeni.github.io/telepresence-gui/download.html) and [**GitHub Releases**](https://github.com/mahdimomeni/telepresence-gui/releases/latest).
+
+| Platform | Supported Architectures | Packages |
+| :--- | :--- | :--- |
+| **Windows** | `x64 (amd64)`, `arm64` | Standalone Installer (`.exe`), Portable (`.zip`) |
+| **macOS** | `Apple Silicon (arm64)`, `Intel (x64)`, `Universal` | App Bundle (`.tar.gz`) |
+| **Linux (Ubuntu/Debian)** | `x64 (amd64)`, `arm64` | `.deb` (WebKit 4.1 & WebKit 4.0 builds), `.tar.gz` |
+| **Linux (Fedora/RHEL)** | `x64 (amd64)`, `arm64` | `.rpm` (WebKit 4.1 & WebKit 4.0 builds) |
+| **Linux (Alpine / Arch)** | `x64 (amd64)`, `arm64` | `.apk`, `.tar.gz` |
+
+> [!NOTE]
+> Ensure the **[Telepresence CLI (v2.x)](https://www.telepresence.io/docs/latest/install/)** and **Kubectl** are installed on your machine and available in your `PATH`.
+
+---
+
+## 📚 Documentation Portal
+
+Comprehensive guides, architectural diagrams, and tutorials are hosted on our documentation site:
+
+| Resource | Description |
+| :--- | :--- |
+| **[Getting Started & Intro](https://mahdimomeni.github.io/telepresence-gui/docs/intro)** | Project overview, core concepts, and prerequisite setup. |
+| **[Quick Start Tutorial](https://mahdimomeni.github.io/telepresence-gui/docs/getting-started/quick-start)** | Connect to a cluster and create your first intercept in under 2 minutes. |
+| **[Cluster Connection Guide](https://mahdimomeni.github.io/telepresence-gui/docs/user-guide/cluster-connection)** | Detailed guide for namespaces, subnets, RBAC proxies, and authentication. |
+| **[Workload Intercepts Guide](https://mahdimomeni.github.io/telepresence-gui/docs/user-guide/intercepts)** | Local processes, Docker container intercepts, headers, and `.env` exports. |
+| **[CLI Command Mapping](https://mahdimomeni.github.io/telepresence-gui/docs/reference/cli-mapping)** | Side-by-side mapping between Telepresence CLI commands and GUI actions. |
+| **[Developer Setup](https://mahdimomeni.github.io/telepresence-gui/docs/developer-guide/development-setup)** | Building from source, Wails dev mode, and cross-platform compilation. |
+| **[Troubleshooting & FAQ](https://mahdimomeni.github.io/telepresence-gui/docs/troubleshooting/faq)** | Solutions for common connection, permission, and WebKit issues. |
+
+---
+
+## 💻 Local Development
+
+Telepresence GUI is built with **[Wails v2](https://wails.io)** (Go 1.25+ backend + React 19 frontend).
+
+### Prerequisites
+- [Go 1.25+](https://golang.org/dl/)
+- [Node.js 20+](https://nodejs.org/) & `npm`
+- [Wails CLI v2](https://wails.io/docs/gettingstarted/installation): `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
+- [Telepresence CLI](https://www.telepresence.io/docs/latest/install/) & [Kubectl](https://kubernetes.io/docs/tasks/tools/)
+
+### Quick Start
 ```bash
+# 1. Clone the repository
+git clone https://github.com/mahdimomeni/telepresence-gui.git
+cd telepresence-gui
+
+# 2. Install frontend dependencies
+cd frontend && npm install && cd ..
+
+# 3. Start Wails live development mode (with hot reloading)
 wails dev
 ```
-This will run a Vite development server that will provide very fast hot reload of your frontend changes. If you want to develop in a browser and have access to your Go methods, there is also a dev server that runs on `http://localhost:34115`.
 
-### Building for Production
+### Compiling Production Binaries
+```bash
+# Compile standalone executable for your current OS
+wails build
 
-To build a standalone, production-ready executable:
+# Build Windows NSIS installer
+wails build -nsis
+
+# Build macOS Universal binary
+wails build -platform darwin/universal
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are always welcome! Whether reporting a bug, proposing a new feature, or submitting a pull request, please review our **[Contributing Guidelines](https://mahdimomeni.github.io/telepresence-gui/docs/contributing/guidelines)**.
 
 ```bash
-wails build
+git checkout -b feature/my-feature
+git commit -m "feat: add my new feature"
+git push origin feature/my-feature
 ```
-This will generate the compiled binary for your operating system in the `build/bin/` directory.
 
-## Project Structure
+---
 
-- `frontend/` - Contains the React/TypeScript frontend application.
-  - `src/components/` - Reusable UI components (shadcn/ui), forms, and dialogs.
-  - `src/pages/` - Main application views (Connect, List).
-  - `src/services/` - Wrapper services to interact with Wails backend functions.
-  - `src/stores/` - Global state management using Zustand.
-- `internal/` - Contains the Go backend logic.
-  - `app/` - Core application lifecycle, systray management, and background watchers.
-  - `cli/` - Command-line execution wrappers for interacting with the Telepresence binary.
-  - `models/` - Go data structures corresponding to Telepresence outputs and configs.
-  - `services/` - Go services for handling Telepresence commands, Kubeconfig parsing, and app configuration.
+## 📄 License
 
-## CI/CD
+This project is licensed under the **MIT License** - see the [`LICENSE`](LICENSE) file for details.
 
-This project uses GitHub Actions to automate multi-platform builds. On every version tag (`v*`), it builds and packages releases for:
-- **Windows** (amd64, arm64) - generating `.exe` binaries and NSIS installers.
-- **macOS** (amd64, arm64, universal) - generating signed `.app` and `.pkg` installers.
-- **Linux** (amd64, arm64).
+---
+
+## 👤 Author & Support
+
+- **Author**: Mohammad Mahdi Momeni
+- **Email**: [mahdimomeni012@gmail.com](mailto:mahdimomeni012@gmail.com)
+- **GitHub**: [@mahdimomeni](https://github.com/mahdimomeni)
+- **Documentation**: [https://mahdimomeni.github.io/telepresence-gui/](https://mahdimomeni.github.io/telepresence-gui/)
+
+⭐ If you find Telepresence GUI helpful, consider giving it a star on [GitHub](https://github.com/mahdimomeni/telepresence-gui)!

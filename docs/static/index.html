@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Telepresence GUI - A modern, lightning-fast cross-platform desktop interface for Telepresence and Kubernetes microservices development.">
+    <meta name="keywords" content="Telepresence, Kubernetes, GUI, Wails, Go, React, Developer Tools, Microservices, Intercept, Traffic Manager">
+    <meta name="author" content="Mohammad Mahdi Momeni">
+    
+    <!-- Open Graph / Social Meta -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mahdimomeni.github.io/telepresence-gui/">
+    <meta property="og:title" content="Telepresence GUI - Modern Desktop App for Kubernetes">
+    <meta property="og:description" content="Connect to Kubernetes clusters, inspect workloads, and manage live traffic intercepts without memorizing complex CLI commands.">
+    <meta property="og:image" content="logo.png">
+
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <title>Telepresence GUI - Modern Cross-Platform Kubernetes Traffic Management</title>
+    
+    <style>
+        :root {
+            --primary: #F06A1A;
+            --primary-glow: rgba(240, 106, 26, 0.4);
+            --primary-subtle: rgba(240, 106, 26, 0.12);
+            --primary-hover: #ff7b2b;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-purple: #8b5cf6;
+            
+            --bg-base: #070709;
+            --bg-elevated: #0f1015;
+            --bg-card: #14151d;
+            --bg-card-hover: #1b1d28;
+            --bg-glass: rgba(20, 21, 29, 0.7);
+            
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(240, 106, 26, 0.4);
+            --border-subtle: rgba(255, 255, 255, 0.04);
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-full: 9999px;
+            
+            --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Background Glows */
+        .ambient-glow {
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(140px);
+            z-index: 0;
+            opacity: 0.22;
+        }
+
+        .glow-1 {
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: radial-gradient(circle, #F06A1A 0%, rgba(240, 106, 26, 0) 70%);
+        }
+
+        .glow-2 {
+            top: 1200px;
+            left: -150px;
+            background: radial-gradient(circle, #06b6d4 0%, rgba(6, 182, 212, 0) 70%);
+            opacity: 0.15;
+        }
+
+        .glow-3 {
+            top: 2200px;
+            right: -150px;
+            background: radial-gradient(circle, #8b5cf6 0%, rgba(139, 92, 246, 0) 70%);
+            opacity: 0.15;
+        }
+
+        /* Grid Background Overlay */
+        .bg-grid-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at 50% 0%, #000 70%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Sticky Glass Navbar */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(7, 7, 9, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 72px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px var(--primary-glow);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .brand:hover .brand-logo {
+            transform: scale(1.08) rotate(-4deg);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            color: var(--text-main);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Hero Section */
+        header.hero {
+            text-align: center;
+            padding: 5.5rem 1.5rem 4rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Version Badge */
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            background: var(--primary-subtle);
+            border: 1px solid rgba(240, 106, 26, 0.3);
+            border-radius: var(--radius-full);
+            color: var(--primary);
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            box-shadow: 0 0 20px rgba(240, 106, 26, 0.15);
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.3); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.04em;
+            max-width: 900px;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff 30%, #cbd5e1 70%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-title .gradient-highlight {
+            background: linear-gradient(135deg, #F06A1A 0%, #ff9852 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.1rem, 2vw, 1.35rem);
+            color: var(--text-muted);
+            max-width: 680px;
+            margin-bottom: 2.75rem;
+            line-height: 1.65;
+            font-weight: 400;
+        }
+
+        /* Buttons & CTAs */
+        .btn-group {
+            display: flex;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            padding: 0.85rem 1.85rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #F06A1A 0%, #e05b0d 100%);
+            color: #ffffff;
+            border: 1px solid #ff7b2b;
+            box-shadow: 0 8px 24px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #ff7b2b 0%, #F06A1A 100%);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 14px 32px rgba(240, 106, 26, 0.5);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+            color: #ffffff;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-main);
+            color: var(--text-main);
+            transform: translateY(-3px);
+        }
+
+        .btn svg {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-primary:hover svg {
+            transform: translateX(3px);
+        }
+
+        /* Hero App Mockup / Visual Window */
+        .hero-mockup-wrapper {
+            width: 100%;
+            max-width: 1050px;
+            margin: 0 auto 5rem;
+            position: relative;
+        }
+
+        .hero-mockup-glow {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(240, 106, 26, 0.25), transparent 70%);
+            filter: blur(50px);
+            z-index: 0;
+            transform: scale(0.95);
+        }
+
+        .mockup-window {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06);
+            position: relative;
+            z-index: 1;
+            transition: transform 0.4s ease, border-color 0.4s ease;
+        }
+
+        .mockup-window:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+        }
+
+        .mockup-header {
+            background: #111219;
+            padding: 0.9rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .mockup-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .mockup-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-green { background: #10b981; }
+
+        .mockup-title-bar {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mockup-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.65rem;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: var(--radius-full);
+            color: #34d399;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .status-dot-pulse {
+            width: 6px;
+            height: 6px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        .mockup-body {
+            padding: 1.5rem;
+            background: #0d0e14;
+        }
+
+        /* Mockup Table */
+        .mock-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        .mock-table th {
+            color: var(--text-dim);
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .mock-table td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-main);
+        }
+
+        .mock-tag {
+            display: inline-block;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+
+        .tag-intercepted {
+            background: rgba(240, 106, 26, 0.18);
+            color: #ff9852;
+            border: 1px solid rgba(240, 106, 26, 0.4);
+        }
+
+        .tag-ready {
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .mock-btn-intercept {
+            padding: 0.35rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .mock-btn-detach {
+            padding: 0.35rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Stats / Highlights Ribbon */
+        .stats-ribbon {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 6rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-item {
+            text-align: center;
+            position: relative;
+        }
+
+        .stat-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 20%;
+            height: 60%;
+            width: 1px;
+            background: var(--border);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #F06A1A, #ff9852);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        /* Section Headings */
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-tag {
+            color: var(--primary);
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.75rem;
+            display: inline-block;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 2.75rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+
+        .section-desc {
+            color: var(--text-muted);
+            font-size: 1.15rem;
+            max-width: 620px;
+            margin: 0 auto;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.75rem;
+            margin-bottom: 6rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2.25rem;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), #ff9852);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-6px);
+            background: var(--bg-card-hover);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(240, 106, 26, 0.15);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon-wrapper {
+            width: 54px;
+            height: 54px;
+            border-radius: var(--radius-md);
+            background: var(--primary-subtle);
+            border: 1px solid rgba(240, 106, 26, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon-wrapper {
+            transform: scale(1.1) rotate(4deg);
+        }
+
+        .feature-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .feature-title .arrow {
+            font-size: 1.1rem;
+            color: var(--primary);
+            opacity: 0;
+            transform: translateX(-8px);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover .feature-title .arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .feature-text {
+            color: var(--text-muted);
+            font-size: 0.98rem;
+            line-height: 1.65;
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .feature-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .feature-tag-pill {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: var(--radius-full);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+
+        /* CLI vs GUI Comparison Card */
+        .comparison-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 3rem;
+            margin-bottom: 6rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .comparison-col {
+            background: #0d0e14;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.75rem;
+        }
+
+        .comparison-col.highlight-gui {
+            border-color: var(--primary);
+            background: linear-gradient(180deg, rgba(240, 106, 26, 0.06) 0%, #0d0e14 100%);
+            box-shadow: 0 0 30px rgba(240, 106, 26, 0.12);
+        }
+
+        .comparison-col-header {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .comparison-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .comparison-item svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .icon-check { color: #10b981; }
+        .icon-cross { color: #ef4444; }
+
+        /* Supported OS Platform Matrix */
+        .platforms-section {
+            text-align: center;
+            margin-bottom: 6rem;
+        }
+
+        .platform-chips {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .platform-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .platform-chip:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px var(--primary-glow);
+            color: #ffffff;
+        }
+
+        /* Final CTA Banner */
+        .cta-banner {
+            background: linear-gradient(135deg, rgba(240, 106, 26, 0.15) 0%, rgba(20, 21, 29, 0.9) 100%);
+            border: 1px solid rgba(240, 106, 26, 0.4);
+            border-radius: var(--radius-lg);
+            padding: 4.5rem 2rem;
+            text-align: center;
+            margin-bottom: 6rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 50px rgba(240, 106, 26, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.25rem;
+        }
+
+        .cta-desc {
+            color: var(--text-muted);
+            font-size: 1.15rem;
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 4rem 1.5rem 2.5rem;
+            background: #050507;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr repeat(3, 1fr);
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand p {
+            color: var(--text-dim);
+            margin-top: 0.75rem;
+            max-width: 320px;
+            font-size: 0.9rem;
+        }
+
+        .footer-col h4 {
+            color: var(--text-main);
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-col a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer-col a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        .footer-bottom a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .footer-bottom a:hover {
+            color: var(--text-main);
+            text-decoration: underline;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 900px) {
+            .nav-links { display: none; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+            .stat-item:not(:last-child)::after { display: none; }
+        }
+
+        @media (max-width: 640px) {
+            .footer-grid { grid-template-columns: 1fr; }
+            .btn-group { flex-direction: column; width: 100%; }
+            .btn { width: 100%; }
+            .comparison-section { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Glowing Orbs -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+    <div class="bg-grid-pattern"></div>
+
+    <!-- Navigation Header -->
+    <nav>
+        <div class="container nav-inner">
+            <a href="./index.html" class="brand">
+                <img src="logo.png" alt="Telepresence GUI" class="brand-logo">
+                <span>Telepresence<span style="color: var(--primary);">GUI</span></span>
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="./docs/intro" class="nav-link">Documentation</a></li>
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="./docs/getting-started/architecture" class="nav-link">Architecture</a></li>
+                <li><a href="./download.html" class="nav-link">Downloads</a></li>
+                <li><a href="./docs/troubleshooting/faq" class="nav-link">FAQ</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <a href="./docs/intro" class="btn btn-secondary" style="padding: 0.55rem 1.25rem; font-size: 0.9rem;">
+                    📖 Docs
+                </a>
+                <a href="https://github.com/mahdimomeni/telepresence-gui" class="btn btn-primary" target="_blank" rel="noopener noreferrer" style="padding: 0.55rem 1.25rem; font-size: 0.9rem;">
+                    <svg viewBox="0 0 24 24" fill="currentColor" style="width: 16px; height: 16px;"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                    <span>GitHub</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero container">
+        <div class="badge-pill">
+            <span class="pulse-dot"></span>
+            <span>Telepresence GUI v1.0 • Built with Go 1.25 & Wails v2</span>
+        </div>
+
+        <h1 class="hero-title">
+            The Modern Visual Control Plane for <span class="gradient-highlight">Kubernetes Development</span>
+        </h1>
+
+        <p class="hero-subtitle">
+            Connect to clusters, browse active workloads, and route live microservice traffic directly to your local IDE or Docker containers without memorizing complex CLI commands.
+        </p>
+
+        <div class="btn-group">
+            <a href="./docs/intro" class="btn btn-primary">
+                <span>📖 Read Documentation</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </a>
+            <a href="./download.html" class="btn btn-secondary">
+                <span>📥 Download App</span>
+            </a>
+            <a href="https://github.com/mahdimomeni/telepresence-gui" class="btn btn-outline" target="_blank" rel="noopener noreferrer">
+                <span>⭐ Star on GitHub</span>
+            </a>
+        </div>
+
+        <!-- Hero Mockup Interactive Visual -->
+        <div class="hero-mockup-wrapper">
+            <div class="hero-mockup-glow"></div>
+            <div class="mockup-window">
+                <div class="mockup-header">
+                    <div class="mockup-dots">
+                        <div class="mockup-dot dot-red"></div>
+                        <div class="mockup-dot dot-yellow"></div>
+                        <div class="mockup-dot dot-green"></div>
+                    </div>
+                    <div class="mockup-title-bar">
+                        <span>telepresence-gui / cluster: staging-us-east / namespace: dev</span>
+                    </div>
+                    <div class="mockup-status-badge">
+                        <span class="status-dot-pulse"></span>
+                        <span>Connected</span>
+                    </div>
+                </div>
+                <div class="mockup-body">
+                    <table class="mock-table">
+                        <thead>
+                            <tr>
+                                <th>Workload Name</th>
+                                <th>Namespace</th>
+                                <th>Kind</th>
+                                <th>Replicas</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: 700; color: #fff;">auth-service</td>
+                                <td>dev</td>
+                                <td>Deployment</td>
+                                <td>2/2</td>
+                                <td><span class="mock-tag tag-intercepted">Intercepted (8080)</span></td>
+                                <td style="text-align: right;"><button class="mock-btn-detach">Detach</button></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 700; color: #fff;">payment-api</td>
+                                <td>dev</td>
+                                <td>Deployment</td>
+                                <td>3/3</td>
+                                <td><span class="mock-tag tag-ready">Ready</span></td>
+                                <td style="text-align: right;"><button class="mock-btn-intercept">Intercept</button></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 700; color: #fff;">order-worker</td>
+                                <td>dev</td>
+                                <td>StatefulSet</td>
+                                <td>1/1</td>
+                                <td><span class="mock-tag tag-ready">Ready</span></td>
+                                <td style="text-align: right;"><button class="mock-btn-intercept">Intercept</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Stats Ribbon -->
+        <section class="stats-ribbon">
+            <div class="stat-item">
+                <div class="stat-number">10x</div>
+                <div class="stat-label">Faster Feedback Loops</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">0s</div>
+                <div class="stat-label">Container Build Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">&lt; 30MB</div>
+                <div class="stat-label">Ultra-Lightweight RAM</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Open Source (MIT)</div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features">
+            <div class="section-header">
+                <span class="section-tag">Powerful Capabilities</span>
+                <h2 class="section-title">Built for Modern Kubernetes Engineers</h2>
+                <p class="section-desc">Experience seamless local microservices development with enterprise features out of the box.</p>
+            </div>
+
+            <div class="features-grid">
+                <!-- Feature 1 -->
+                <a href="./docs/user-guide/cluster-connection" class="feature-card">
+                    <div class="feature-icon-wrapper">🌐</div>
+                    <h3 class="feature-title">Cluster Connection Manager <span class="arrow">→</span></h3>
+                    <p class="feature-text">Automatically discover kubeconfig contexts and namespaces. Configure mapped namespaces, proxy subnets, and auto-save profiles for 1-click reconnections.</p>
+                    <div class="feature-tags">
+                        <span class="feature-tag-pill">--also-proxy</span>
+                        <span class="feature-tag-pill">--vnat</span>
+                        <span class="feature-tag-pill">Auto-Save</span>
+                    </div>
+                </a>
+
+                <!-- Feature 2 -->
+                <a href="./docs/user-guide/intercepts" class="feature-card">
+                    <div class="feature-icon-wrapper">🎯</div>
+                    <h3 class="feature-title">Visual Workload Intercepts <span class="arrow">→</span></h3>
+                    <p class="feature-text">Route traffic from any cluster pod to your local debugger (localhost:8080) or local Docker container. Test your code live against real upstream cluster services.</p>
+                    <div class="feature-tags">
+                        <span class="feature-tag-pill">Local Port</span>
+                        <span class="feature-tag-pill">Docker Run</span>
+                        <span class="feature-tag-pill">1-Click Detach</span>
+                    </div>
+                </a>
+
+                <!-- Feature 3 -->
+                <a href="./docs/user-guide/intercepts" class="feature-card">
+                    <div class="feature-icon-wrapper">🔀</div>
+                    <h3 class="feature-title">Multi-Developer Header Routing <span class="arrow">→</span></h3>
+                    <p class="feature-text">Share the same staging cluster safely without collisions! Route only requests matching custom HTTP headers (e.g. x-dev-user=alice) to your machine.</p>
+                    <div class="feature-tags">
+                        <span class="feature-tag-pill">HTTP Headers</span>
+                        <span class="feature-tag-pill">Envoy Matching</span>
+                        <span class="feature-tag-pill">Team Sharing</span>
+                    </div>
+                </a>
+
+                <!-- Feature 4 -->
+                <a href="./docs/user-guide/system-tray" class="feature-card">
+                    <div class="feature-icon-wrapper">🖥️</div>
+                    <h3 class="feature-title">Native System Tray & Background Poller <span class="arrow">→</span></h3>
+                    <p class="feature-text">Runs quietly in your system tray on Windows, macOS, and Linux. Receive instant desktop notifications on connection events and manage daemon state.</p>
+                    <div class="feature-tags">
+                        <span class="feature-tag-pill">Systray</span>
+                        <span class="feature-tag-pill">Single Instance</span>
+                        <span class="feature-tag-pill">Real-time Polling</span>
+                    </div>
+                </a>
+
+                <!-- Feature 5 -->
+                <a href="./docs/installation/auto-updates" class="feature-card">
+                    <div class="feature-icon-wrapper">🔄</div>
+                    <h3 class="feature-title">In-App Auto Updates <span class="arrow">→</span></h3>
+                    <p class="feature-text">Built-in release detection powered by GitHub Releases. Downloads matching OS and WebKit ABI binaries, applies in-place patches, and restarts in seconds.</p>
+                    <div class="feature-tags">
+                        <span class="feature-tag-pill">Self-Update</span>
+                        <span class="feature-tag-pill">ABI Detection</span>
+                        <span class="feature-tag-pill">1-Click Patch</span>
+                    </div>
+                </a>
+
+                <!-- Feature 6 -->
+                <a href="./docs/user-guide/authentication-rbac" class="feature-card">
+                    <div class="feature-icon-wrapper">🛡️</div>
+                    <h3 class="feature-title">Enterprise RBAC & Impersonation <span class="arrow">→</span></h3>
+                    <p class="feature-text">Support for bearer tokens, client TLS certificates/keys, user/group/UID impersonation (--as, --as-group), and custom CA certificate configurations.</p>
+                    <div class="feature-tags">
+                        <span class="feature-tag-pill">--as</span>
+                        <span class="feature-tag-pill">Client mTLS</span>
+                        <span class="feature-tag-pill">Tokens</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Comparison Section -->
+        <section class="comparison-section">
+            <div class="section-header" style="margin-bottom: 2rem;">
+                <span class="section-tag">Workflow Evolution</span>
+                <h2 class="section-title">CLI Complexity vs. Visual Speed</h2>
+            </div>
+
+            <div class="comparison-grid">
+                <div class="comparison-col">
+                    <div class="comparison-col-header">
+                        <span style="color: #ef4444;">❌</span>
+                        <span>Official Terminal CLI</span>
+                    </div>
+                    <div class="comparison-item">
+                        <svg class="icon-cross" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        <span>Must memorize 15+ complex CLI flags and CIDR ranges</span>
+                    </div>
+                    <div class="comparison-item">
+                        <svg class="icon-cross" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        <span>Manual typing of contexts and namespaces on every restart</span>
+                    </div>
+                    <div class="comparison-item">
+                        <svg class="icon-cross" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        <span>Plain text terminal output with no live filtering or sorting</span>
+                    </div>
+                    <div class="comparison-item">
+                        <svg class="icon-cross" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        <span>Must keep terminal sessions open; no tray integration</span>
+                    </div>
+                </div>
+
+                <div class="comparison-col highlight-gui">
+                    <div class="comparison-col-header">
+                        <span style="color: #10b981;">✨</span>
+                        <span style="color: var(--primary);">Telepresence GUI</span>
+                    </div>
+                    <div class="comparison-item">
+                        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Multi-tab visual form with auto-completion and validation</span>
+                    </div>
+                    <div class="comparison-item">
+                        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Auto-discovered kubeconfig contexts and 1-click profiles</span>
+                    </div>
+                    <div class="comparison-item">
+                        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>High-speed TanStack table with live search, sorting, and pagination</span>
+                    </div>
+                    <div class="comparison-item">
+                        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Native system tray, background polling, and desktop alerts</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Supported Platforms Section -->
+        <section class="platforms-section">
+            <span class="section-tag">Cross-Platform Support</span>
+            <h2 class="section-title">Available on Every Desktop Platform</h2>
+            <div class="platform-chips">
+                <a href="./download.html" class="platform-chip">
+                    <span>🪟 Windows (x64 / arm64)</span>
+                </a>
+                <a href="./download.html" class="platform-chip">
+                    <span>🍏 macOS (Apple Silicon M-Series)</span>
+                </a>
+                <a href="./download.html" class="platform-chip">
+                    <span>🍏 macOS (Intel x86_64)</span>
+                </a>
+                <a href="./download.html" class="platform-chip">
+                    <span>🐧 Ubuntu / Debian (.deb)</span>
+                </a>
+                <a href="./download.html" class="platform-chip">
+                    <span>🐧 Fedora / RHEL (.rpm)</span>
+                </a>
+                <a href="./download.html" class="platform-chip">
+                    <span>🐧 Alpine / Arch (.apk / .tar.gz)</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Final CTA Banner -->
+        <section class="cta-banner">
+            <h2 class="cta-title">Supercharge Your Kubernetes Workflow Today</h2>
+            <p class="cta-desc">Download Telepresence GUI and experience the ultimate local development speed on Kubernetes.</p>
+            <div class="btn-group" style="margin-bottom: 0;">
+                <a href="./docs/intro" class="btn btn-primary">
+                    <span>📖 Explore Documentation</span>
+                </a>
+                <a href="./download.html" class="btn btn-secondary">
+                    <span>📥 Download Latest Release</span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Polished Footer -->
+    <footer>
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <a href="./index.html" class="brand">
+                    <img src="logo.png" alt="Telepresence GUI" class="brand-logo" style="width: 30px; height: 30px;">
+                    <span>Telepresence<span style="color: var(--primary);">GUI</span></span>
+                </a>
+                <p>A modern, high-performance graphical user interface for Telepresence, built with Go 1.25 and React 19.</p>
+            </div>
+
+            <div class="footer-col">
+                <h4>Documentation</h4>
+                <ul>
+                    <li><a href="./docs/intro">Getting Started</a></li>
+                    <li><a href="./docs/getting-started/quick-start">5-Min Quickstart</a></li>
+                    <li><a href="./docs/installation/overview">Installation Matrix</a></li>
+                    <li><a href="./docs/user-guide/cluster-connection">User Guide</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>Developers</h4>
+                <ul>
+                    <li><a href="./docs/developer-guide/development-setup">Developer Setup</a></li>
+                    <li><a href="./docs/developer-guide/backend-architecture">Backend Architecture</a></li>
+                    <li><a href="./docs/developer-guide/frontend-architecture">Frontend UI System</a></li>
+                    <li><a href="./docs/contributing/guidelines">Contributing</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>Community & Links</h4>
+                <ul>
+                    <li><a href="./download.html">Downloads</a></li>
+                    <li><a href="https://github.com/mahdimomeni/telepresence-gui" target="_blank" rel="noopener noreferrer">GitHub Repo</a></li>
+                    <li><a href="https://github.com/mahdimomeni/telepresence-gui/releases" target="_blank" rel="noopener noreferrer">Releases</a></li>
+                    <li><a href="./docs/troubleshooting/faq">FAQ</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="container footer-bottom">
+            <p>&copy; 2026 Mohammad Mahdi Momeni. Released under the <a href="https://github.com/mahdimomeni/telepresence-gui/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>.</p>
+            <p>Built with <span style="color: var(--primary);">♥</span> for the Cloud Native & Kubernetes Community.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
