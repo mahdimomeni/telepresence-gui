@@ -19,7 +19,7 @@ interface DataTableProps<TData extends RowData> {
   data: TData[]
 }
 
-export function DataTable<TData extends RowData>({
+function DataTableComponent<TData extends RowData>({
   columns,
   data,
 }: DataTableProps<TData>) {
@@ -44,15 +44,21 @@ export function DataTable<TData extends RowData>({
     }
   })
 
+  const filterValue = (table.getColumn("name")?.getFilterValue() as string) ?? ""
+  const handleFilterChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      table.getColumn("name")?.setFilterValue(event.target.value)
+    },
+    [table]
+  )
+
   return (
     <div>
       <div className="flex items-center py-4">
         <ContextInput
           placeholder="Filter names..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
+          value={filterValue}
+          onChange={handleFilterChange}
           className="max-w-sm"
         />
       </div>
@@ -101,3 +107,5 @@ export function DataTable<TData extends RowData>({
     </div>
   )
 }
+
+export const DataTable = React.memo(DataTableComponent) as typeof DataTableComponent

@@ -18,13 +18,16 @@ func (a *App) setupSystemTray() {
 
 	menu := systray.NewMenu()
 	mConnectToggle = menu.Add("Connect", func() {
+		a.statusMu.Lock()
 		currentlyConnected := a.isConnected
+		a.statusMu.Unlock()
 
 		if currentlyConnected {
 			runtime.EventsEmit(a.ctx, "connection-pending", true)
 			if err := a.StopTelepresence(); err != nil {
 				_ = a.Notify("Disconnect Failed", fmt.Sprintf("Error: %v", err))
 			} else {
+				a.updateConnectionStatus(false)
 				runtime.EventsEmit(a.ctx, "connection-pending", false)
 			}
 		} else {
@@ -38,6 +41,7 @@ func (a *App) setupSystemTray() {
 			if err := a.StartTelepresence(*config); err != nil {
 				_ = a.Notify("Connection Failed", fmt.Sprintf("Error: %v", err))
 			} else {
+				a.updateConnectionStatus(true)
 				runtime.EventsEmit(a.ctx, "connection-pending", false)
 			}
 		}

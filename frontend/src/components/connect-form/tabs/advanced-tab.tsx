@@ -1,13 +1,13 @@
+import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { TabProps } from "../types";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 import { ContextInput } from "@/components/context-input";
 import { BrowseInput } from "@/components/browse-input";
 
-export function AdvancedTab({ values, onChange, onBrowse }: TabProps) {
+function AdvancedTabComponent({ values, onChange, onBrowse }: TabProps) {
     const isConnecting = useLoadingStore((state) => state.isLoading("connection"))
     const isFetchingKube = useLoadingStore((state) => state.isLoading("kube-info"))
     const loading = isConnecting || isFetchingKube
@@ -60,3 +60,5 @@ export function AdvancedTab({ values, onChange, onBrowse }: TabProps) {
         </Card>
     )
 }
+
+export const AdvancedTab = React.memo(AdvancedTabComponent)

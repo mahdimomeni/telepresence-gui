@@ -15,5 +15,17 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src")
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-ui': ['@base-ui/react', 'clsx', 'tailwind-merge', 'class-variance-authority'],
+          'vendor-table': ['@tanstack/react-table'],
+          'vendor-icons': ['lucide-react'],
+        }
+      }
+    }
   }
 })

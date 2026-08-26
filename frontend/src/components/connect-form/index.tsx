@@ -10,7 +10,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ModeToggle } from "@/components/mode-toggle"
 import { models } from "@/../wailsjs/go/models"
-import { SyntheticEvent, useEffect, useRef, useState, type SubmitEvent } from "react"
+import { useCallback, SyntheticEvent, useEffect, useRef, useState, type SubmitEvent } from "react"
 import { Spinner } from "@/components/ui/spinner"
 import { toast } from "@/components/ui/toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -97,13 +97,11 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
         fetchKubeData()
     }, [connectConfig.kubeconfig])
 
-    const handleReset = async (event: SyntheticEvent<HTMLFormElement>) => {
+    const handleReset = useCallback(async (event: SyntheticEvent<HTMLFormElement>) => {
         setConnectConfig(new models.ConnectConfig(DEFAULT_VALUES))
-        CoreService.notify("Telepresence Config Reset", "Options reseted successfully.")
+        CoreService.notify("Telepresence Config Reset", "Options reset successfully.")
 
         startLoading("kube-info")
-
-        setConnectConfig(new models.ConnectConfig(DEFAULT_VALUES))
 
         try {
             const info = await KubeService.getInfo("")
@@ -123,13 +121,13 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
         } finally {
             stopLoading("kube-info")
         }
-    }
+    }, [startLoading, stopLoading])
 
-    const handleFieldChange = (key: keyof models.ConnectConfig, value: any) => {
+    const handleFieldChange = useCallback((key: keyof models.ConnectConfig, value: any) => {
         setConnectConfig((prev) => ({ ...prev, [key]: value }))
-    }
+    }, [])
 
-    const handleBrowseFile = (key: keyof models.ConnectConfig, message: string) => {
+    const handleBrowseFile = useCallback((key: keyof models.ConnectConfig, message: string) => {
         const browseFile = async () => {
             const path = await CoreService.browseFile(message)
             if (path) {
@@ -140,9 +138,9 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
             }
         }
         browseFile()
-    }
+    }, [])
 
-    const handleConnect = async (event: SubmitEvent<HTMLFormElement>) => {
+    const handleConnect = useCallback(async (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault()
         setApiError("")
         startLoading("connection")
@@ -155,7 +153,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
         } finally {
             stopLoading("connection")
         }
-    }
+    }, [connectConfig, onConnectSuccess, startLoading, stopLoading])
 
     return (
         <Card className="w-2xl m-5 bg-card/80 backdrop-blur-md border-border/50 shadow-2xl shadow-black/20">

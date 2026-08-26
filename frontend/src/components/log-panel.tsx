@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { Terminal, ChevronUp, ChevronDown, Trash2, List } from "lucide-react"
+import { Terminal, ChevronUp, ChevronDown, Trash2 } from "lucide-react"
 import { EventsOn, EventsOff } from "../../wailsjs/runtime/runtime"
 import {
   Collapsible,
@@ -9,16 +9,18 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 
+const MAX_LOG_LINES = 500
+
 export function LogPanel() {
   const [isOpen, setIsOpen] = useState(false)
-  const [logs, setLogs] = useState(new Array())
+  const [logs, setLogs] = useState<string[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    EventsOn("daemon-log", (newLine) => {
-      setLogs((prevLogs: any[]): any[] => {
-        const updatedLogs = [...prevLogs, newLine]
-        return updatedLogs.slice(-1000)
+    EventsOn("daemon-log", (newLine: string) => {
+      setLogs((prevLogs) => {
+        const updated = [...prevLogs, newLine]
+        return updated.length > MAX_LOG_LINES ? updated.slice(-MAX_LOG_LINES) : updated
       })
     })
 
@@ -28,13 +30,15 @@ export function LogPanel() {
   }, [])
 
   useEffect(() => {
-    if (scrollRef.current) {
-      const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight
-      }
+    if (isOpen && scrollRef.current) {
+      requestAnimationFrame(() => {
+        const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
+        if (viewport) {
+          viewport.scrollTop = viewport.scrollHeight
+        }
+      })
     }
-  }, [logs])
+  }, [logs, isOpen])
 
   return (
     <Collapsible

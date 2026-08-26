@@ -1,9 +1,10 @@
+import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { TabProps } from "../types";
 import { ContextInput } from "@/components/context-input";
 
-export function NetworkTab({ values, onChange }: TabProps) {
+function NetworkTabComponent({ values, onChange }: TabProps) {
     return (
         <Card>
             <CardHeader>
@@ -123,3 +124,5 @@ export function NetworkTab({ values, onChange }: TabProps) {
         </Card>
     )
 }
+
+export const NetworkTab = React.memo(NetworkTabComponent)

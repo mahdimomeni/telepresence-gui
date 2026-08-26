@@ -18,7 +18,9 @@ func (a *App) setupSystemTray() {
 
 	menu := systray.NewMenu()
 	mConnectToggle = menu.Add("Connect", func() {
+		a.statusMu.Lock()
 		currentlyConnected := a.isConnected
+		a.statusMu.Unlock()
 
 		if currentlyConnected {
 			runtime.EventsEmit(a.ctx, "connection-pending", true)
@@ -73,8 +75,10 @@ func (a *App) setTrayIcon() {
 }
 
 func (a *App) updateConnectionStatus(connected bool) {
-
+	a.statusMu.Lock()
 	a.isConnected = connected
+	a.statusMu.Unlock()
+
 	if connected {
 		_ = a.Notify("Telepresence Connected", "Connected to cluster successfully.")
 		if mConnectToggle != nil {
@@ -87,5 +91,5 @@ func (a *App) updateConnectionStatus(connected bool) {
 		}
 	}
 
-	runtime.EventsEmit(a.ctx, "connection-changed", a.isConnected)
+	runtime.EventsEmit(a.ctx, "connection-changed", connected)
 }

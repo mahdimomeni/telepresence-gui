@@ -1,3 +1,4 @@
+import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -5,7 +6,7 @@ import { TabProps } from "../types";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 import { ContextInput } from "@/components/context-input";
 
-export function CoreTab({ values, onChange }: TabProps) {
+function CoreTabComponent({ values, onChange }: TabProps) {
     const isConnecting = useLoadingStore((state) => state.isLoading("connection"))
     const isFetchingKube = useLoadingStore((state) => state.isLoading("kube-info"))
     const loading = isConnecting || isFetchingKube
@@ -70,3 +71,5 @@ export function CoreTab({ values, onChange }: TabProps) {
         </Card>
     )
 }
+
+export const CoreTab = React.memo(CoreTabComponent)

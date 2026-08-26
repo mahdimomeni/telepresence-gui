@@ -33,12 +33,20 @@ func (a *App) checkTelepresenceChanges() {
 	defer a.teleService.Unlock()
 
 	rawStatus, status, err := a.teleService.StatusNoLock(a.ctx)
-	if err == nil && rawStatus != "" && rawStatus != a.lastStatusRaw {
-		a.lastStatusRaw = rawStatus
-		if status != nil {
+	if err == nil && rawStatus != "" {
+		a.statusMu.Lock()
+		statusChanged := rawStatus != a.lastStatusRaw
+		if statusChanged {
+			a.lastStatusRaw = rawStatus
+		}
+		a.statusMu.Unlock()
+
+		if statusChanged && status != nil {
 			connected := status.UserDaemon.Running && strings.EqualFold(status.UserDaemon.Status, "Connected")
 
+			a.statusMu.Lock()
 			prevConnected := a.isConnected
+			a.statusMu.Unlock()
 
 			if connected != prevConnected {
 				a.updateConnectionStatus(connected)
@@ -48,14 +56,28 @@ func (a *App) checkTelepresenceChanges() {
 		}
 	}
 
+	a.statusMu.Lock()
 	connected := a.isConnected
+	a.statusMu.Unlock()
 
 	if connected {
-		workloads, err := a.teleService.ListWorkloadsNoLock(a.ctx)
+		rawList, workloads, err := a.teleService.ListWorkloadsRawNoLock(a.ctx)
 		if err == nil {
-			runtime.EventsEmit(a.ctx, "workloads-changed", workloads)
+			a.statusMu.Lock()
+			listChanged := rawList != a.lastListRaw
+			if listChanged {
+				a.lastListRaw = rawList
+			}
+			a.statusMu.Unlock()
+
+			if listChanged {
+				runtime.EventsEmit(a.ctx, "workloads-changed", workloads)
+			}
 		}
 	} else {
+		a.statusMu.Lock()
 		a.lastListRaw = ""
+		a.statusMu.Unlock()
 	}
 }
+

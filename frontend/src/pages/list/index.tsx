@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { RefreshCw, ServerOff } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,8 +14,6 @@ import { TelepresenceService } from "@/services/telepresence"
 import { CoreService } from "@/services/core"
 import { InterceptDialog } from "@/components/intercept-dialog"
 
-
-
 export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
   const [workloads, setWorkloads] = useState<models.Workload[]>([])
   const [error, setError] = useState("")
@@ -29,7 +27,7 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
   const stopLoading = useLoadingStore((state) => state.stopLoading)
   const setLoading = useLoadingStore((state) => state.setLoading)
 
-  const fetchWorkloads = async () => {
+  const fetchWorkloads = useCallback(async () => {
     startLoading("workloads")
     setError("")
 
@@ -43,9 +41,9 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
     } finally {
       stopLoading("workloads")
     }
-  }
+  }, [startLoading, stopLoading])
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = useCallback(async () => {
     startLoading("connection")
     
     try {
@@ -56,7 +54,19 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
     } finally {
       stopLoading("connection")
     }
-  }
+  }, [startLoading, stopLoading, onDisconnect])
+
+  const handleOpenIntercept = useCallback((name: string) => {
+    setInterceptTarget(name)
+  }, [])
+
+  const handleCloseIntercept = useCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      setInterceptTarget(null)
+    }
+  }, [])
+
+  const columns = useMemo(() => getColumns(fetchWorkloads, handleOpenIntercept), [fetchWorkloads, handleOpenIntercept])
 
   useEffect(() => {
     fetchWorkloads()
@@ -73,7 +83,7 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
       EventsOff("workloads-changed")
       EventsOff("connection-pending")
     }
-  }, [])
+  }, [fetchWorkloads, setLoading])
 
   return (
     <Card className="w-full max-w-4xl m-5 min-h-125 flex flex-col bg-card/80 backdrop-blur-md border-border/50 shadow-2xl shadow-black/20">
@@ -114,14 +124,14 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
             <p>No interceptable workloads found in this namespace.</p>
           </div>
         ) : (
-          <DataTable columns={getColumns(fetchWorkloads, (name) => setInterceptTarget(name))} data={workloads} />
+          <DataTable columns={columns} data={workloads} />
         )}
 
         {interceptTarget && (
           <InterceptDialog
             workloadName={interceptTarget}
             open={Boolean(interceptTarget)}
-            onOpenChange={(isOpen) => !isOpen && setInterceptTarget(null)}
+            onOpenChange={handleCloseIntercept}
             onSuccess={fetchWorkloads}
           />
         )}

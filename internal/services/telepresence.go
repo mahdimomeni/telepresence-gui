@@ -183,29 +183,34 @@ func (s *TelepresenceService) ListWorkloads(ctx context.Context) ([]models.Workl
 }
 
 func (s *TelepresenceService) ListWorkloadsNoLock(ctx context.Context) ([]models.Workload, error) {
+	_, workloads, err := s.ListWorkloadsRawNoLock(ctx)
+	return workloads, err
+}
+
+func (s *TelepresenceService) ListWorkloadsRawNoLock(ctx context.Context) (string, []models.Workload, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
 	output, err := s.runner.Run(ctx, "telepresence", "list", "--format", "json")
 	if err != nil {
-		return nil, fmt.Errorf("failed to list workloads: %w (output: %s)", err, output)
+		return output, nil, fmt.Errorf("failed to list workloads: %w (output: %s)", err, output)
 	}
 
 	trimmed := strings.TrimSpace(output)
 	if trimmed == "" || strings.Contains(trimmed, "No workloads") || trimmed == "null" {
-		return []models.Workload{}, nil
+		return trimmed, []models.Workload{}, nil
 	}
 
 	var workloads []models.Workload
 	if err := json.Unmarshal([]byte(output), &workloads); err != nil {
-		return nil, fmt.Errorf("failed to decode workloads: %w (output: %s)", err, output)
+		return trimmed, nil, fmt.Errorf("failed to decode workloads: %w (output: %s)", err, output)
 	}
 
 	if workloads == nil {
 		workloads = []models.Workload{}
 	}
 
-	return workloads, nil
+	return trimmed, workloads, nil
 }
 
 func (s *TelepresenceService) Intercept(ctx context.Context, config models.InterceptConfig) error {

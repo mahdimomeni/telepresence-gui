@@ -1,3 +1,4 @@
+import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { TabProps } from "../types";
@@ -6,12 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 import { ContextInput } from "@/components/context-input";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { Folder } from "lucide-react";
 import { BrowseInput } from "@/components/browse-input";
 
-export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts = [] }: TabProps) {
+function ClusterAuthTabComponent({ values, onChange, onBrowse, availableContexts = [] }: TabProps) {
     const isConnecting = useLoadingStore((state) => state.isLoading("connection"))
     const isFetchingKube = useLoadingStore((state) => state.isLoading("kube-info"))
     const loading = isConnecting || isFetchingKube
@@ -188,3 +186,5 @@ export function ClusterAuthTab({ values, onChange, onBrowse, availableContexts =
         </Card>
     )
 }
+
+export const ClusterAuthTab = React.memo(ClusterAuthTabComponent)

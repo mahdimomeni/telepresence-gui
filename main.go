@@ -22,10 +22,10 @@ var assets embed.FS
 //go:embed build/darwin/tray-icon.png
 var darwinTrayIcon []byte
 
-//go:embed build/windows/tray-icon.png
+//go:embed build/linux/tray-icon.png
 var linuxTrayIcon []byte
 
-//go:embed build/linux/tray-icon.png
+//go:embed build/windows/tray-icon.png
 var windowsTrayIcon []byte
 
 type wailsConfig struct {

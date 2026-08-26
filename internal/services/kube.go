@@ -8,7 +8,21 @@ import (
 	"telepresence-gui/internal/cli"
 	"telepresence-gui/internal/models"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
+
+type kubeConfigFile struct {
+	CurrentContext string `yaml:"current-context"`
+	Contexts       []struct {
+		Name    string `yaml:"name"`
+		Context struct {
+			Namespace string `yaml:"namespace"`
+			Cluster   string `yaml:"cluster"`
+			User      string `yaml:"user"`
+		} `yaml:"context"`
+	} `yaml:"contexts"`
+}
 
 type KubeService struct {
 	runner        cli.Runner
@@ -25,9 +39,6 @@ func NewKubeService(runner cli.Runner, configService *ConfigService) *KubeServic
 }
 
 func (s *KubeService) GetKubeInfo(ctx context.Context, kubeConfigPath string) (models.KubeInfo, error) {
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
-	defer cancel()
-
 	info := models.KubeInfo{
 		Contexts:  []string{},
 		Namespace: "",
@@ -48,7 +59,26 @@ func (s *KubeService) GetKubeInfo(ctx context.Context, kubeConfigPath string) (m
 		}
 	}
 
-	outAll, err := s.runner.Run(ctx, "kubectl", "config", "get-contexts", "-o", "name", "--kubeconfig="+info.KubeconfigPath)
+	// 1. High-speed in-memory YAML parse
+	if data, err := os.ReadFile(info.KubeconfigPath); err == nil {
+		var parsed kubeConfigFile
+		if err := yaml.Unmarshal(data, &parsed); err == nil && len(parsed.Contexts) > 0 {
+			info.CurrentContext = parsed.CurrentContext
+			for _, ctxItem := range parsed.Contexts {
+				info.Contexts = append(info.Contexts, ctxItem.Name)
+				if ctxItem.Name == parsed.CurrentContext {
+					info.Namespace = ctxItem.Context.Namespace
+				}
+			}
+			return info, nil
+		}
+	}
+
+	// 2. Fallback to CLI if file reading/parsing didn't succeed
+	ctxTimeout, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	outAll, err := s.runner.Run(ctxTimeout, "kubectl", "config", "get-contexts", "-o", "name", "--kubeconfig="+info.KubeconfigPath)
 	if err == nil {
 		for _, line := range strings.Split(outAll, "\n") {
 			if trimmed := strings.TrimSpace(line); trimmed != "" {
@@ -57,12 +87,12 @@ func (s *KubeService) GetKubeInfo(ctx context.Context, kubeConfigPath string) (m
 		}
 	}
 
-	outCtx, err := s.runner.Run(ctx, "kubectl", "config", "current-context", "--kubeconfig="+info.KubeconfigPath)
+	outCtx, err := s.runner.Run(ctxTimeout, "kubectl", "config", "current-context", "--kubeconfig="+info.KubeconfigPath)
 	if err == nil {
 		info.CurrentContext = strings.TrimSpace(outCtx)
 	}
 
-	outNs, err := s.runner.Run(ctx, "kubectl", "config", "view", "--minify", "--output", "jsonpath={..namespace}", "--kubeconfig="+info.KubeconfigPath)
+	outNs, err := s.runner.Run(ctxTimeout, "kubectl", "config", "view", "--minify", "--output", "jsonpath={..namespace}", "--kubeconfig="+info.KubeconfigPath)
 	if err == nil {
 		if ns := strings.TrimSpace(outNs); ns != "" {
 			info.Namespace = ns
@@ -71,3 +101,4 @@ func (s *KubeService) GetKubeInfo(ctx context.Context, kubeConfigPath string) (m
 
 	return info, nil
 }
+

@@ -5,7 +5,8 @@ go 1.25.12
 require (
 	github.com/creativeprojects/go-selfupdate v1.6.0
 	github.com/gogpu/systray v0.2.8
-	github.com/wailsapp/wails/v2 v2.13.0
+	github.com/wailsapp/wails/v2 v2.15.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -47,12 +48,11 @@ require (
 	github.com/wailsapp/mimetype v1.4.1 // indirect
 	gitlab.com/gitlab-org/api/client-go v1.46.0 // indirect
 	golang.org/x/crypto v0.53.0 // indirect
-	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
+	golang.org/x/text v0.39.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 // replace github.com/wailsapp/wails/v2 v2.13.0 => C:\Users\Mohammad\go\pkg\mod
