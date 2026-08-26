@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -31,6 +32,7 @@ type UpdateService struct {
 	repoSlug       string
 	currentVersion string
 	mu             sync.Mutex
+	isUpdating     bool
 	cachedRelease  *selfupdate.Release
 }
 
@@ -42,9 +44,6 @@ func NewUpdateService(owner, repo, currentVersion string) *UpdateService {
 }
 
 func (s *UpdateService) CheckForUpdate(ctx context.Context) (*UpdateInfo, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	updater, err := selfupdate.NewUpdater(selfupdate.Config{
 		Filters: []string{
 			`telepresence-gui_.*_` + runtime.GOOS + `_` + runtime.GOARCH + getAbiTag() + `\.(tar\.gz|zip)`,
@@ -66,7 +65,10 @@ func (s *UpdateService) CheckForUpdate(ctx context.Context) (*UpdateInfo, error)
 		}, nil
 	}
 
+	s.mu.Lock()
 	s.cachedRelease = latest
+	s.mu.Unlock()
+
 	isGreater := latest.GreaterThan(s.currentVersion)
 
 	var publishedAt string
@@ -86,7 +88,19 @@ func (s *UpdateService) CheckForUpdate(ctx context.Context) (*UpdateInfo, error)
 
 func (s *UpdateService) DownloadAndApply(ctx context.Context, onProgress func(UpdateProgress)) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	if s.isUpdating {
+		s.mu.Unlock()
+		return errors.New("update already in progress")
+	}
+	s.isUpdating = true
+	release := s.cachedRelease
+	s.mu.Unlock()
+
+	defer func() {
+		s.mu.Lock()
+		s.isUpdating = false
+		s.mu.Unlock()
+	}()
 
 	updater, err := selfupdate.NewUpdater(selfupdate.Config{
 		Filters: []string{
@@ -97,7 +111,7 @@ func (s *UpdateService) DownloadAndApply(ctx context.Context, onProgress func(Up
 		return fmt.Errorf("failed to initialize updater: %w", err)
 	}
 
-	if s.cachedRelease == nil {
+	if release == nil {
 		onProgress(UpdateProgress{Percentage: 10, Status: "checking"})
 		latest, found, err := updater.DetectLatest(ctx, selfupdate.ParseSlug(s.repoSlug))
 		if err != nil {
@@ -106,7 +120,10 @@ func (s *UpdateService) DownloadAndApply(ctx context.Context, onProgress func(Up
 		if !found || latest == nil {
 			return fmt.Errorf("no release found on repository %s", s.repoSlug)
 		}
+		release = latest
+		s.mu.Lock()
 		s.cachedRelease = latest
+		s.mu.Unlock()
 	}
 
 	exePath, err := os.Executable()
@@ -116,7 +133,7 @@ func (s *UpdateService) DownloadAndApply(ctx context.Context, onProgress func(Up
 
 	onProgress(UpdateProgress{Percentage: 35, Status: "downloading"})
 
-	if err := updater.UpdateTo(ctx, s.cachedRelease, exePath); err != nil {
+	if err := updater.UpdateTo(ctx, release, exePath); err != nil {
 		onProgress(UpdateProgress{Percentage: 0, Status: "error", Error: err.Error()})
 		return fmt.Errorf("failed to apply update: %w", err)
 	}

@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sync"
 	"telepresence-gui/internal/models"
 )
 
-type ConfigService struct{}
+type ConfigService struct {
+	mu sync.RWMutex
+}
 
 func NewConfigService() *ConfigService {
 	return &ConfigService{}
@@ -26,6 +29,9 @@ func (s *ConfigService) getConfigFilePath() (string, error) {
 }
 
 func (s *ConfigService) SaveConnectConfig(config models.ConnectConfig) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	filePath, err := s.getConfigFilePath()
 	if err != nil {
 		return err
@@ -38,6 +44,9 @@ func (s *ConfigService) SaveConnectConfig(config models.ConnectConfig) error {
 }
 
 func (s *ConfigService) LoadConnectConfig() (*models.ConnectConfig, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	filePath, err := s.getConfigFilePath()
 	if err != nil {
 		return nil, err

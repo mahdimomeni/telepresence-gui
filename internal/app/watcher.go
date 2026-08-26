@@ -43,15 +43,7 @@ func (a *App) checkTelepresenceChanges() {
 
 		if statusChanged && status != nil {
 			connected := status.UserDaemon.Running && strings.EqualFold(status.UserDaemon.Status, "Connected")
-
-			a.statusMu.Lock()
-			prevConnected := a.isConnected
-			a.statusMu.Unlock()
-
-			if connected != prevConnected {
-				a.updateConnectionStatus(connected)
-			}
-
+			a.updateConnectionStatus(connected)
 			runtime.EventsEmit(a.ctx, "telepresence-status-changed", status)
 		}
 	}

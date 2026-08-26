@@ -24,11 +24,9 @@ func (a *App) setupSystemTray() {
 
 		if currentlyConnected {
 			runtime.EventsEmit(a.ctx, "connection-pending", true)
+			defer runtime.EventsEmit(a.ctx, "connection-pending", false)
 			if err := a.StopTelepresence(); err != nil {
 				_ = a.Notify("Disconnect Failed", fmt.Sprintf("Error: %v", err))
-			} else {
-				a.updateConnectionStatus(false)
-				runtime.EventsEmit(a.ctx, "connection-pending", false)
 			}
 		} else {
 			config, err := a.configService.LoadConnectConfig()
@@ -38,11 +36,9 @@ func (a *App) setupSystemTray() {
 
 			runtime.EventsEmit(a.ctx, "daemon-log", "[Tray] Connecting to cluster...")
 			runtime.EventsEmit(a.ctx, "connection-pending", true)
+			defer runtime.EventsEmit(a.ctx, "connection-pending", false)
 			if err := a.StartTelepresence(*config); err != nil {
 				_ = a.Notify("Connection Failed", fmt.Sprintf("Error: %v", err))
-			} else {
-				a.updateConnectionStatus(true)
-				runtime.EventsEmit(a.ctx, "connection-pending", false)
 			}
 		}
 	})
@@ -74,22 +70,13 @@ func (a *App) setTrayIcon() {
 	tray.SetIcon(a.linuxTrayIcon)
 }
 
-func (a *App) updateConnectionStatus(connected bool) {
-	a.statusMu.Lock()
-	a.isConnected = connected
-	a.statusMu.Unlock()
-
-	if connected {
-		_ = a.Notify("Telepresence Connected", "Connected to cluster successfully.")
-		if mConnectToggle != nil {
+func (a *App) updateTrayMenu(connected bool) {
+	if mConnectToggle != nil {
+		if connected {
 			mConnectToggle.SetLabel("Disconnect")
-		}
-	} else {
-		_ = a.Notify("Telepresence Disconnected", "Daemon stopped successfully.")
-		if mConnectToggle != nil {
+		} else {
 			mConnectToggle.SetLabel("Connect")
 		}
 	}
-
-	runtime.EventsEmit(a.ctx, "connection-changed", connected)
 }
+

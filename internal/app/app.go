@@ -189,6 +189,28 @@ func (a *App) GetKubeInfo(kubeConfigPath string) (models.KubeInfo, error) {
 	return a.kubeService.GetKubeInfo(a.ctx, kubeConfigPath)
 }
 
+func (a *App) updateConnectionStatus(connected bool) {
+	a.statusMu.Lock()
+	if a.isConnected == connected {
+		a.statusMu.Unlock()
+		return
+	}
+	a.isConnected = connected
+	if !connected {
+		a.lastListRaw = ""
+	}
+	a.statusMu.Unlock()
+
+	if connected {
+		_ = a.Notify("Telepresence Connected", "Connected to cluster successfully.")
+	} else {
+		_ = a.Notify("Telepresence Disconnected", "Daemon stopped successfully.")
+	}
+
+	a.updateTrayMenu(connected)
+	runtime.EventsEmit(a.ctx, "connection-changed", connected)
+}
+
 func (a *App) SaveConnectConfig(config models.ConnectConfig) error {
 	return a.configService.SaveConnectConfig(config)
 }
@@ -196,3 +218,4 @@ func (a *App) SaveConnectConfig(config models.ConnectConfig) error {
 func (a *App) LoadConnectConfig() (*models.ConnectConfig, error) {
 	return a.configService.LoadConnectConfig()
 }
+
