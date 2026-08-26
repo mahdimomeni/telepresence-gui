@@ -80,9 +80,12 @@ telepresence-gui/
 │       ├── abi_webkit40.go       # Linux WebKit 4.0 build tag provider
 │       └── abi_other.go          # Non-Linux ABI provider
 ├── CHANGELOG.md                  # Release version history
+├── CODE_OF_CONDUCT.md            # Contributor Covenant Code of Conduct
+├── CONTRIBUTING.md               # Contribution guidelines and workflow
 ├── go.mod / go.sum               # Go module dependencies
 ├── main.go                       # Application entrypoint & Wails window options
 ├── nfpm.yaml                     # Linux NFPM package configuration (.deb, .rpm, .apk)
 ├── README.md                     # Project README
+├── SECURITY.md                   # Security policy & vulnerability reporting
 └── wails.json                    # Wails build configuration & metadata
 ```
