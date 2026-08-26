@@ -44,19 +44,20 @@ When enabled, Telepresence GUI runs the user daemon inside a local Docker contai
 
 ---
 
-## 📁 Automatic Kubeconfig Discovery
+## 📁 High-Speed Kubeconfig Discovery
 
-Telepresence GUI inspects your default Kubernetes configuration file (`~/.kube/config` on macOS/Linux, `%USERPROFILE%\.kube\config` on Windows) on startup:
+Telepresence GUI inspects your default Kubernetes configuration file (`~/.kube/config` on macOS/Linux, `%USERPROFILE%\.kube\config` on Windows) or custom selected files using a high-speed in-memory YAML parsing engine:
 
-1. **Context Dropdown**: Lists all configured contexts.
-2. **Cluster & Server**: Automatically resolves cluster endpoint URLs.
-3. **Custom Kubeconfig Browser**: Click the **Browse** button to select an alternate kubeconfig file anywhere on your filesystem.
+1. **Sub-Millisecond Loading**: Contexts, clusters, and default namespaces are extracted directly from YAML in memory without launching sluggish `kubectl` subprocesses.
+2. **Context Dropdown**: Instantly lists all configured contexts with the current context auto-selected.
+3. **Resilient Fallback**: Automatically falls back to standard `kubectl` CLI commands if custom auth plugins or complex structures prevent direct file parsing.
+4. **Custom Kubeconfig Browser**: Click the **Browse** button to select an alternate kubeconfig file anywhere on your filesystem.
 
 ---
 
-## 💾 Profile Persistence & 1-Click Restore
+## 💾 Thread-Safe Profile Persistence & 1-Click Restore
 
-Every time you modify connection fields and click **Connect**, Telepresence GUI automatically serializes your entire configuration into `config.json` in your user config directory:
+Every time you modify connection fields and click **Connect**, Telepresence GUI safely serializes your entire configuration into `config.json` in your user config directory using thread-safe read/write locking:
 - **Windows**: `%APPDATA%\telepresence-gui\config.json`
 - **macOS / Linux**: `~/.config/telepresence-gui/config.json`
 

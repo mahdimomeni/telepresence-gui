@@ -37,23 +37,34 @@ internal/
 ### 1. `TelepresenceService` (`internal/services/telepresence.go`)
 - **Mutex Synchronization**: Protects CLI subprocesses using `sync.Mutex` and `TryLock()`, preventing simultaneous execution collisions between user actions and background polling.
 - **Command Generation**: Translates `models.ConnectConfig` and `models.InterceptConfig` into strict CLI flag arguments (`--namespace`, `--also-proxy`, `--as`, `--vnat`, etc.).
-- **JSON Serialization**: Enforces `--format json` on all commands and deserializes stdout into typed Go structures (`models.Workload`, `models.TelepresenceStatusOutput`).
+- **JSON Serialization & Raw Caching**: Enforces `--format json` on all commands and deserializes stdout into typed Go structures (`models.Workload`, `models.TelepresenceStatusOutput`). `ListWorkloadsRawNoLock()` returns both raw JSON strings and decoded models for high-efficiency delta comparison.
 
 ### 2. `KubeService` (`internal/services/kube.go`)
-- Discovers available contexts from `~/.kube/config` or user-selected kubeconfig paths.
-- Queries namespaces using `kubectl get namespaces --output=jsonpath={.items[*].metadata.name}`.
+- **In-Memory YAML Parsing**: Parses `~/.kube/config` and user-selected kubeconfig paths directly in memory using `gopkg.in/yaml.v3`. This extracts `current-context`, configured contexts, and associated namespaces in sub-millisecond time without spawning external processes.
+- **Resilient CLI Fallback**: If file reading or YAML unmarshaling fails (e.g., due to custom auth plugins or dynamic configs), it gracefully falls back to executing standard `kubectl config get-contexts`, `kubectl config current-context`, and `kubectl config view --minify` commands with context timeout protection.
 
 ### 3. `ConfigService` (`internal/services/config.go`)
-- Saves connection profiles to the standard OS configuration directory using `os.UserConfigDir()`:
+- **Thread-Safe Concurrency**: Employs `sync.RWMutex` to guarantee safe concurrent reads (`LoadConnectConfig`) and exclusive writes (`SaveConnectConfig`) across multiple frontend requests and background routines.
+- **Cross-Platform Storage**: Saves connection profiles to the standard OS configuration directory using `os.UserConfigDir()`:
   - Windows: `%APPDATA%\telepresence-gui\config.json`
   - macOS / Linux: `~/.config/telepresence-gui/config.json`
 - Restores connection fields automatically on application startup.
 
 ### 4. `UpdateService` (`internal/services/update.go`)
 - Powered by `github.com/creativeprojects/go-selfupdate`.
-- Queries GitHub Releases for the `mahdimomeni/telepresence-gui` repository.
-- Uses ABI detection (`getAbiTag()`) to match WebKit 4.1 (`webkit41`) vs WebKit 4.0 (`webkit40`) binaries on Linux.
+- **Atomic Update Guard**: Guarded by `sync.Mutex` and an `isUpdating` state flag, preventing concurrent update checks or duplicate download attempts. Mutex locks are released prior to long network operations (`DetectLatest`, `UpdateTo`) to ensure non-blocking responsiveness.
+- **ABI & Architecture Matching**: Uses ABI detection (`getAbiTag()`) to match WebKit 4.1 (`webkit41`) vs WebKit 4.0 (`webkit40`) binaries on Linux.
 - Downloads assets, validates checksums, replaces the binary on disk, and spawns the new executable upon restart.
+
+---
+
+## 🚦 Centralized Connection Status Management (`internal/app/app.go`)
+
+Application connection lifecycle transitions are centralized in `App.updateConnectionStatus(connected bool)`:
+- **Thread-Safe State**: Protects `isConnected` and resets the workload cache `lastListRaw` when disconnecting under `statusMu.Lock()`.
+- **System Tray Coordination**: Calls `updateTrayMenu(connected)` to toggle the tray action item between `Connect` and `Disconnect`.
+- **OS Notifications**: Dispatches system notifications upon connection and disconnection.
+- **Wails Event Dispatching**: Emits `connection-changed` with a boolean payload to synchronize the frontend UI state.
 
 ---
 
@@ -69,11 +80,12 @@ func (a *App) startBackgroundWatcher() {
         case <-a.ctx.Done():
             return
         case <-ticker.C:
-            a.pollStatusAndWorkloads()
+            a.checkTelepresenceChanges()
         }
     }
 }
 ```
 
-- **Non-Blocking Execution**: Calls `teleService.TryLock()` so user interactions take priority.
-- **Delta Detection**: Compares raw JSON output with previous cached strings (`lastStatusRaw`, `lastListRaw`) and only triggers frontend events (`status:update`, `workloads:update`) when actual state changes occur.
+- **Non-Blocking Execution**: Calls `teleService.TryLock()` so user interactions take priority over polling queries.
+- **Delta Detection**: Compares raw JSON output with previous cached strings (`lastStatusRaw`, `lastListRaw`) and only triggers frontend events (`telepresence-status-changed`, `workloads-changed`) when actual state changes occur.
+- **Centralized Status Updates**: When the daemon connection state changes out-of-band, the watcher automatically delegates to `a.updateConnectionStatus(connected)`.

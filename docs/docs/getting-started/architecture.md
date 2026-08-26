@@ -76,16 +76,16 @@ graph TD
 - **Wails JS Bindings**: Automatically generated TypeScript declarations bridging Go struct definitions and methods directly to browser JavaScript.
 
 ### 2. Application Layer (Go Backend)
-- **App Controller (`internal/app/app.go`)**: Manages the application lifecycle, IPC communication with the frontend, desktop notifications, file dialogs, and single-instance locks.
-- **Background Watcher (`internal/app/watcher.go`)**: A dedicated background goroutine that polls `telepresence status` and `telepresence list` every 3 seconds, detecting daemon crashes or out-of-band CLI changes and emitting event updates (`status:update`, `workloads:update`) to the frontend.
-- **System Tray (`internal/app/tray_*.go`)**: OS-native system tray integration (Windows, macOS, Linux) enabling quick status checks and 1-click connect/disconnect actions when the main window is minimized or closed.
+- **App Controller (`internal/app/app.go`)**: Manages the application lifecycle, centralized connection state transitions (`updateConnectionStatus`), IPC communication with the frontend, desktop notifications, file dialogs, and single-instance locks.
+- **Background Watcher (`internal/app/watcher.go`)**: A dedicated background goroutine that polls `telepresence status` and `telepresence list` every 3 seconds, detecting daemon crashes or out-of-band CLI changes and emitting event updates (`telepresence-status-changed`, `workloads-changed`, `connection-changed`) to the frontend.
+- **System Tray (`internal/app/tray_*.go`)**: OS-native system tray integration (Windows, macOS, Linux) enabling dynamic status labels (`Connect`/`Disconnect`), quick status checks, and 1-click connect/disconnect actions when the main window is minimized or closed.
 - **Subprocess Runner (`internal/cli/runner.go`)**: Cross-platform execution engine with timeout contexts, JSON output parsing, and error sanitization.
 
 ### 3. Core Services (`internal/services/`)
-- **`TelepresenceService`**: Manages daemon lifecycle (`telepresence connect`, `quit -s`), workload queries (`telepresence list --format json`), intercept creation (`telepresence intercept`), and detach commands (`telepresence detach`).
-- **`KubeService`**: Parses `~/.kube/config` and executes `kubectl config get-contexts` / `kubectl get namespaces` to populate context and namespace dropdowns.
-- **`ConfigService`**: Persists user connection profiles to the OS-appropriate config directory (`%APPDATA%/telepresence-gui/config.json` on Windows, `~/.config/telepresence-gui/config.json` on Linux/macOS).
-- **`UpdateService`**: Communicates with the GitHub Releases API to detect new versions, matches platform architecture and Linux WebKit ABI tags (`webkit41` vs `webkit40`), downloads release binaries, applies in-place patches, and restarts the process.
+- **`TelepresenceService`**: Manages daemon lifecycle (`telepresence connect`, `quit -s`), workload queries (`telepresence list --format json`), intercept creation (`telepresence intercept`), and detach commands (`telepresence detach`). Supports raw JSON caching for efficient delta detection.
+- **`KubeService`**: Features a high-speed in-memory YAML parser (`gopkg.in/yaml.v3`) to parse `~/.kube/config` and custom kubeconfig files in sub-millisecond time, with fallback to `kubectl config get-contexts` / `kubectl get namespaces`.
+- **`ConfigService`**: Thread-safe configuration persistence (`sync.RWMutex`) storing user profiles in the OS config directory (`%APPDATA%/telepresence-gui/config.json` on Windows, `~/.config/telepresence-gui/config.json` on Linux/macOS).
+- **`UpdateService`**: Thread-safe self-update engine (`sync.Mutex` with atomic state guard) checking GitHub Releases, matching Linux WebKit ABI tags (`webkit41` vs `webkit40`), downloading assets, applying in-place patches, and restarting the process.
 
 ---
 
@@ -106,7 +106,7 @@ sequenceDiagram
     TeleSvc->>CLI: telepresence connect [flags...] --format json
     CLI-->>TeleSvc: JSON status response
     TeleSvc-->>App: Success / Error
-    App->>User: Emit "status:update" (connected: true)
+    App->>User: Emit "connection-changed" (connected: true)
 ```
 
 ### 2. Workload Polling & Intercept Flow
@@ -121,10 +121,10 @@ sequenceDiagram
         Watcher->>TeleSvc: StatusNoLock(ctx)
         TeleSvc->>CLI: telepresence status --format json
         CLI-->>TeleSvc: Status JSON
-        Watcher->>TeleSvc: ListWorkloadsNoLock(ctx)
+        Watcher->>TeleSvc: ListWorkloadsRawNoLock(ctx)
         TeleSvc->>CLI: telepresence list --format json
         CLI-->>TeleSvc: Workloads JSON
-        Watcher->>UI: Emit "status:update" & "workloads:update"
+        Watcher->>UI: Emit "telepresence-status-changed" & "workloads-changed"
     end
 ```
 

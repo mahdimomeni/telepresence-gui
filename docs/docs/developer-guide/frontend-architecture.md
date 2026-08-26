@@ -50,6 +50,31 @@ graph TD
 
 ---
 
+## ⚡ Performance Optimizations & State Management
+
+To deliver 60 FPS responsiveness when managing hundreds of workloads or streaming high-velocity daemon logs, the frontend implements several optimization strategies:
+
+### 1. Form Tab Memoization (`React.memo`)
+The multi-tab connection configuration form separates tab panes (`CoreTab`, `NetworkTab`, `ClusterAuthTab`, `AdvancedTab`) into dedicated components memoized with `React.memo`. State mutations inside one tab (such as entering CIDR subnets or proxy options) do not trigger re-renders of the other tabs.
+
+### 2. Table & Callback Stabilization
+- **Memoized DataTable**: `DataTable` is wrapped with `React.memo` and uses stabilized input filtering callbacks (`handleFilterChange`).
+- **Hook Optimization in ListPage**: Workload fetchers (`fetchWorkloads`), disconnection handlers (`handleDisconnect`), intercept dialog toggles, and column definitions (`columns`) are stabilized via `useCallback` and `useMemo` to eliminate unnecessary DOM recalculations on background updates.
+
+### 3. Bounded Log Stream & Smooth Auto-Scroll
+The daemon log viewer (`frontend/src/components/log-panel.tsx`) prevents browser memory degradation during long-running sessions:
+- **Ring Buffer Capping**: Restricts log storage to a maximum of `MAX_LOG_LINES = 500` entries using `.slice(-MAX_LOG_LINES)`.
+- **AnimationFrame Scroll**: Dispatches scroll position adjustments via `requestAnimationFrame` when the log drawer is open, preventing UI layout thrashing.
+
+### 4. Vite Bundle Code Splitting
+The production Vite build (`frontend/vite.config.ts`) defines explicit Rollup chunk boundaries to optimize caching and reduce main thread parsing time:
+- `vendor-react`: `react`, `react-dom`
+- `vendor-ui`: `@base-ui/react`, `clsx`, `tailwind-merge`, `class-variance-authority`
+- `vendor-table`: `@tanstack/react-table`
+- `vendor-icons`: `lucide-react`
+
+---
+
 ## 📊 Workload Table (TanStack Table v9)
 
 The workload table in `frontend/src/pages/list/data-table.tsx` uses TanStack Table v9:
@@ -83,18 +108,24 @@ await InterceptWorkload(interceptConfig);
 import { EventsOn, EventsOff } from '@/wailsjs/runtime/runtime';
 
 useEffect(() => {
-  // Listen for daemon status changes from the Go background watcher
-  const unsubStatus = EventsOn('status:update', (status) => {
-    setDaemonStatus(status);
+  // Listen for daemon status / connection state changes
+  const unsubConn = EventsOn('connection-changed', (connected: boolean) => {
+    setIsConnected(connected);
+  });
+
+  // Listen for real-time workload changes from background watcher
+  const unsubWorkloads = EventsOn('workloads-changed', (workloads: models.Workload[]) => {
+    setWorkloads(workloads);
   });
 
   // Listen for live daemon logs
-  const unsubLogs = EventsOn('daemon-log', (logMessage) => {
+  const unsubLogs = EventsOn('daemon-log', (logMessage: string) => {
     appendLog(logMessage);
   });
 
   return () => {
-    EventsOff('status:update');
+    EventsOff('connection-changed');
+    EventsOff('workloads-changed');
     EventsOff('daemon-log');
   };
 }, []);

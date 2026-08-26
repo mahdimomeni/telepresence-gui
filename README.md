@@ -32,11 +32,11 @@ Instead of juggling lengthy CLI flags for CIDR blocks, port forwardings, authent
 
 ## ✨ Key Features
 
-- 🌐 **Cluster Connection Management**: Auto-detects `~/.kube/config` contexts and namespaces. Supports custom Kubeconfig files, manager namespace overrides, proxy subnets (`--also-proxy`, `--never-proxy`), Virtual NAT (`--vnat`), and user impersonation.
+- 🌐 **High-Speed Cluster Discovery**: Instant in-memory YAML parsing of `~/.kube/config` and custom configs for sub-millisecond context and namespace extraction (with resilient `kubectl` CLI fallback). Supports manager namespace overrides, proxy subnets (`--also-proxy`, `--never-proxy`), Virtual NAT (`--vnat`), and user impersonation.
 - 🎯 **Visual Workload Intercepts**: Real-time table of cluster workloads. Intercept traffic to local processes (`localhost:8080`) or Docker containers with HTTP header routing (`x-dev-user=mohammad`) and environment variable export (`.env`, Shell, JSON).
-- 🖥️ **Native Desktop Integration**: System tray menu on Windows, macOS, and Linux with 1-click connect/disconnect, live status polling, desktop notifications, and single-instance lock.
-- 🔄 **Built-in Auto Updates**: In-app updater checks for new GitHub releases and automatically downloads and applies platform-specific patches.
-- 🎨 **Modern UI**: Dark/Light mode with system theme sync, built with React 19, Tailwind CSS v4, and shadcn/ui.
+- 🖥️ **Native Desktop Integration**: Thread-safe system tray menu on Windows, macOS, and Linux with dynamic 1-click connect/disconnect toggles, live status polling, desktop notifications, and single-instance lock.
+- 🔄 **Thread-Safe Auto Updates**: In-app updater checks for new GitHub Releases with atomic update protection and automatic platform/WebKit ABI matching.
+- ⚡ **Optimized Performance & Modern UI**: Zero-lag UI with React 19 component memoization (`React.memo`), TanStack Table v9 virtualization, bounded streaming logs, Vite code-splitting, and dark/light theme sync with Tailwind CSS v4 and shadcn/ui.
 
 ---
 

@@ -69,8 +69,10 @@ Clicking **Update & Restart** opens a progress bar showing live download and ins
 - `Applying binary patch... (80%)`
 - `Update complete! Restarting... (100%)`
 
-### 3. In-Place Process Replacement
-The application seamlessly swaps the on-disk binary, launches the new executable with your existing arguments, and terminates the previous process without disrupting your system.
+### 3. In-Place Process Replacement & Concurrency Safety
+- **Atomic Concurrency Guard**: An internal `isUpdating` mutex guard ensures that update downloads cannot be triggered multiple times concurrently.
+- **Non-Blocking Operations**: Mutex locks are released prior to initiating network downloads and patching, keeping the application interface responsive throughout the update process.
+- **Seamless Process Swap**: The application safely swaps the on-disk binary, launches the new executable with your existing arguments, and terminates the previous process without disrupting your system.
 
 ---
 

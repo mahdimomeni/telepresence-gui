@@ -34,18 +34,21 @@ Telepresence GUI is engineered to run quietly in the background without clutteri
 ### 2. Restoring the Window
 - Left-click or double-click the tray icon to instantly bring the Telepresence GUI window back into focus.
 
-### 3. 1-Click Disconnect
-- Select **Disconnect** from the tray menu to immediately stop all intercepts and terminate the daemon without opening the full UI.
+### 3. 1-Click Connect & Disconnect Toggle
+- The tray menu dynamically updates its action item label between **Connect** and **Disconnect** based on the real-time daemon state.
+- Selecting **Connect** loads the saved connection profile and initiates a cluster connection.
+- Selecting **Disconnect** immediately stops all intercepts and terminates the daemon without needing to open the full UI.
 
 ---
 
-## 🔄 Background Watcher & Polling Engine
+## 🔄 Background Watcher & Centralized State Synchronization
 
 The Go backend maintains an active watcher goroutine:
 
-- **State Polling**: Every 3 seconds, the watcher calls `telepresence status` and `telepresence list` asynchronously.
+- **State Polling**: Every 3 seconds, the watcher polls `telepresence status` and `telepresence list` asynchronously.
 - **Conflict Prevention**: Uses thread-safe mutex locking (`TryLock()`) to prevent polling queries from colliding with active user actions.
-- **Automatic Event Dispatching**: When network status changes or an intercept is created out-of-band via terminal CLI, events (`status:update`, `workloads:update`) are pushed to the frontend store via Wails IPC.
+- **Delta-Based Caching**: Compares raw JSON output (`ListWorkloadsRawNoLock`) against cached responses, only emitting frontend updates when actual cluster changes occur.
+- **Centralized Synchronization**: Automatically updates internal state, toggles tray action text, and pushes events (`connection-changed`, `telepresence-status-changed`, `workloads-changed`) to the frontend store via Wails IPC.
 
 ---
 
