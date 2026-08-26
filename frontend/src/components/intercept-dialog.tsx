@@ -7,7 +7,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
@@ -94,12 +93,6 @@ export function InterceptDialog({ workloadName, open, onOpenChange, onSuccess }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal={loading}>
-      <DialogTrigger>
-        <Button variant="default" size="sm">
-          Intercept
-        </Button>
-      </DialogTrigger>
-
       <DialogContent className="sm:max-w-106.25">
         <form onSubmit={handleIntercept}>
           <DialogHeader>
@@ -135,12 +128,12 @@ export function InterceptDialog({ workloadName, open, onOpenChange, onSuccess }:
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="httpHeader" className="text-right text-xs">HTTP Header</Label>
                 <ContextInput 
-                id="httpHeader" 
-                value={interceptConfig.http_header}
-                onChange={(e) => handleFieldChange("http_header", e.target.value)}
-                className="col-span-3 h-8 text-sm" 
-                placeholder="x-dev-user=mohammad"
-                disabled={loading}
+                  id="httpHeader" 
+                  value={interceptConfig.http_header}
+                  onChange={(e) => handleFieldChange("http_header", e.target.value)}
+                  className="col-span-3 h-8 text-sm" 
+                  placeholder="x-dev-user=mohammad"
+                  disabled={loading}
                 />
               </div>
 
@@ -150,12 +143,12 @@ export function InterceptDialog({ workloadName, open, onOpenChange, onSuccess }:
                   <Label htmlFor="envFile" className="text-right text-xs">Env Output</Label>
                   <div className="col-span-3 flex gap-2">
                     <ContextInput
-                    id="envFile" 
-                    value={envFile} 
-                    onChange={(e) => setEnvFile(e.target.value)} 
-                    className="flex-1 h-8 text-sm" 
-                    placeholder="/path/to/output.env" 
-                    disabled={loading} 
+                      id="envFile" 
+                      value={envFile} 
+                      onChange={(e) => setEnvFile(e.target.value)} 
+                      className="flex-1 h-8 text-sm" 
+                      placeholder="/path/to/output.env" 
+                      disabled={loading} 
                     />
                     <Select value={envFormat} onValueChange={(val) => val && setEnvFormat(val)} disabled={loading}>
                       <SelectTrigger className="w-27.5 h-8 text-xs">
@@ -174,26 +167,50 @@ export function InterceptDialog({ workloadName, open, onOpenChange, onSuccess }:
               <TabsContent value="docker" className="space-y-4 m-0">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="dockerArgs" className="text-right text-xs font-semibold">Docker Args <span className="text-destructive">*</span></Label>
-                  <ContextInput id="dockerArgs" value="" className="col-span-3 h-8 text-sm" placeholder="-it --rm ubuntu:20.04 /bin/bash" required={interceptConfig.docker_run} disabled={loading} />
+                  <ContextInput 
+                    id="dockerArgs" 
+                    value={interceptConfig.docker_args} 
+                    onChange={(e) => handleFieldChange("docker_args", e.target.value)}
+                    className="col-span-3 h-8 text-sm" 
+                    placeholder="-it --rm ubuntu:20.04 /bin/bash" 
+                    required={interceptConfig.docker_run} 
+                    disabled={loading} 
+                  />
                 </div>
               </TabsContent>
 
               {/* ADVANCED SECTION */}
               <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen} className="w-full mt-2">
-                <CollapsibleTrigger>
-                  <Button variant="ghost" size="sm" className="w-full flex justify-between text-muted-foreground">
-                    <span>Advanced Routing</span>
-                    {isAdvancedOpen ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
-                  </Button>
+                <CollapsibleTrigger
+                  render={
+                    <Button variant="ghost" size="sm" className="w-full flex justify-between text-muted-foreground" />
+                  }
+                >
+                  <span>Advanced Routing</span>
+                  {isAdvancedOpen ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4 pt-4 border-t mt-2">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="mount" className="text-right text-xs">Mount Point</Label>
-                    <ContextInput id="mount" value="" className="col-span-3 h-8 text-xs" placeholder="true, false, or /absolute/path" disabled={loading} />
+                    <ContextInput 
+                      id="mount" 
+                      value={interceptConfig.mount} 
+                      onChange={(e) => handleFieldChange("mount", e.target.value)}
+                      className="col-span-3 h-8 text-xs" 
+                      placeholder="true, false, or /absolute/path" 
+                      disabled={loading} 
+                    />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="container" className="text-right text-xs">Container</Label>
-                    <ContextInput id="container" value="" className="col-span-3 h-8 text-xs" placeholder="Overrides auto-detection" disabled={loading} />
+                    <ContextInput 
+                      id="container" 
+                      value={interceptConfig.container} 
+                      onChange={(e) => handleFieldChange("container", e.target.value)}
+                      className="col-span-3 h-8 text-xs" 
+                      placeholder="Overrides auto-detection" 
+                      disabled={loading} 
+                    />
                   </div>
                 </CollapsibleContent>
               </Collapsible>

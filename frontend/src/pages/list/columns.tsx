@@ -1,7 +1,5 @@
 import { createColumnHelper } from "@tanstack/react-table"
 
-import { InterceptDialog } from "@/components/intercept-dialog"
-
 import { type DataTableFeatures } from "./data-table-features"
 
 import { models } from "@/../wailsjs/go/models"
