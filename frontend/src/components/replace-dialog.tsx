@@ -11,7 +11,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
+import { ChevronDownIcon, ChevronUpIcon, Laptop, Container, Hammer, Layers } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { models } from "../../wailsjs/go/models"
@@ -132,12 +132,17 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal={loading}>
-      <DialogContent className="sm:max-w-120 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-125 max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleReplace}>
           <DialogHeader>
-            <DialogTitle>Replace Workload</DialogTitle>
-            <DialogDescription>
-              Removes remote container from <strong>{workloadName}</strong> and reroutes all traffic, environment, and volumes to your workstation.
+            <div className="flex items-center gap-2">
+              <div className="flex size-7 items-center justify-center rounded-md bg-amber-500/10 text-amber-500">
+                <Layers className="size-4" />
+              </div>
+              <DialogTitle>Replace Workload</DialogTitle>
+            </div>
+            <DialogDescription className="text-xs">
+              Removes remote container from <strong className="text-foreground">{workloadName}</strong> and reroutes all traffic, environment, and volumes to your workstation.
             </DialogDescription>
           </DialogHeader>
 
@@ -147,10 +152,20 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
             className="w-full mt-4"
           >
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="local">Local Process</TabsTrigger>
-              <TabsTrigger value="docker-run">Docker Run</TabsTrigger>
-              <TabsTrigger value="docker-build">Docker Build</TabsTrigger>
+              <TabsTrigger value="local" className="gap-1.5 text-xs">
+                <Laptop className="size-3.5" />
+                <span>Local Process</span>
+              </TabsTrigger>
+              <TabsTrigger value="docker-run" className="gap-1.5 text-xs">
+                <Container className="size-3.5" />
+                <span>Docker Run</span>
+              </TabsTrigger>
+              <TabsTrigger value="docker-build" className="gap-1.5 text-xs">
+                <Hammer className="size-3.5" />
+                <span>Docker Build</span>
+              </TabsTrigger>
             </TabsList>
+
 
             <div className="grid gap-3 py-4">
               {/* Port */}

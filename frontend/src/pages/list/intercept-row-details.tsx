@@ -6,14 +6,12 @@ import {
   ExternalLink,
   Info,
   Server,
-  Folder,
   Globe,
   HardDrive,
   Copy,
   Check,
   Radio,
   Layers,
-  Terminal,
 } from "lucide-react"
 import { DetachButton } from "./detach-button"
 
@@ -54,29 +52,33 @@ export function InterceptRowDetails({
   const headerCount = spec?.header_filters ? Object.keys(spec.header_filters).length : 0
 
   return (
-    <div className="p-3.5 bg-muted/40 rounded-lg border border-border/80 my-1 space-y-3 animate-in fade-in-50 duration-200">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2">
+    <div className="p-3.5 bg-card/90 rounded-lg border border-border/80 my-1 space-y-3 shadow-xs animate-in fade-in-50 duration-200">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2.5">
         <div className="flex items-center gap-2">
           {isReplaced ? (
-            <Layers className="size-4 text-amber-500" />
+            <div className="flex items-center justify-center size-6 rounded-md bg-amber-500/10 text-amber-500">
+              <Layers className="size-3.5" />
+            </div>
           ) : (
-            <Radio className="size-4 text-emerald-500" />
+            <div className="flex items-center justify-center size-6 rounded-md bg-emerald-500/10 text-emerald-500">
+              <Radio className="size-3.5" />
+            </div>
           )}
-          <span className="text-xs font-semibold text-foreground">
-            {isReplaced ? "Active Replacement" : "Active Interception"}
+          <span className="text-xs font-bold text-foreground">
+            {isReplaced ? "Active Local Replacement" : "Active Traffic Interception"}
           </span>
           <span className="text-xs text-muted-foreground font-mono">({spec?.name || workload.name})</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
             size="sm"
             className="h-7 text-xs gap-1.5"
             onClick={() => onOpenDetails(workload)}
           >
-            <Info className="size-3.5 text-primary" />
-            View Full Details
+            <Info className="size-3 text-primary" />
+            Full Details
           </Button>
           <DetachButton workload={workload} onFetchWorkloads={onFetchWorkloads} />
         </div>
@@ -84,18 +86,18 @@ export function InterceptRowDetails({
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
         {/* Forwarding Endpoint */}
-        <div className="bg-background/80 p-2 rounded border flex flex-col justify-between">
-          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-            <ExternalLink className="size-3" /> Target Address
+        <div className="bg-background/90 p-2.5 rounded-lg border border-border/60 flex flex-col justify-between">
+          <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium">
+            <ExternalLink className="size-3 text-primary" /> Local Target
           </span>
           <div className="flex items-center justify-between mt-1 gap-1">
-            <span className="font-mono font-semibold truncate" title={targetEndpoint}>
+            <span className="font-mono font-semibold text-xs truncate text-foreground" title={targetEndpoint}>
               {targetEndpoint}
             </span>
             <Button
               variant="ghost"
-              size="icon-sm"
-              className="h-6 w-6 shrink-0"
+              size="icon-xs"
+              className="size-6 shrink-0"
               onClick={handleCopyEndpoint}
               title="Copy endpoint"
             >
@@ -109,23 +111,23 @@ export function InterceptRowDetails({
         </div>
 
         {/* Container */}
-        <div className="bg-background/80 p-2 rounded border flex flex-col justify-between">
-          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-            <Server className="size-3" /> Container & Port
+        <div className="bg-background/90 p-2.5 rounded-lg border border-border/60 flex flex-col justify-between">
+          <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium">
+            <Server className="size-3 text-primary" /> Container & Port
           </span>
-          <span className="font-mono font-medium truncate mt-1" title={spec?.container_name || "default"}>
+          <span className="font-mono font-semibold text-xs truncate mt-1 text-foreground" title={spec?.container_name || "default"}>
             {spec?.container_name || "default"}
             {spec?.container_port ? ` : ${spec.container_port}` : ""}
           </span>
         </div>
 
         {/* Mechanism & Routing */}
-        <div className="bg-background/80 p-2 rounded border flex flex-col justify-between">
-          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-            <Globe className="size-3" /> Mechanism & Filters
+        <div className="bg-background/90 p-2.5 rounded-lg border border-border/60 flex flex-col justify-between">
+          <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium">
+            <Globe className="size-3 text-primary" /> Routing Mode
           </span>
           <div className="flex items-center gap-1.5 mt-1 truncate">
-            <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 uppercase">
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-semibold uppercase">
               {spec?.mechanism || "TCP"}
             </Badge>
             {headerCount > 0 ? (
@@ -139,13 +141,13 @@ export function InterceptRowDetails({
         </div>
 
         {/* Mounts & Env */}
-        <div className="bg-background/80 p-2 rounded border flex flex-col justify-between">
-          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-            <HardDrive className="size-3" /> Mount & Environment
+        <div className="bg-background/90 p-2.5 rounded-lg border border-border/60 flex flex-col justify-between">
+          <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium">
+            <HardDrive className="size-3 text-primary" /> Mount & Env
           </span>
           <div className="flex items-center gap-1.5 mt-1 truncate text-[11px]">
             {interceptInfo.mount_point ? (
-              <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 border-emerald-500/50 text-emerald-600 dark:text-emerald-400">
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 font-semibold">
                 Mounted
               </Badge>
             ) : (
@@ -153,7 +155,7 @@ export function InterceptRowDetails({
             )}
             {envCount > 0 && (
               <span className="text-muted-foreground font-mono">
-                {envCount} env var{envCount > 1 ? "s" : ""}
+                {envCount} var{envCount > 1 ? "s" : ""}
               </span>
             )}
           </div>
@@ -162,3 +164,4 @@ export function InterceptRowDetails({
     </div>
   )
 }
+

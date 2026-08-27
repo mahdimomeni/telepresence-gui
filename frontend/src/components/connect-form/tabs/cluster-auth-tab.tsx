@@ -10,6 +10,7 @@ import { ContextInput } from "@/components/context-input";
 import { BrowseInput } from "@/components/browse-input";
 
 function ClusterAuthTabComponent({ values, onChange, onBrowse, availableContexts = [] }: TabProps) {
+    const [showToken, setShowToken] = React.useState(false)
     const isConnecting = useLoadingStore((state) => state.isLoading("connection"))
     const isFetchingKube = useLoadingStore((state) => state.isLoading("kube-info"))
     const loading = isConnecting || isFetchingKube
@@ -85,16 +86,28 @@ function ClusterAuthTabComponent({ values, onChange, onBrowse, availableContexts
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="token">Bearer Token</Label>
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="token">Bearer Token</Label>
+                            {values.token && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowToken(!showToken)}
+                                    className="text-[11px] text-primary hover:underline font-medium cursor-pointer"
+                                >
+                                    {showToken ? "Hide" : "Show"}
+                                </button>
+                            )}
+                        </div>
                         <ContextInput
                             id="token"
                             name="token"
-                            type="password"
+                            type={showToken ? "text" : "password"}
                             placeholder="••••••••••••"
                             value={values.token}
                             onChange={(e) => onChange("token", e.target.value)}
                         />
                     </div>
+
 
                     <div className="grid gap-2">
                         <Label htmlFor="user">User</Label>

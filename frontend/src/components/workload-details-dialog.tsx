@@ -281,32 +281,39 @@ export function WorkloadDetailsDialog({
         <div className="flex-1 min-h-0 flex flex-col">
           <Tabs defaultValue="overview" className="w-full flex-1 flex flex-col min-h-0">
             <TabsList className="grid w-full grid-cols-4 shrink-0 mb-3">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="routing">
-                Routing
+              <TabsTrigger value="overview" className="gap-1 text-xs">
+                <Info className="size-3.5" />
+                <span>Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="routing" className="gap-1 text-xs">
+                <Globe className="size-3.5" />
+                <span>Routing</span>
                 {headerEntries.length > 0 && (
-                  <Badge variant="secondary" className="ml-1.5 px-1 py-0 text-[10px] h-4">
+                  <Badge variant="secondary" className="ml-1 px-1 py-0 text-[10px] h-4 font-mono">
                     {headerEntries.length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="mounts">
-                Mounts
+              <TabsTrigger value="mounts" className="gap-1 text-xs">
+                <HardDrive className="size-3.5" />
+                <span>Mounts</span>
                 {interceptInfo?.mount_point && (
-                  <Badge variant="secondary" className="ml-1.5 px-1 py-0 text-[10px] h-4">
+                  <Badge variant="secondary" className="ml-1 px-1 py-0 text-[10px] h-4 font-mono">
                     1
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="environment">
-                Environment
+              <TabsTrigger value="environment" className="gap-1 text-xs">
+                <Terminal className="size-3.5" />
+                <span>Env</span>
                 {envEntries.length > 0 && (
-                  <Badge variant="secondary" className="ml-1.5 px-1 py-0 text-[10px] h-4">
+                  <Badge variant="secondary" className="ml-1 px-1 py-0 text-[10px] h-4 font-mono">
                     {envEntries.length}
                   </Badge>
                 )}
               </TabsTrigger>
             </TabsList>
+
 
             {/* Overview Tab */}
             <TabsContent
