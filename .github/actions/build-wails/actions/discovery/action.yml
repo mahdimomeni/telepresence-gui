@@ -23,18 +23,19 @@ runs:
         TARGET_PLATFORM="${{ inputs.build-platform }}"
         DISTRO=$(lsb_release -rs)
         CODENAME=$(lsb_release -cs)
+        HOST_ARCH=$(dpkg --print-architecture)
 
-        if [[ "$TARGET_PLATFORM" == *"arm64"* ]]; then
-          # 1. Enable arm64 architecture
+        if [[ "$TARGET_PLATFORM" == *"arm64"* && "$HOST_ARCH" != "arm64" ]]; then
+          # 1. Enable arm64 architecture for cross-compilation
           sudo dpkg --add-architecture arm64
 
           # 2. Configure APT sources for arm64 (ports.ubuntu.com)
           if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
             # Ubuntu 24.04+ (deb822 format)
             if grep -q "Architectures:" /etc/apt/sources.list.d/ubuntu.sources; then
-              sudo sed -i 's/^Architectures:.*/Architectures: amd64/' /etc/apt/sources.list.d/ubuntu.sources
+              sudo sed -i "s/^Architectures:.*/Architectures: ${HOST_ARCH}/" /etc/apt/sources.list.d/ubuntu.sources
             else
-              sudo sed -i 's/^Components:/Architectures: amd64\nComponents:/' /etc/apt/sources.list.d/ubuntu.sources
+              sudo sed -i "s/^Components:/Architectures: ${HOST_ARCH}\nComponents:/" /etc/apt/sources.list.d/ubuntu.sources
             fi
 
             printf '%s\n' \
@@ -46,10 +47,10 @@ runs:
           else
             # Ubuntu 20.04 / 22.04 (traditional format)
             # Add [arch=amd64] to entries without options
-            sudo sed -i -E 's/^deb ([^\[])/deb [arch=amd64] \1/' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null || true
+            sudo sed -i -E "s/^deb ([^\[])/deb [arch=${HOST_ARCH}] \1/" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null || true
             
             # Append arch=amd64 to entries that already contain bracket options (like [signed-by=...])
-            sudo sed -i -E 's/^deb \[([^]]*)\]/deb [\1 arch=amd64]/' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null || true
+            sudo sed -i -E "s/^deb \[([^]]*)\]/deb [\1 arch=${HOST_ARCH}]/" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null || true
 
             printf '%s\n' \
               "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports ${CODENAME} main restricted universe multiverse" \
@@ -66,18 +67,20 @@ runs:
             echo "Retrying apt-get update ($tries)"; sleep 2
           done
 
-          # 4. Install ARM64 target dependencies ONLY
-          if [[ "$DISTRO" == "20.04" || "$DISTRO" == "22.04" ]]; then
+          # 4. Sync host Multi-Arch: same packages to prevent version mismatch conflicts
+          if [[ "$DISTRO" == "24.04" ]]; then
+            sudo apt-get -yq --only-upgrade install libglib2.0-0t64 libglib2.0-data 2>/dev/null || true
+            sudo apt-get -yq install libglib2.0-dev-bin 2>/dev/null || true
+            sudo apt-get -yq -o Dpkg::Options::="--force-overwrite" install libglib2.0-dev-bin libgtk-3-dev:arm64 libwebkit2gtk-4.1-dev:arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          elif [[ "$DISTRO" == "20.04" || "$DISTRO" == "22.04" ]]; then
             sudo apt-get -yq -o Dpkg::Options::="--force-overwrite" install libgtk-3-dev:arm64 libwebkit2gtk-4.0-dev:arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-          elif [[ "$DISTRO" == "24.04" ]]; then
-            sudo apt-get -yq -o Dpkg::Options::="--force-overwrite" install libgtk-3-dev:arm64 libwebkit2gtk-4.1-dev:arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
           else
             echo "Unsupported Linux distribution: $DISTRO"
             exit 1
           fi
 
         else
-          # Standard amd64 target dependencies ONLY
+          # Native target dependencies (amd64 on amd64, or arm64 on arm64)
           tries=0
           until sudo apt-get -yq update; do
             tries=$((tries+1))
