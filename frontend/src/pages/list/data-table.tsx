@@ -1,4 +1,11 @@
-import { ColumnFiltersState, PaginationState, useTable, type ColumnDef, type RowData } from "@tanstack/react-table"
+import {
+  ColumnFiltersState,
+  PaginationState,
+  SortingState,
+  useTable,
+  type ColumnDef,
+  type RowData,
+} from "@tanstack/react-table"
 
 import {
   Table,
@@ -13,6 +20,7 @@ import { features, type DataTableFeatures } from "./data-table-features"
 import React from "react"
 import { ContextInput } from "@/components/context-input"
 import { DataTablePagination } from "./data-table-pagination"
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 
 interface DataTableProps<TData extends RowData> {
   columns: ColumnDef<DataTableFeatures, TData>[]
@@ -27,9 +35,8 @@ function DataTableComponent<TData extends RowData>({
   renderSubRow,
   isRowExpanded,
 }: DataTableProps<TData>) {
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  )
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [sorting, setSorting] = React.useState<SortingState>([])
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -41,11 +48,13 @@ function DataTableComponent<TData extends RowData>({
     columns,
     autoResetPageIndex: false,
     onColumnFiltersChange: setColumnFilters,
+    onSortingChange: setSorting,
     onPaginationChange: setPagination,
     state: {
       columnFilters,
+      sorting,
       pagination,
-    }
+    },
   })
 
   const filterValue = (table.getColumn("name")?.getFilterValue() as string) ?? ""
@@ -60,7 +69,7 @@ function DataTableComponent<TData extends RowData>({
     <div>
       <div className="flex items-center py-4">
         <ContextInput
-          placeholder="Filter names..."
+          placeholder="Filter workloads by name..."
           value={filterValue}
           onChange={handleFilterChange}
           className="max-w-sm"
@@ -72,9 +81,33 @@ function DataTableComponent<TData extends RowData>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
+                  const canSort = header.column.getCanSort()
+                  const isSorted = header.column.getIsSorted()
+
                   return (
                     <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : (
+                      {header.isPlaceholder ? null : canSort ? (
+                        <div
+                          className="flex items-center gap-1.5 cursor-pointer select-none hover:text-foreground transition-colors group"
+                          onClick={header.column.getToggleSortingHandler()}
+                          title={
+                            isSorted === "asc"
+                              ? "Sorted ascending. Click to sort descending"
+                              : isSorted === "desc"
+                              ? "Sorted descending. Click to clear sort"
+                              : "Click to sort"
+                          }
+                        >
+                          <table.FlexRender header={header} />
+                          {isSorted === "asc" ? (
+                            <ArrowUp className="size-3.5 text-primary shrink-0" />
+                          ) : isSorted === "desc" ? (
+                            <ArrowDown className="size-3.5 text-primary shrink-0" />
+                          ) : (
+                            <ArrowUpDown className="size-3 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors shrink-0" />
+                          )}
+                        </div>
+                      ) : (
                         <table.FlexRender header={header} />
                       )}
                     </TableHead>
@@ -112,8 +145,8 @@ function DataTableComponent<TData extends RowData>({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                  No workloads found.
                 </TableCell>
               </TableRow>
             )}

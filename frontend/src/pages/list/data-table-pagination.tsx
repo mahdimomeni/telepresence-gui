@@ -27,8 +27,9 @@ export function DataTablePagination<TData extends RowData>({
   return (
     <div className="flex items-center justify-between px-2 mt-4">
       <div className="flex-1 text-sm text-muted-foreground">
-        {table.getFilteredSelectedRowModel().rows.length} of{" "}
-        {table.getFilteredRowModel().rows.length} row(s) selected.
+        {table.getFilteredRowModel().rows.length === 1
+          ? "1 workload found"
+          : `${table.getFilteredRowModel().rows.length} workloads found`}
       </div>
       <div className="flex items-center space-x-6 lg:space-x-8">
         <div className="flex items-center space-x-2">
