@@ -17,11 +17,15 @@ import { DataTablePagination } from "./data-table-pagination"
 interface DataTableProps<TData extends RowData> {
   columns: ColumnDef<DataTableFeatures, TData>[]
   data: TData[]
+  renderSubRow?: (data: TData) => React.ReactNode
+  isRowExpanded?: (data: TData) => boolean
 }
 
 function DataTableComponent<TData extends RowData>({
   columns,
   data,
+  renderSubRow,
+  isRowExpanded,
 }: DataTableProps<TData>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -81,18 +85,31 @@ function DataTableComponent<TData extends RowData>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      <table.FlexRender cell={cell} />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const expanded = isRowExpanded ? isRowExpanded(row.original) : false
+
+                return (
+                  <React.Fragment key={row.id}>
+                    <TableRow
+                      data-state={row.getIsSelected() && "selected"}
+                      className={expanded ? "border-b-0 bg-muted/20" : ""}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          <table.FlexRender cell={cell} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                    {expanded && renderSubRow && (
+                      <TableRow className="hover:bg-transparent border-b bg-muted/10">
+                        <TableCell colSpan={columns.length} className="px-4 py-2 pt-0">
+                          {renderSubRow(row.original)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                )
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">

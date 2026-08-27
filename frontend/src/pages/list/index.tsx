@@ -14,12 +14,16 @@ import { TelepresenceService } from "@/services/telepresence"
 import { CoreService } from "@/services/core"
 import { InterceptDialog } from "@/components/intercept-dialog"
 import { ReplaceDialog } from "@/components/replace-dialog"
+import { WorkloadDetailsDialog } from "@/components/workload-details-dialog"
+import { InterceptRowDetails } from "./intercept-row-details"
 
 export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
   const [workloads, setWorkloads] = useState<models.Workload[]>([])
   const [error, setError] = useState("")
   const [interceptTarget, setInterceptTarget] = useState<string | null>(null)
   const [replaceTarget, setReplaceTarget] = useState<string | null>(null)
+  const [selectedWorkloadForDetails, setSelectedWorkloadForDetails] = useState<models.Workload | null>(null)
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
   const isScanning = useLoadingStore((state) => state.isLoading("workloads"))
   const isDisconnecting = useLoadingStore((state) => state.isLoading("connection"))
@@ -78,10 +82,73 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
     }
   }, [])
 
-  const columns = useMemo(
-    () => getColumns(fetchWorkloads, handleOpenIntercept, handleOpenReplace),
-    [fetchWorkloads, handleOpenIntercept, handleOpenReplace]
+  const handleOpenDetails = useCallback((workload: models.Workload) => {
+    setSelectedWorkloadForDetails(workload)
+  }, [])
+
+  const handleToggleExpand = useCallback((workloadName: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev)
+      if (next.has(workloadName)) {
+        next.delete(workloadName)
+      } else {
+        next.add(workloadName)
+      }
+      return next
+    })
+  }, [])
+
+  const isRowExpanded = useCallback(
+    (workload: models.Workload) => expandedRows.has(workload.name),
+    [expandedRows]
   )
+
+  const renderSubRow = useCallback(
+    (workload: models.Workload) => {
+      return (
+        <InterceptRowDetails
+          workload={workload}
+          onFetchWorkloads={fetchWorkloads}
+          onOpenDetails={handleOpenDetails}
+        />
+      )
+    },
+    [fetchWorkloads, handleOpenDetails]
+  )
+
+  const columns = useMemo(
+    () =>
+      getColumns(
+        fetchWorkloads,
+        handleOpenIntercept,
+        handleOpenReplace,
+        handleOpenDetails,
+        expandedRows,
+        handleToggleExpand
+      ),
+    [
+      fetchWorkloads,
+      handleOpenIntercept,
+      handleOpenReplace,
+      handleOpenDetails,
+      expandedRows,
+      handleToggleExpand,
+    ]
+  )
+
+  // Keep selectedWorkloadForDetails in sync with latest workloads array
+  useEffect(() => {
+    if (selectedWorkloadForDetails) {
+      const updated = workloads.find(
+        (w) =>
+          w.name === selectedWorkloadForDetails.name &&
+          w.namespace === selectedWorkloadForDetails.namespace
+      )
+      if (updated) {
+        setSelectedWorkloadForDetails(updated)
+      }
+    }
+  }, [workloads, selectedWorkloadForDetails])
 
   useEffect(() => {
     fetchWorkloads()
@@ -139,7 +206,12 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
             <p>No interceptable workloads found in this namespace.</p>
           </div>
         ) : (
-          <DataTable columns={columns} data={workloads} />
+          <DataTable
+            columns={columns}
+            data={workloads}
+            renderSubRow={renderSubRow}
+            isRowExpanded={isRowExpanded}
+          />
         )}
 
         {interceptTarget && (
@@ -156,6 +228,17 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
             workloadName={replaceTarget}
             open={Boolean(replaceTarget)}
             onOpenChange={handleCloseReplace}
+            onSuccess={fetchWorkloads}
+          />
+        )}
+
+        {selectedWorkloadForDetails && (
+          <WorkloadDetailsDialog
+            workload={selectedWorkloadForDetails}
+            open={Boolean(selectedWorkloadForDetails)}
+            onOpenChange={(isOpen) => {
+              if (!isOpen) setSelectedWorkloadForDetails(null)
+            }}
             onSuccess={fetchWorkloads}
           />
         )}
