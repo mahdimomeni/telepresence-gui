@@ -10,6 +10,8 @@ export function DetachButton({ workload, onFetchWorkloads }: { workload: models.
   const startLoading = useLoadingStore((state) => state.startLoading)
   const stopLoading = useLoadingStore((state) => state.stopLoading)
 
+  const isReplaced = workload.intercept_info?.some((i) => i.spec?.replace)
+
   const handleDetach = async () => {
     startLoading(`detach-${workload.name}`)
     try {
@@ -17,7 +19,10 @@ export function DetachButton({ workload, onFetchWorkloads }: { workload: models.
         attachment_name: workload.name,
         namespace: workload.namespace
       })
-      CoreService.notify("Telepresence Detach Active", `Successfully detached ${workload.name}`)
+      CoreService.notify(
+        isReplaced ? "Telepresence Replace Detached" : "Telepresence Detach Active",
+        `Successfully detached ${workload.name}`
+      )
       onFetchWorkloads()
     } catch (error) {
       CoreService.notify("Telepresence Detach Error", `Detach failed: ${String(error)}`)

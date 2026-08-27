@@ -12,7 +12,8 @@ const columnHelper = createColumnHelper<DataTableFeatures, models.Workload>()
 
 export const getColumns = (
     fetchWorkloads: () => void,
-    onOpenIntercept: (workloadName: string) => void
+    onOpenIntercept: (workloadName: string) => void,
+    onOpenReplace: (workloadName: string) => void
 ) => columnHelper.columns([
     columnHelper.accessor("name", {
         header: "Name",
@@ -32,27 +33,67 @@ export const getColumns = (
         }
     }),
     columnHelper.display({
-        id: "intercept",
+        id: "status",
+        header: "Status",
         cell: ({ row }) => {
             const workload = row.original
+            const isAttached = workload.intercept_info && workload.intercept_info.length > 0
+            const isReplaced = isAttached && workload.intercept_info!.some((i) => i.spec?.replace)
+
+            if (!isAttached) {
+                return (
+                    <Badge variant="outline" className="border-border text-muted-foreground">
+                        Ready
+                    </Badge>
+                )
+            }
+
+            if (isReplaced) {
+                return (
+                    <Badge variant="outline" className="border-amber-500/50 bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 font-medium">
+                        Replaced
+                    </Badge>
+                )
+            }
 
             return (
-                <>
-                    {workload.intercept_info && workload.intercept_info.length > 0 ? (
-                        <DetachButton workload={workload} onFetchWorkloads={fetchWorkloads} />
-                    ) : (
-                        <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => onOpenIntercept(workload.name)}
-                        >
-                            Intercept
-                        </Button>
-                    )}
-                </>
-
+                <Badge variant="outline" className="border-emerald-500/50 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 font-medium">
+                    Intercepted
+                </Badge>
             )
         }
+    }),
+    columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+            const workload = row.original
+            const isAttached = workload.intercept_info && workload.intercept_info.length > 0
 
+            return (
+                <div className="flex items-center gap-2">
+                    {isAttached ? (
+                        <DetachButton workload={workload} onFetchWorkloads={fetchWorkloads} />
+                    ) : (
+                        <>
+                            <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => onOpenIntercept(workload.name)}
+                            >
+                                Intercept
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => onOpenReplace(workload.name)}
+                            >
+                                Replace
+                            </Button>
+                        </>
+                    )}
+                </div>
+            )
+        }
     })
 ])

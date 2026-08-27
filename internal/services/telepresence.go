@@ -220,7 +220,42 @@ func (s *TelepresenceService) Intercept(ctx context.Context, config models.Inter
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	args := []string{"intercept", config.Workload, "--port", config.Port}
+	args := []string{"intercept", config.Workload}
+
+	if config.Port != "" {
+		args = append(args, "--port", config.Port)
+	}
+	if config.Namespace != "" {
+		args = append(args, "--namespace", config.Namespace)
+	}
+	if config.Address != "" {
+		args = append(args, "--address", config.Address)
+	}
+	if config.Container != "" {
+		args = append(args, "--container", config.Container)
+	}
+	if config.Service != "" {
+		args = append(args, "--service", config.Service)
+	}
+
+	// Advanced routing options
+	if config.HTTPHeader != "" {
+		args = append(args, "--http-header", config.HTTPHeader)
+	}
+	if config.HTTPPathPrefix != "" {
+		args = append(args, "--http-path-prefix", config.HTTPPathPrefix)
+	}
+	if config.Mount != "" {
+		args = append(args, "--mount", config.Mount)
+	}
+	if config.LocalMountPort > 0 {
+		args = append(args, "--local-mount-port", fmt.Sprintf("%d", config.LocalMountPort))
+	}
+	for _, tp := range config.ToPod {
+		if strings.TrimSpace(tp) != "" {
+			args = append(args, "--to-pod", strings.TrimSpace(tp))
+		}
+	}
 
 	// Environment options
 	if config.EnvFile != "" {
@@ -233,26 +268,102 @@ func (s *TelepresenceService) Intercept(ctx context.Context, config models.Inter
 		args = append(args, "--env-syntax", config.EnvSyntax)
 	}
 
-	// Advanced routing options
-	if config.HTTPHeader != "" {
-		args = append(args, "--http-header", config.HTTPHeader)
+	// Docker options
+	if config.DockerMount != "" {
+		args = append(args, "--docker-mount", config.DockerMount)
 	}
-	if config.Mount != "" {
-		args = append(args, "--mount", config.Mount)
+	if config.DockerDebug != "" {
+		args = append(args, "--docker-debug", config.DockerDebug)
+	}
+	if config.DockerBuild != "" {
+		args = append(args, "--docker-build", config.DockerBuild)
+		for _, opt := range config.DockerBuildOpt {
+			if strings.TrimSpace(opt) != "" {
+				args = append(args, "--docker-build-opt", strings.TrimSpace(opt))
+			}
+		}
+	}
+	if config.DockerRun {
+		args = append(args, "--docker-run")
+	}
+
+	// Pass arguments after `--` for docker run / docker build / command execution
+	if config.DockerArgs != "" {
+		args = append(args, "--")
+		args = append(args, strings.Fields(config.DockerArgs)...)
+	}
+
+	_, err := s.runner.Run(ctx, "telepresence", args...)
+	return err
+}
+
+func (s *TelepresenceService) Replace(ctx context.Context, config models.ReplaceConfig) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	args := []string{"replace", config.Workload}
+
+	if config.Namespace != "" {
+		args = append(args, "--namespace", config.Namespace)
+	}
+	if config.Port != "" {
+		args = append(args, "--port", config.Port)
 	}
 	if config.Container != "" {
 		args = append(args, "--container", config.Container)
 	}
-	if config.Service != "" {
-		args = append(args, "--service", config.Service)
+	if config.Address != "" {
+		args = append(args, "--address", config.Address)
+	}
+	if config.Mount != "" {
+		args = append(args, "--mount", config.Mount)
+	}
+	if config.LocalMountPort > 0 {
+		args = append(args, "--local-mount-port", fmt.Sprintf("%d", config.LocalMountPort))
+	}
+	for _, tp := range config.ToPod {
+		if strings.TrimSpace(tp) != "" {
+			args = append(args, "--to-pod", strings.TrimSpace(tp))
+		}
 	}
 
-	// Docker integration
-	if config.DockerRun {
-		args = append(args, "--docker-run", "--")
-		if config.DockerArgs != "" {
-			args = append(args, strings.Fields(config.DockerArgs)...)
+	// Environment options
+	if config.EnvFile != "" {
+		args = append(args, "--env-file", config.EnvFile)
+	}
+	if config.EnvJSON != "" {
+		args = append(args, "--env-json", config.EnvJSON)
+	}
+	if config.EnvSyntax != "" {
+		args = append(args, "--env-syntax", config.EnvSyntax)
+	}
+
+	// Docker options
+	if config.DockerMount != "" {
+		args = append(args, "--docker-mount", config.DockerMount)
+	}
+	if config.DockerDebug != "" {
+		args = append(args, "--docker-debug", config.DockerDebug)
+	}
+	if config.DockerBuild != "" {
+		args = append(args, "--docker-build", config.DockerBuild)
+		for _, opt := range config.DockerBuildOpt {
+			if strings.TrimSpace(opt) != "" {
+				args = append(args, "--docker-build-opt", strings.TrimSpace(opt))
+			}
 		}
+	}
+	if config.DockerRun {
+		args = append(args, "--docker-run")
+	}
+
+	// Pass arguments after `--` for docker run / docker build / command execution
+	if config.DockerArgs != "" {
+		args = append(args, "--")
+		args = append(args, strings.Fields(config.DockerArgs)...)
 	}
 
 	_, err := s.runner.Run(ctx, "telepresence", args...)
