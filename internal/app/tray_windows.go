@@ -4,62 +4,73 @@ package app
 
 import (
 	"fmt"
+	"runtime"
 	"telepresence-gui/internal/models"
 
 	"github.com/gogpu/systray"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 var mConnectToggle *systray.MenuItem
 var tray *systray.SystemTray
 
 func (a *App) setupSystemTray() {
-	tray = systray.New()
-
-	menu := systray.NewMenu()
-	mConnectToggle = menu.Add("Connect", func() {
-		a.statusMu.Lock()
-		currentlyConnected := a.isConnected
-		a.statusMu.Unlock()
-
-		if currentlyConnected {
-			runtime.EventsEmit(a.ctx, "connection-pending", true)
-			defer runtime.EventsEmit(a.ctx, "connection-pending", false)
-			if err := a.StopTelepresence(); err != nil {
-				_ = a.Notify("Disconnect Failed", fmt.Sprintf("Error: %v", err))
-			}
-		} else {
-			config, err := a.configService.LoadConnectConfig()
-			if err != nil || config == nil {
-				config = &models.ConnectConfig{Namespace: "default"}
-			}
-
-			runtime.EventsEmit(a.ctx, "daemon-log", "[Tray] Connecting to cluster...")
-			runtime.EventsEmit(a.ctx, "connection-pending", true)
-			defer runtime.EventsEmit(a.ctx, "connection-pending", false)
-			if err := a.StartTelepresence(*config); err != nil {
-				_ = a.Notify("Connection Failed", fmt.Sprintf("Error: %v", err))
-			}
-		}
-	})
-	menu.AddSeparator()
-	menu.Add("Quit", func() {
-		_ = a.StopTelepresence()
-		tray.Remove()
-		runtime.Quit(a.ctx)
-	})
-
-	a.setTrayIcon()
-
-	tray.SetTooltip("Telepresence GUI").
-		SetMenu(menu)
-	tray.OnClick(func() {
-		runtime.WindowUnminimise(a.ctx)
-		runtime.WindowShow(a.ctx)
-	})
-	tray.Show()
-
 	go func() {
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
+
+		tray = systray.New()
+
+		menu := systray.NewMenu()
+		mConnectToggle = menu.Add("Connect", func() {
+			a.statusMu.Lock()
+			currentlyConnected := a.isConnected
+			a.statusMu.Unlock()
+
+			if currentlyConnected {
+				wailsRuntime.EventsEmit(a.ctx, "connection-pending", true)
+				defer wailsRuntime.EventsEmit(a.ctx, "connection-pending", false)
+				if err := a.StopTelepresence(); err != nil {
+					_ = a.Notify("Disconnect Failed", fmt.Sprintf("Error: %v", err))
+				}
+			} else {
+				config, err := a.configService.LoadConnectConfig()
+				if err != nil || config == nil {
+					config = &models.ConnectConfig{Namespace: "default"}
+				}
+
+				wailsRuntime.EventsEmit(a.ctx, "daemon-log", "[Tray] Connecting to cluster...")
+				wailsRuntime.EventsEmit(a.ctx, "connection-pending", true)
+				defer wailsRuntime.EventsEmit(a.ctx, "connection-pending", false)
+				if err := a.StartTelepresence(*config); err != nil {
+					_ = a.Notify("Connection Failed", fmt.Sprintf("Error: %v", err))
+				}
+			}
+		})
+		menu.AddSeparator()
+		menu.Add("Quit", func() {
+			_ = a.StopTelepresence()
+			tray.Remove()
+			wailsRuntime.Quit(a.ctx)
+		})
+
+		a.setTrayIcon()
+
+		tray.SetTooltip("Telepresence GUI").
+			SetMenu(menu)
+		tray.OnClick(func() {
+			wailsRuntime.WindowUnminimise(a.ctx)
+			wailsRuntime.WindowShow(a.ctx)
+		})
+		tray.Show()
+
+		a.statusMu.Lock()
+		connected := a.isConnected
+		a.statusMu.Unlock()
+		if connected {
+			mConnectToggle.SetLabel("Disconnect")
+		}
+
 		if err := tray.Run(); err != nil {
 			fmt.Println("Tray error:", err)
 		}
@@ -67,7 +78,9 @@ func (a *App) setupSystemTray() {
 }
 
 func (a *App) setTrayIcon() {
-	tray.SetIcon(a.windowsTrayIcon)
+	if tray != nil {
+		tray.SetIcon(a.windowsTrayIcon)
+	}
 }
 
 func (a *App) updateTrayMenu(connected bool) {
