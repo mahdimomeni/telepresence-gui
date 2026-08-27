@@ -5,7 +5,7 @@ go 1.25.12
 require (
 	github.com/creativeprojects/go-selfupdate v1.6.0
 	github.com/gogpu/systray v0.2.8
-	github.com/wailsapp/wails/v2 v2.15.0
+	github.com/wailsapp/wails/v2 v2.13.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

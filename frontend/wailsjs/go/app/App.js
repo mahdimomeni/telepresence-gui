@@ -38,6 +38,10 @@ export function OnSecondInstanceLaunch(arg1) {
   return window['go']['app']['App']['OnSecondInstanceLaunch'](arg1);
 }
 
+export function ReplaceWorkload(arg1) {
+  return window['go']['app']['App']['ReplaceWorkload'](arg1);
+}
+
 export function RestartApp() {
   return window['go']['app']['App']['RestartApp']();
 }

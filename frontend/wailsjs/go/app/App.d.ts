@@ -22,6 +22,8 @@ export function Notify(arg1:string,arg2:string):Promise<void>;
 
 export function OnSecondInstanceLaunch(arg1:options.SecondInstanceData):Promise<void>;
 
+export function ReplaceWorkload(arg1:models.ReplaceConfig):Promise<void>;
+
 export function RestartApp():Promise<void>;
 
 export function SaveConnectConfig(arg1:models.ConnectConfig):Promise<void>;

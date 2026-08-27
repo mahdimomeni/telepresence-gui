@@ -13,11 +13,13 @@ import { useLoadingStore } from "@/stores/useLoadingStore"
 import { TelepresenceService } from "@/services/telepresence"
 import { CoreService } from "@/services/core"
 import { InterceptDialog } from "@/components/intercept-dialog"
+import { ReplaceDialog } from "@/components/replace-dialog"
 
 export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
   const [workloads, setWorkloads] = useState<models.Workload[]>([])
   const [error, setError] = useState("")
   const [interceptTarget, setInterceptTarget] = useState<string | null>(null)
+  const [replaceTarget, setReplaceTarget] = useState<string | null>(null)
 
   const isScanning = useLoadingStore((state) => state.isLoading("workloads"))
   const isDisconnecting = useLoadingStore((state) => state.isLoading("connection"))
@@ -66,7 +68,20 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
     }
   }, [])
 
-  const columns = useMemo(() => getColumns(fetchWorkloads, handleOpenIntercept), [fetchWorkloads, handleOpenIntercept])
+  const handleOpenReplace = useCallback((name: string) => {
+    setReplaceTarget(name)
+  }, [])
+
+  const handleCloseReplace = useCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      setReplaceTarget(null)
+    }
+  }, [])
+
+  const columns = useMemo(
+    () => getColumns(fetchWorkloads, handleOpenIntercept, handleOpenReplace),
+    [fetchWorkloads, handleOpenIntercept, handleOpenReplace]
+  )
 
   useEffect(() => {
     fetchWorkloads()
@@ -91,7 +106,7 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
         <div>
           <CardTitle>Active Connection</CardTitle>
           <CardDescription>
-            Workloads available for interception in the current namespace.
+            Workloads available for interception and replacement in the current namespace.
           </CardDescription>
         </div>
         <div className="flex gap-2">
@@ -132,6 +147,15 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
             workloadName={interceptTarget}
             open={Boolean(interceptTarget)}
             onOpenChange={handleCloseIntercept}
+            onSuccess={fetchWorkloads}
+          />
+        )}
+
+        {replaceTarget && (
+          <ReplaceDialog
+            workloadName={replaceTarget}
+            open={Boolean(replaceTarget)}
+            onOpenChange={handleCloseReplace}
             onSuccess={fetchWorkloads}
           />
         )}

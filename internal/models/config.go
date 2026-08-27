@@ -34,20 +34,49 @@ type ConnectConfig struct {
 }
 
 type InterceptConfig struct {
-	Workload   string `json:"workload"`
-	Port       string `json:"port"`
-	EnvFile    string `json:"env_file"`
-	EnvJSON    string `json:"env_json"`
-	EnvSyntax  string `json:"env_syntax"`
-	HTTPHeader string `json:"http_header"`
-	Mount      string `json:"mount"`
-	Container  string `json:"container"`
-	Service    string `json:"service"`
-	DockerRun  bool   `json:"docker_run"`
-	DockerArgs string `json:"docker_args"`
+	Workload       string   `json:"workload"`
+	Port           string   `json:"port"`
+	Address        string   `json:"address"`
+	Container      string   `json:"container"`
+	Service        string   `json:"service"`
+	Namespace      string   `json:"namespace"`
+	HTTPHeader     string   `json:"http_header"`
+	HTTPPathPrefix string   `json:"http_path_prefix"`
+	Mount          string   `json:"mount"`
+	LocalMountPort int      `json:"local_mount_port"`
+	ToPod          []string `json:"to_pod"`
+	EnvFile        string   `json:"env_file"`
+	EnvJSON        string   `json:"env_json"`
+	EnvSyntax      string   `json:"env_syntax"`
+	DockerRun      bool     `json:"docker_run"`
+	DockerArgs     string   `json:"docker_args"`
+	DockerBuild    string   `json:"docker_build"`
+	DockerBuildOpt []string `json:"docker_build_opt"`
+	DockerDebug    string   `json:"docker_debug"`
+	DockerMount    string   `json:"docker_mount"`
 }
 
 type DetachConfig struct {
 	AttachmentName string `json:"attachment_name"`
 	Namespace      string `json:"namespace"`
+}
+
+type ReplaceConfig struct {
+	Workload       string   `json:"workload"`
+	Port           string   `json:"port"`
+	Container      string   `json:"container"`
+	Address        string   `json:"address"`
+	Mount          string   `json:"mount"`
+	LocalMountPort int      `json:"local_mount_port"`
+	ToPod          []string `json:"to_pod"`
+	EnvFile        string   `json:"env_file"`
+	EnvJSON        string   `json:"env_json"`
+	EnvSyntax      string   `json:"env_syntax"`
+	DockerRun      bool     `json:"docker_run"`
+	DockerArgs     string   `json:"docker_args"`
+	DockerBuild    string   `json:"docker_build"`
+	DockerBuildOpt []string `json:"docker_build_opt"`
+	DockerDebug    string   `json:"docker_debug"`
+	DockerMount    string   `json:"docker_mount"`
+	Namespace      string   `json:"namespace"`
 }

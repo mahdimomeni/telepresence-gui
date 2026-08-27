@@ -181,6 +181,10 @@ func (a *App) InterceptWorkload(config models.InterceptConfig) error {
 	return a.teleService.Intercept(a.ctx, config)
 }
 
+func (a *App) ReplaceWorkload(config models.ReplaceConfig) error {
+	return a.teleService.Replace(a.ctx, config)
+}
+
 func (a *App) DetachWorkload(config models.DetachConfig) error {
 	return a.teleService.Detach(a.ctx, config)
 }

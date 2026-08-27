@@ -103,15 +103,24 @@ export namespace models {
 	export class InterceptConfig {
 	    workload: string;
 	    port: string;
+	    address: string;
+	    container: string;
+	    service: string;
+	    namespace: string;
+	    http_header: string;
+	    http_path_prefix: string;
+	    mount: string;
+	    local_mount_port: number;
+	    to_pod: string[];
 	    env_file: string;
 	    env_json: string;
 	    env_syntax: string;
-	    http_header: string;
-	    mount: string;
-	    container: string;
-	    service: string;
 	    docker_run: boolean;
 	    docker_args: string;
+	    docker_build: string;
+	    docker_build_opt: string[];
+	    docker_debug: string;
+	    docker_mount: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new InterceptConfig(source);
@@ -121,15 +130,24 @@ export namespace models {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.workload = source["workload"];
 	        this.port = source["port"];
+	        this.address = source["address"];
+	        this.container = source["container"];
+	        this.service = source["service"];
+	        this.namespace = source["namespace"];
+	        this.http_header = source["http_header"];
+	        this.http_path_prefix = source["http_path_prefix"];
+	        this.mount = source["mount"];
+	        this.local_mount_port = source["local_mount_port"];
+	        this.to_pod = source["to_pod"];
 	        this.env_file = source["env_file"];
 	        this.env_json = source["env_json"];
 	        this.env_syntax = source["env_syntax"];
-	        this.http_header = source["http_header"];
-	        this.mount = source["mount"];
-	        this.container = source["container"];
-	        this.service = source["service"];
 	        this.docker_run = source["docker_run"];
 	        this.docker_args = source["docker_args"];
+	        this.docker_build = source["docker_build"];
+	        this.docker_build_opt = source["docker_build_opt"];
+	        this.docker_debug = source["docker_debug"];
+	        this.docker_mount = source["docker_mount"];
 	    }
 	}
 	export class Timestamp {
@@ -296,6 +314,50 @@ export namespace models {
 		    }
 		    return a;
 		}
+	}
+	export class ReplaceConfig {
+	    workload: string;
+	    port: string;
+	    container: string;
+	    address: string;
+	    mount: string;
+	    local_mount_port: number;
+	    to_pod: string[];
+	    env_file: string;
+	    env_json: string;
+	    env_syntax: string;
+	    docker_run: boolean;
+	    docker_args: string;
+	    docker_build: string;
+	    docker_build_opt: string[];
+	    docker_debug: string;
+	    docker_mount: string;
+	    namespace: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ReplaceConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workload = source["workload"];
+	        this.port = source["port"];
+	        this.container = source["container"];
+	        this.address = source["address"];
+	        this.mount = source["mount"];
+	        this.local_mount_port = source["local_mount_port"];
+	        this.to_pod = source["to_pod"];
+	        this.env_file = source["env_file"];
+	        this.env_json = source["env_json"];
+	        this.env_syntax = source["env_syntax"];
+	        this.docker_run = source["docker_run"];
+	        this.docker_args = source["docker_args"];
+	        this.docker_build = source["docker_build"];
+	        this.docker_build_opt = source["docker_build_opt"];
+	        this.docker_debug = source["docker_debug"];
+	        this.docker_mount = source["docker_mount"];
+	        this.namespace = source["namespace"];
+	    }
 	}
 	
 	export class Workload {

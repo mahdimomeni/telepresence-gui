@@ -5,6 +5,7 @@ import {
   GetKubeInfo,
   SaveConnectConfig,
   InterceptWorkload,
+  ReplaceWorkload,
   DetachWorkload,
 } from "@/../wailsjs/go/app/App"
 import { models } from "@/../wailsjs/go/models"
@@ -56,7 +57,15 @@ export const TelepresenceService = {
     try {
       return await InterceptWorkload(config)
     } catch (error) {
-      return handleBackendError(error, "list workloads")
+      return handleBackendError(error, "intercept workload")
+    }
+  },
+
+  async replaceWorkload(config: models.ReplaceConfig): Promise<void> {
+    try {
+      return await ReplaceWorkload(config)
+    } catch (error) {
+      return handleBackendError(error, "replace workload")
     }
   },
 
@@ -64,7 +73,7 @@ export const TelepresenceService = {
     try {
       await DetachWorkload(config)
     } catch (error) {
-      return handleBackendError(error, "list workloads")
+      return handleBackendError(error, "detach workload")
     }
   }
 }
