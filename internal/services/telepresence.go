@@ -213,7 +213,7 @@ func (s *TelepresenceService) ListWorkloadsRawNoLock(ctx context.Context) (strin
 	return trimmed, workloads, nil
 }
 
-func (s *TelepresenceService) Intercept(ctx context.Context, config models.InterceptConfig) error {
+func (s *TelepresenceService) Intercept(ctx context.Context, config models.InterceptConfig) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -293,11 +293,11 @@ func (s *TelepresenceService) Intercept(ctx context.Context, config models.Inter
 		args = append(args, strings.Fields(config.DockerArgs)...)
 	}
 
-	_, err := s.runner.Run(ctx, "telepresence", args...)
-	return err
+	output, err := s.runner.Run(ctx, "telepresence", args...)
+	return output, err
 }
 
-func (s *TelepresenceService) Replace(ctx context.Context, config models.ReplaceConfig) error {
+func (s *TelepresenceService) Replace(ctx context.Context, config models.ReplaceConfig) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -366,11 +366,11 @@ func (s *TelepresenceService) Replace(ctx context.Context, config models.Replace
 		args = append(args, strings.Fields(config.DockerArgs)...)
 	}
 
-	_, err := s.runner.Run(ctx, "telepresence", args...)
-	return err
+	output, err := s.runner.Run(ctx, "telepresence", args...)
+	return output, err
 }
 
-func (s *TelepresenceService) Detach(ctx context.Context, config models.DetachConfig) error {
+func (s *TelepresenceService) Detach(ctx context.Context, config models.DetachConfig) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -383,8 +383,8 @@ func (s *TelepresenceService) Detach(ctx context.Context, config models.DetachCo
 	}
 	args = append(args, config.AttachmentName)
 
-	_, err := s.runner.Run(ctx, "telepresence", args...)
-	return err
+	output, err := s.runner.Run(ctx, "telepresence", args...)
+	return output, err
 }
 
 func (s *TelepresenceService) Status(ctx context.Context) (string, *models.TelepresenceStatusOutput, error) {

@@ -10,13 +10,10 @@ import {
 } from "@/../wailsjs/go/app/App"
 import { models } from "@/../wailsjs/go/models"
 
-/**
- * Standardized error handling for Wails backend calls.
- * This prevents raw Go panics or generic string errors from leaking into the UI.
- */
 const handleBackendError = (error: unknown, context: string): never => {
+  const errorMsg = error instanceof Error ? error.message : typeof error === "string" ? error : JSON.stringify(error)
   console.error(`[TelepresenceService] ${context}:`, error)
-  throw new Error(`Failed to ${context}. Please check your connection and try again.`)
+  throw new Error(errorMsg || `Failed to ${context}. Please check your connection and try again.`)
 }
 
 export const TelepresenceService = {

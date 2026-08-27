@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -43,6 +44,7 @@ func (a *App) checkTelepresenceChanges() {
 
 		if statusChanged && status != nil {
 			connected := status.UserDaemon.Running && strings.EqualFold(status.UserDaemon.Status, "Connected")
+			runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Status] Daemon status updated: UserDaemon=%s (Running=%v), RootDaemon Running=%v", status.UserDaemon.Status, status.UserDaemon.Running, status.RootDaemon.Running))
 			a.updateConnectionStatus(connected)
 			runtime.EventsEmit(a.ctx, "telepresence-status-changed", status)
 		}
@@ -63,6 +65,7 @@ func (a *App) checkTelepresenceChanges() {
 			a.statusMu.Unlock()
 
 			if listChanged {
+				runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Workloads] Workload list synchronized (%d workloads found)", len(workloads)))
 				runtime.EventsEmit(a.ctx, "workloads-changed", workloads)
 			}
 		}
