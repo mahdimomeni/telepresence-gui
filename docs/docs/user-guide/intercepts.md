@@ -1,12 +1,12 @@
 ---
 id: intercepts
-title: Traffic Intercepts Deep Dive
+title: Traffic Intercepts & Workload Replacement
 sidebar_position: 5
 ---
 
-# Traffic Intercepts Deep Dive
+# Traffic Intercepts & Workload Replacement
 
-A **Traffic Intercept** is the core superpower of Telepresence. It instructs the Kubernetes Traffic Manager to reroute inbound traffic destined for a remote workload directly to your local development machine.
+A **Traffic Intercept** is the core capability of Telepresence. It instructs the Kubernetes Traffic Manager to reroute inbound traffic destined for a remote workload directly to your local development machine or a local Docker container.
 
 ---
 
@@ -32,9 +32,18 @@ graph TD
 
 ---
 
+## 🔄 Intercept vs. Workload Replacement
+
+Telepresence GUI supports two distinct interception paradigms:
+
+1. **Traffic Intercept (`telepresence intercept`)**: Keeps the remote Kubernetes pod running while inserting a lightweight sidecar proxy (traffic-agent) to dynamically reroute inbound requests.
+2. **Workload Replacement (`telepresence replace`)**: Swaps out the remote pod's main container completely with a dedicated proxy, effectively redirecting all inbound connections while eliminating remote CPU/RAM resource usage.
+
+---
+
 ## 🛠️ Configuring an Intercept in Telepresence GUI
 
-Clicking **Intercept** on any workload opens the configuration modal:
+Clicking **Intercept** or **Replace** on any workload opens the configuration modal:
 
 ```
 +--------------------------------------------------------------------+
@@ -62,7 +71,7 @@ Clicking **Intercept** on any workload opens the configuration modal:
 
 ---
 
-## ⚙️ Intercept Configuration Options
+## ⚙️ Configuration Options
 
 ### 1. Target Local Port (`--port`)
 Specifies where your local code is listening:
@@ -96,7 +105,7 @@ Instead of running code directly on your host OS, you can launch a local Docker 
 
 ## 🛑 Releasing an Intercept
 
-To end an intercept session:
+To end an intercept or replacement session:
 1. Locate the intercepted workload in the table.
 2. Click **Detach**.
 3. Telepresence GUI immediately instructs the traffic manager to remove the Envoy routing rules and restore standard pod traffic.

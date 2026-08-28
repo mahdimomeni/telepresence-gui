@@ -29,32 +29,47 @@ Queries the active Kubernetes namespace and returns all discoverable workloads (
 ### 4. `InterceptWorkload(config: models.InterceptConfig): Promise<void>`
 Creates a traffic intercept targeting a specific workload with local port, header routing, or Docker container arguments.
 
-### 5. `DetachWorkload(config: models.DetachConfig): Promise<void>`
-Releases an active traffic intercept on the specified workload and namespace.
+### 5. `ReplaceWorkload(config: models.ReplaceConfig): Promise<void>`
+Replaces an existing workload with a local binary or Docker container execution mode.
 
-### 6. `GetKubeInfo(kubeConfigPath: string): Promise<models.KubeInfo>`
+### 6. `DetachWorkload(config: models.DetachConfig): Promise<void>`
+Releases an active traffic intercept or replacement on the specified workload and namespace.
+
+### 7. `GetKubeInfo(kubeConfigPath: string): Promise<models.KubeInfo>`
 Parses the specified or default kubeconfig file (using in-memory YAML parsing with CLI fallback) and returns all available contexts and namespaces.
 
-### 7. `SaveConnectConfig(config: models.ConnectConfig): Promise<void>`
+### 8. `SaveConnectConfig(config: models.ConnectConfig): Promise<void>`
 Persists connection parameters to `config.json` on disk with thread-safe `sync.RWMutex` write locking.
 
-### 8. `LoadConnectConfig(): Promise<models.ConnectConfig>`
+### 9. `LoadConnectConfig(): Promise<models.ConnectConfig>`
 Reads and returns the saved configuration profile from disk with thread-safe read locking.
 
-### 9. `CheckForUpdates(): Promise<services.UpdateInfo>`
+### 10. `GetAppSettings(): Promise<models.AppSettings>`
+Retrieves the saved user application settings and preferences from `settings.json`.
+
+### 11. `SaveAppSettings(settings: models.AppSettings): Promise<void>`
+Persists updated user application settings to `settings.json` on disk.
+
+### 12. `ResetAppSettings(): Promise<models.AppSettings>`
+Resets all user settings to default factory values and returns the new configuration.
+
+### 13. `CheckSystemTools(): Promise<models.SystemToolsReport>`
+Checks for the presence, executable paths, and versions of required command-line dependencies (`telepresence` and `kubectl`).
+
+### 14. `CheckForUpdates(): Promise<services.UpdateInfo>`
 Queries GitHub Releases for new updates matching the OS, architecture, and WebKit ABI.
 
-### 10. `DownloadAndInstallUpdate(): Promise<void>`
+### 15. `DownloadAndInstallUpdate(): Promise<void>`
 Downloads the matching release binary and applies in-place binary patching.
 - **Emits**: `update:progress` (`{ percentage: number, status: string, error?: string }`).
 
-### 11. `RestartApp(): Promise<void>`
+### 16. `RestartApp(): Promise<void>`
 Spawns the updated binary and exits the current process.
 
-### 12. `SelectFile(title: string): Promise<string>`
+### 17. `SelectFile(title: string): Promise<string>`
 Opens a native OS file picker dialog and returns the selected absolute file path.
 
-### 13. `Notify(title: string, body: string): Promise<void>`
+### 18. `Notify(title: string, body: string): Promise<void>`
 Sends an OS-native desktop notification through the platform notification center.
 
 ---

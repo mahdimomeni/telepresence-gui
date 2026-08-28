@@ -1,24 +1,28 @@
 ---
 id: config-schema
-title: Configuration File Schema
+title: Configuration File Schemas
 sidebar_position: 2
 ---
 
-# Configuration File Schema
+# Configuration File Schemas
 
-Telepresence GUI automatically persists the user's connection profile to a local JSON configuration file.
-
----
-
-## 📁 File Locations
-
-- **Windows**: `%APPDATA%\telepresence-gui\config.json` (typically `C:\Users\<Username>\AppData\Roaming\telepresence-gui\config.json`)
-- **macOS**: `~/Library/Application Support/telepresence-gui/config.json` or `~/.config/telepresence-gui/config.json`
-- **Linux**: `~/.config/telepresence-gui/config.json`
+Telepresence GUI persists configuration data across two primary JSON files in the user's application data directory:
+1. **`config.json`**: Stores the cluster connection parameters and network routing profiles (`ConnectConfig`).
+2. **`settings.json`**: Stores application preferences, appearance options, logging limits, and notification triggers (`AppSettings`).
 
 ---
 
-## 📄 JSON Structure & Example
+## 📁 Storage Directory Locations
+
+- **Windows**: `%APPDATA%\telepresence-gui\` (typically `C:\Users\<Username>\AppData\Roaming\telepresence-gui\`)
+- **macOS**: `~/Library/Application Support/telepresence-gui/` or `~/.config/telepresence-gui/`
+- **Linux**: `~/.config/telepresence-gui/`
+
+---
+
+## 1. Connection Profile Schema (`config.json`)
+
+Stores the parameters submitted through the multi-tab connection form:
 
 ```json
 {
@@ -55,9 +59,7 @@ Telepresence GUI automatically persists the user's connection profile to a local
 }
 ```
 
----
-
-## 🔍 Schema Property Definitions
+### Properties Definition
 
 | Property | Type | Description |
 | :--- | :--- | :--- |
@@ -80,3 +82,59 @@ Telepresence GUI automatically persists the user's connection profile to a local
 | `insecure-skip-tls-verify` | `boolean` | Skip TLS certificate validation. |
 | `request-timeout` | `string` | Operation timeout duration string (e.g., `45s`, `1m`). |
 | `disable-compression` | `boolean` | Disable gzip/brotli stream compression. |
+
+---
+
+## 2. Application Preferences Schema (`settings.json`)
+
+Stores the user's application preferences and default behaviors:
+
+```json
+{
+  "theme": "dark",
+  "enableGlowEffects": true,
+  "showSplashScreen": true,
+  "closeToTray": true,
+  "startMinimized": false,
+  "enableNotifications": true,
+  "notifyOnConnect": true,
+  "notifyOnIntercept": true,
+  "autoCheckUpdates": true,
+  "defaultNamespace": "default",
+  "defaultKubeconfig": "",
+  "defaultContext": "",
+  "managerNamespace": "",
+  "requestTimeoutSeconds": 60,
+  "pollIntervalSeconds": 4,
+  "dockerDaemonMode": false,
+  "disableCompression": false,
+  "insecureSkipTLS": false,
+  "maxLogLines": 2000,
+  "autoScrollLogs": true,
+  "wrapLogLines": true,
+  "defaultLogLevel": "all"
+}
+```
+
+### Properties Definition
+
+| Property | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `theme` | `string` | `"dark"` | Active color scheme: `"dark"`, `"light"`, or `"system"`. |
+| `enableGlowEffects` | `boolean` | `true` | Toggles background aurora ambient glow halos. |
+| `showSplashScreen` | `boolean` | `true` | Displays animated brand splash screen on startup. |
+| `closeToTray` | `boolean` | `true` | Minimizes window to tray when close (`✕`) button is clicked. |
+| `startMinimized` | `boolean` | `false` | Launches application directly to system tray on start. |
+| `enableNotifications` | `boolean` | `true` | Master switch for desktop notifications. |
+| `notifyOnConnect` | `boolean` | `true` | Dispatches desktop alert when cluster connects/disconnects. |
+| `notifyOnIntercept` | `boolean` | `true` | Dispatches alert when workload intercept/replace changes. |
+| `autoCheckUpdates` | `boolean` | `true` | Checks GitHub Releases for new updates on application launch. |
+| `defaultNamespace` | `string` | `"default"` | Initial namespace populated in connection form. |
+| `defaultKubeconfig` | `string` | `""` | Path to custom kubeconfig override. |
+| `defaultContext` | `string` | `""` | Context identifier to pre-select on startup. |
+| `requestTimeoutSeconds` | `integer` | `60` | CLI execution timeout in seconds. |
+| `pollIntervalSeconds` | `integer` | `4` | Watcher poll interval in seconds. |
+| `maxLogLines` | `integer` | `2000` | Maximum number of log lines retained in log panel buffer. |
+| `autoScrollLogs` | `boolean` | `true` | Automatically scroll log viewer on new output. |
+| `wrapLogLines` | `boolean` | `true` | Wrap long log lines. |
+| `defaultLogLevel` | `string` | `"all"` | Default filter level for the log console. |

@@ -12,6 +12,7 @@ Whether you are fixing a bug, adding new features, improving documentation, or t
 - [How Can I Contribute?](#-how-can-i-contribute)
 - [Development Setup](#-development-setup)
 - [Contribution Workflow](#-contribution-workflow)
+- [Testing & Validation](#-testing--validation)
 - [Commit Conventions](#-commit-conventions)
 - [Code Style Guidelines](#-code-style-guidelines)
 - [Pull Request Process](#-pull-request-process)
@@ -37,7 +38,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 ### 3. Submitting Pull Requests
 - Keep PRs focused on a single change or feature.
-- Follow the project's coding and commit standards.
+- Follow the project's coding, testing, and commit standards.
 
 ---
 
@@ -73,17 +74,7 @@ wails dev
 2. **Make Your Changes**:
    Ensure all changes are well-structured, performant, and commented where necessary.
 3. **Validate Your Changes**:
-   ```bash
-   # Validate Go codebase (Static Analysis & Vet)
-   go vet ./...
-   golangci-lint run ./...
-
-   # Validate Frontend (Typecheck, Lint, Formatting, Dead Code)
-   cd frontend
-   npm run validate
-   npm run deadcode
-   cd ..
-   ```
+   Run the full testing and static analysis pipeline described below.
 4. **Commit Your Changes**:
    Use [Conventional Commits](https://www.conventionalcommits.org/):
    ```bash
@@ -95,6 +86,36 @@ wails dev
    ```
 6. **Open a Pull Request**:
    Navigate to the [Telepresence GUI repository](https://github.com/mahdimomeni/telepresence-gui) and click **Compare & pull request**.
+
+---
+
+## 🧪 Testing & Validation
+
+Before submitting any PR, please run the following test and validation commands:
+
+### Frontend Validation (TypeCheck, Lint, Format, Deadcode, Vitest)
+```bash
+cd frontend
+
+# Full validation pipeline (typecheck, lint, formatting check, and Vitest suite)
+npm run validate
+
+# Dead code detection
+npm run deadcode
+
+# Run Playwright E2E browser tests
+npm run test:e2e
+```
+
+### Backend Validation (Go Tests & Linters)
+```bash
+# Run all Go unit, integration, and E2E tests
+go test -v ./...
+
+# Run Go static analysis
+go vet ./...
+golangci-lint run ./...
+```
 
 ---
 
@@ -120,9 +141,9 @@ We adhere to the [Conventional Commits](https://www.conventionalcommits.org/) sp
 - **Go Backend**:
   - Run `go fmt ./...` before committing.
   - Follow idiomatic Go guidelines and clean architecture.
-  - Maintain thread safety with appropriate mutex locking when modifying shared state.
+  - Maintain thread safety with `sync.RWMutex` locking when modifying shared state.
 - **React Frontend**:
-  - Use TypeScript with strict typing.
+  - Use TypeScript with strict typing (avoid `any`).
   - Structure components cleanly with memoization (`React.memo`, `useCallback`, `useMemo`) where appropriate to prevent unnecessary re-renders.
   - Use Tailwind CSS v4 and shadcn/ui design primitives for visual consistency.
 

@@ -20,7 +20,31 @@ Before installing and launching **Telepresence GUI**, ensure your workstation me
 
 ---
 
-## 🛠️ Required Dependencies
+## 🛠️ Automated System Dependency Verification
+
+Telepresence GUI includes an automated **System Tool Dependency Checker**. Upon launching, the application automatically verifies whether required CLI binaries are installed, executable, and in your system `PATH`:
+
+```
++--------------------------------------------------------------------+
+| ⚠️ Required CLI Tools Missing                                       |
++--------------------------------------------------------------------+
+| Telepresence GUI requires the Telepresence CLI and Kubectl to       |
+| manage cluster connections and traffic routing.                    |
+|                                                                    |
+| [X] Telepresence CLI: NOT FOUND in PATH                             |
+|     Run: scoop install telepresence                                |
+|                                                                    |
+| [✓] Kubectl CLI: INSTALLED (/usr/local/bin/kubectl v1.31.0)        |
++--------------------------------------------------------------------+
+|                                                [ Check Again ]     |
++--------------------------------------------------------------------+
+```
+
+If any tool is missing, the application provides direct copy-to-clipboard commands for your operating system and automatically refreshes when installed.
+
+---
+
+## 📦 Required Dependencies
 
 ### 1. Telepresence CLI (v2.x)
 
@@ -92,7 +116,7 @@ kubectl config current-context
 
 Docker is **only required** if you intend to:
 - Run the Telepresence user/root daemon inside a local container (`--docker` flag).
-- Intercept workloads directly into a local Docker container (`--docker-run` flag).
+- Intercept or replace workloads directly into a local Docker container (`--docker-run` flag).
 
 For standard local process intercepts (e.g., debugging a service on `localhost:8080`), Docker is **not required**.
 

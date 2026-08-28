@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Development Environment Setup
 
-This guide provides everything you need to set up your local development workstation, compile Telepresence GUI from source, and run live development servers with hot module replacement (HMR).
+This guide provides everything you need to set up your local development workstation, compile Telepresence GUI from source, run live development servers with hot module replacement (HMR), and execute the full test suite.
 
 ---
 
@@ -97,3 +97,42 @@ wails dev
 2. Wails compiles the Go backend and generates TypeScript bindings in `frontend/src/wailsjs/`.
 3. The desktop window opens automatically.
 4. **Browser Preview**: You can also open `http://localhost:34115` in Chrome, Firefox, or Safari to inspect elements, debug console logs, or use React DevTools directly.
+
+---
+
+## 🧪 Running the Test & Validation Suite
+
+Telepresence GUI maintains a comprehensive testing and static analysis pipeline across both frontend and backend codebases:
+
+### Frontend Validation & Tests
+```bash
+cd frontend
+
+# Run all unit and integration tests (Vitest)
+npm run test
+
+# Run full validation pipeline (typecheck, eslint, prettier check, and vitest)
+npm run validate
+
+# Run dead code detection (Knip)
+npm run deadcode
+
+# Run Playwright End-to-End browser tests
+npm run test:e2e
+
+# Run Playwright E2E with interactive UI
+npm run test:e2e:ui
+```
+
+### Backend Go Tests & Linters
+```bash
+# Run all Go unit and integration tests
+go test -v ./...
+
+# Run Go backend E2E lifecycle and resilience tests
+go test -v ./internal/e2e/...
+
+# Run Go static analysis
+go vet ./...
+golangci-lint run ./...
+```

@@ -33,9 +33,12 @@ Instead of juggling lengthy CLI flags for CIDR blocks, port forwardings, authent
 ## ✨ Key Features
 
 - 🌐 **High-Speed Cluster Discovery**: Instant in-memory YAML parsing of `~/.kube/config` and custom configs for sub-millisecond context and namespace extraction (with resilient `kubectl` CLI fallback). Supports manager namespace overrides, proxy subnets (`--also-proxy`, `--never-proxy`), Virtual NAT (`--vnat`), and user impersonation.
-- 🎯 **Visual Workload Intercepts**: Real-time table of cluster workloads. Intercept traffic to local processes (`localhost:8080`) or Docker containers with HTTP header routing (`x-dev-user=mohammad`) and environment variable export (`.env`, Shell, JSON).
+- 🎯 **Visual Workload Intercepts & Replacement**: Real-time table of cluster workloads. Intercept or replace traffic to local processes (`localhost:8080`) or Docker containers with HTTP header routing (`x-dev-user=mohammad`) and environment variable export (`.env`, Shell, JSON).
+- 🛠️ **Automated System Dependency Checks**: Automated pre-flight validation on startup for `telepresence` (v2.x) and `kubectl` with live status reporting, detected paths/versions, and guided installation.
+- ⚙️ **Comprehensive Application Settings**: Fine-tune themes (Dark/Light/System), ambient aurora glow effects, splash screen animations, close-to-tray/start-minimized behaviors, notification triggers, connectivity defaults, and log buffer preferences.
+- 🪟 **Modern Frameless UI & Custom Title Bar**: Custom borderless window with integrated window controls, connection state pill, and native window dragging regions.
 - 🖥️ **Native Desktop Integration**: Thread-safe system tray menu on Windows, macOS, and Linux with dynamic 1-click connect/disconnect toggles, live status polling, desktop notifications, and single-instance lock.
-- 🔄 **Thread-Safe Auto Updates**: In-app updater checks for new GitHub Releases with atomic update protection and automatic platform/WebKit ABI matching.
+- 🔄 **Thread-Safe Auto Updates**: In-app updater checks for new GitHub Releases with atomic update protection and automatic platform/WebKit ABI matching (WebKit 4.1 & WebKit 4.0).
 - ⚡ **Optimized Performance & Modern UI**: Zero-lag UI with React 19 component memoization (`React.memo`), TanStack Table v9 virtualization, bounded streaming logs, Vite code-splitting, and dark/light theme sync with Tailwind CSS v4 and shadcn/ui.
 
 ---
@@ -66,7 +69,8 @@ Comprehensive guides, architectural diagrams, and tutorials are hosted on our do
 | **[Getting Started & Intro](https://mahdimomeni.github.io/telepresence-gui/docs/intro)** | Project overview, core concepts, and prerequisite setup. |
 | **[Quick Start Tutorial](https://mahdimomeni.github.io/telepresence-gui/docs/getting-started/quick-start)** | Connect to a cluster and create your first intercept in under 2 minutes. |
 | **[Cluster Connection Guide](https://mahdimomeni.github.io/telepresence-gui/docs/user-guide/cluster-connection)** | Detailed guide for namespaces, subnets, RBAC proxies, and authentication. |
-| **[Workload Intercepts Guide](https://mahdimomeni.github.io/telepresence-gui/docs/user-guide/intercepts)** | Local processes, Docker container intercepts, headers, and `.env` exports. |
+| **[Workload Intercepts & Replace](https://mahdimomeni.github.io/telepresence-gui/docs/user-guide/intercepts)** | Local processes, Docker container intercepts, headers, and `.env` exports. |
+| **[Application Settings Guide](https://mahdimomeni.github.io/telepresence-gui/docs/user-guide/application-settings)** | Customizing themes, startup behavior, notification triggers, and connection defaults. |
 | **[CLI Command Mapping](https://mahdimomeni.github.io/telepresence-gui/docs/reference/cli-mapping)** | Side-by-side mapping between Telepresence CLI commands and GUI actions. |
 | **[Developer Setup](https://mahdimomeni.github.io/telepresence-gui/docs/developer-guide/development-setup)** | Building from source, Wails dev mode, and cross-platform compilation. |
 | **[Troubleshooting & FAQ](https://mahdimomeni.github.io/telepresence-gui/docs/troubleshooting/faq)** | Solutions for common connection, permission, and WebKit issues. |
@@ -110,7 +114,7 @@ wails build -platform darwin/universal
 
 ---
 
-## 🧪 Testing Suite
+## 🧪 Testing & Validation Suite
 
 Telepresence GUI includes a comprehensive test suite across the entire application stack:
 
@@ -129,6 +133,9 @@ npm run test:e2e:ui
 
 # Full validation pipeline (typecheck, lint, formatting, dead code, unit & integration tests)
 npm run validate
+
+# Dead code detection
+npm run deadcode
 ```
 
 ### Backend Go Tests (Unit, Integration & E2E)
@@ -138,6 +145,10 @@ go test -v ./...
 
 # Run Go backend E2E lifecycle and resilience tests only
 go test -v ./internal/e2e/...
+
+# Run Go static analysis
+go vet ./...
+golangci-lint run ./...
 ```
 
 ---

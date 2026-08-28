@@ -15,8 +15,9 @@ The Telepresence GUI frontend is built with **React 19**, **TypeScript**, **Vite
 - **React 19 & TypeScript**: Provides modern state handling with strict typing.
 - **Tailwind CSS v4 & shadcn/ui**: Accessible, customizable design primitives with native dark/light theme switching.
 - **TanStack Table v9**: Virtualized, high-performance table engine handling workload filtering, multi-column sorting, and pagination.
-- **Zustand**: Lightweight global state management for connection lifecycle and notification queues.
+- **Zustand Stores**: Lightweight global state management for connection lifecycle (`useConnectionStore`), application preferences (`useSettingsStore`), tool dependency health (`useToolsStore`), and action loaders (`useLoadingStore`).
 - **Lucide Icons**: Consistent, modern iconography.
+- **Vitest & Playwright**: Comprehensive unit, integration, and E2E test suites.
 
 ---
 
@@ -25,12 +26,22 @@ The Telepresence GUI frontend is built with **React 19**, **TypeScript**, **Vite
 ```mermaid
 graph TD
     AppShell["App.tsx (Global Shell & ThemeProvider)"]
+    TitleBar["TitleBar (Custom Frameless Header)"]
+    SplashScreen["SplashScreen (Brand Startup Animation)"]
+    SettingsDialog["SettingsDialog (Modal Preferences)"]
+    MissingTools["MissingToolsView (Dependency Recovery Screen)"]
     UpdateToast["UpdateToast (Auto-Update Notification Banner)"]
     ContextMenu["TextContextMenu (Global Native Context Menu)"]
     
+    AppShell --> TitleBar
+    AppShell --> SplashScreen
+    AppShell --> SettingsDialog
     AppShell --> UpdateToast
     AppShell --> ContextMenu
-    AppShell --> Router{"View Router (Connection State)"}
+    
+    AppShell --> ToolGate{"All Tools Installed?"}
+    ToolGate -->|No| MissingTools
+    ToolGate -->|Yes| Router{"View Router (Connection State)"}
     
     Router -->|Disconnected| ConnectPage["ConnectPage"]
     Router -->|Connected| ListPage["ListPage (Workload Browser)"]
@@ -42,10 +53,9 @@ graph TD
     ConnectForm --> AdvancedTab["AdvancedTab"]
     
     ListPage --> DataTable["DataTable (TanStack Table v9)"]
-    DataTable --> Columns["Columns Definition"]
-    DataTable --> Pagination["DataTablePagination"]
     DataTable --> InterceptDialog["InterceptDialog (Modal)"]
-    DataTable --> DetachButton["DetachButton"]
+    DataTable --> ReplaceDialog["ReplaceDialog (Modal)"]
+    DataTable --> DetailsDialog["WorkloadDetailsDialog (Modal)"]
 ```
 
 ---
@@ -55,7 +65,7 @@ graph TD
 To deliver 60 FPS responsiveness when managing hundreds of workloads or streaming high-velocity daemon logs, the frontend implements several optimization strategies:
 
 ### 1. Form Tab Memoization (`React.memo`)
-The multi-tab connection configuration form separates tab panes (`CoreTab`, `NetworkTab`, `ClusterAuthTab`, `AdvancedTab`) into dedicated components memoized with `React.memo`. State mutations inside one tab (such as entering CIDR subnets or proxy options) do not trigger re-renders of the other tabs.
+The multi-tab connection configuration form separates tab panes (`CoreTab`, `NetworkTab`, `ClusterAuthTab`, `AdvancedTab`) into dedicated components memoized with `React.memo`. State mutations inside one tab do not trigger re-renders of other tabs.
 
 ### 2. Table & Callback Stabilization
 - **Memoized DataTable**: `DataTable` is wrapped with `React.memo` and uses stabilized input filtering callbacks (`handleFilterChange`).
@@ -63,7 +73,7 @@ The multi-tab connection configuration form separates tab panes (`CoreTab`, `Net
 
 ### 3. Bounded Log Stream & Smooth Auto-Scroll
 The daemon log viewer (`frontend/src/components/log-panel.tsx`) prevents browser memory degradation during long-running sessions:
-- **Ring Buffer Capping**: Restricts log storage to a maximum of `MAX_LOG_LINES = 500` entries using `.slice(-MAX_LOG_LINES)`.
+- **Ring Buffer Capping**: Restricts log storage to configurable `maxLogLines` (default: 2000 entries) using `.slice(-maxLogLines)`.
 - **AnimationFrame Scroll**: Dispatches scroll position adjustments via `requestAnimationFrame` when the log drawer is open, preventing UI layout thrashing.
 
 ### 4. Vite Bundle Code Splitting
@@ -90,7 +100,7 @@ Wails automatically parses Go struct methods in `internal/app/app.go` and genera
 
 ```typescript
 // Invoking Go backend from React:
-import { StartTelepresence, ListWorkloads, InterceptWorkload } from '@/wailsjs/go/app/App';
+import { StartTelepresence, ListWorkloads, InterceptWorkload, ReplaceWorkload, GetAppSettings } from '@/wailsjs/go/app/App';
 import { models } from '@/wailsjs/go/models';
 
 // Establish connection:
@@ -99,34 +109,7 @@ await StartTelepresence(connectConfig);
 // Query workloads:
 const workloads: models.Workload[] = await ListWorkloads();
 
-// Start intercept:
+// Intercept or replace workload:
 await InterceptWorkload(interceptConfig);
-```
-
-### Event Listeners (Wails Runtime)
-```typescript
-import { EventsOn, EventsOff } from '@/wailsjs/runtime/runtime';
-
-useEffect(() => {
-  // Listen for daemon status / connection state changes
-  const unsubConn = EventsOn('connection-changed', (connected: boolean) => {
-    setIsConnected(connected);
-  });
-
-  // Listen for real-time workload changes from background watcher
-  const unsubWorkloads = EventsOn('workloads-changed', (workloads: models.Workload[]) => {
-    setWorkloads(workloads);
-  });
-
-  // Listen for live daemon logs
-  const unsubLogs = EventsOn('daemon-log', (logMessage: string) => {
-    appendLog(logMessage);
-  });
-
-  return () => {
-    EventsOff('connection-changed');
-    EventsOff('workloads-changed');
-    EventsOff('daemon-log');
-  };
-}, []);
+await ReplaceWorkload(replaceConfig);
 ```

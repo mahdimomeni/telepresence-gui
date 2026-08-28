@@ -10,7 +10,9 @@ We actively provide security updates and patches for the following versions:
 
 | Version | Supported | Notes |
 | :--- | :--- | :--- |
-| `v1.x` (Latest Release) | ✅ Yes | Actively maintained with security and compatibility patches. |
+| `v1.2.x` (Latest Release) | ✅ Yes | Actively maintained with security and compatibility patches. |
+| `v1.1.x` | ✅ Yes | Maintained for critical vulnerability patches. |
+| `v1.0.x` | ⚠️ Security Only | Critical security fixes only; upgrade to latest recommended. |
 | `< v1.0` | ❌ No | Pre-release versions are deprecated. Please upgrade to latest. |
 
 ---
