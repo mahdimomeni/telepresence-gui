@@ -132,4 +132,3 @@ func (a *App) checkTelepresenceChanges() {
 		a.statusMu.Unlock()
 	}
 }
-

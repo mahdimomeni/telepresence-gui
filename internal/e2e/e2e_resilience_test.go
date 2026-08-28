@@ -99,7 +99,7 @@ func TestE2E_ResilienceAndErrorRecovery(t *testing.T) {
 
 	// 3. Reset settings creates fresh valid config
 	resetSettings, err := appInstance.ResetAppSettings()
-	if err != nil || resetSettings.Theme != "dark" {
+	if err != nil || resetSettings.Theme != themeDark {
 		t.Fatalf("ResetAppSettings failed to restore defaults: %v", err)
 	}
 
@@ -209,7 +209,7 @@ func TestE2E_ConcurrentStatusChecksAndConfigRoundtrips(t *testing.T) {
 
 	// Verify consistent state at the end
 	finalSettings, err := appInstance.GetAppSettings()
-	if err != nil || finalSettings.Theme != "dark" {
+	if err != nil || finalSettings.Theme != themeDark {
 		t.Fatalf("unexpected state after concurrent execution: %+v, err: %v", finalSettings, err)
 	}
 }

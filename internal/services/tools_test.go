@@ -6,13 +6,18 @@ import (
 	"testing"
 )
 
+const (
+	toolTelepresence = "telepresence"
+	toolKubectl      = "kubectl"
+)
+
 func TestToolCheckerService_CheckTools(t *testing.T) {
 	runner := &mockRunner{
 		runFunc: func(_ context.Context, name string, args ...string) (string, error) {
-			if name == "telepresence" && len(args) > 0 && args[0] == "version" {
+			if name == toolTelepresence && len(args) > 0 && args[0] == "version" {
 				return "Client: v2.21.3 (api v3)\nRoot Daemon: not running", nil
 			}
-			if name == "kubectl" && len(args) > 0 && args[0] == "version" {
+			if name == toolKubectl && len(args) > 0 && args[0] == "version" {
 				return "Client Version: v1.31.0", nil
 			}
 			return "", nil
@@ -41,7 +46,7 @@ func TestToolCheckerService_CheckTools(t *testing.T) {
 	teleFound := false
 	kubeFound := false
 	for _, tool := range report.Tools {
-		if tool.Name == "telepresence" {
+		if tool.Name == toolTelepresence {
 			teleFound = true
 			if tool.DocsURL == "" {
 				t.Errorf("expected telepresence docsUrl to be set")
@@ -50,7 +55,7 @@ func TestToolCheckerService_CheckTools(t *testing.T) {
 				t.Errorf("unexpected telepresence result: %+v", tool)
 			}
 		}
-		if tool.Name == "kubectl" {
+		if tool.Name == toolKubectl {
 			kubeFound = true
 			if tool.DocsURL == "" {
 				t.Errorf("expected kubectl docsUrl to be set")
@@ -73,7 +78,7 @@ func TestToolCheckerService_CheckTools_MissingTools(t *testing.T) {
 	runner := &mockRunner{}
 	checker := NewToolCheckerService(runner)
 	checker.SetLookPathFunc(func(file string) (string, error) {
-		if file == "telepresence" {
+		if file == toolTelepresence {
 			return "", os.ErrNotExist
 		}
 		return "/usr/bin/kubectl", nil

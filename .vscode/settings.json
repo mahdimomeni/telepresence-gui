@@ -5,5 +5,11 @@
   "prettier.requireConfig": true,
   "prettier.configPath": "./frontend/.prettierrc.json",
   "prettier.prettierPath": "./frontend/node_modules/prettier",
-  "prettier.ignorePath": "./frontend/.prettierignore"
+  "prettier.ignorePath": "./frontend/.prettierignore",
+  "[go]": {
+    "editor.defaultFormatter": "golang.go",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "always"
+    }
+  }
 }

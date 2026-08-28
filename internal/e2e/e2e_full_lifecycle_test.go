@@ -17,6 +17,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 )
 
+const themeDark = "dark"
+
 type e2eMockRunner struct {
 	mu       sync.Mutex
 	commands []string
@@ -252,7 +254,7 @@ func TestE2E_CompleteApplicationLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetAppSettings failed: %v", err)
 	}
-	if initialSettings.Theme != "dark" {
+	if initialSettings.Theme != themeDark {
 		t.Errorf("expected default theme dark, got %s", initialSettings.Theme)
 	}
 
