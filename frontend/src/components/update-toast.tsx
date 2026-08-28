@@ -3,14 +3,7 @@ import { UpdateInfo, UpdateProgress, UpdateService } from "@/services/update";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import {
-  Sparkles,
-  DownloadCloud,
-  RotateCcw,
-  X,
-  CheckCircle2,
-  AlertTriangle,
-} from "lucide-react";
+import { Sparkles, DownloadCloud, RotateCcw, X, CheckCircle2, AlertTriangle } from "lucide-react";
 
 export function UpdateToast() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
@@ -23,7 +16,7 @@ export function UpdateToast() {
 
   useEffect(() => {
     // Listen for backend startup check
-    const unsubAvailable = UpdateService.onUpdateAvailable((info) => {
+    const unsubAvailable = UpdateService.onUpdateAvailable(info => {
       if (info && info.available) {
         setUpdateInfo(info);
         setDismissed(false);
@@ -31,7 +24,7 @@ export function UpdateToast() {
     });
 
     // Listen for live progress
-    const unsubProgress = UpdateService.onProgress((p) => {
+    const unsubProgress = UpdateService.onProgress(p => {
       setProgress(p);
       if (p.status === "error") {
         setIsUpdating(false);
@@ -75,9 +68,7 @@ export function UpdateToast() {
               <Sparkles className="size-4" />
             </div>
             <div>
-              <h4 className="text-sm font-semibold leading-tight">
-                Update Available
-              </h4>
+              <h4 className="text-sm font-semibold leading-tight">Update Available</h4>
               <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                 <span>{updateInfo.currentVersion}</span>
                 <span>→</span>
@@ -104,19 +95,10 @@ export function UpdateToast() {
         <div className="mt-3">
           {!isUpdating && progress.status !== "done" && progress.status !== "error" && (
             <div className="flex items-center justify-end gap-2 pt-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setDismissed(true)}
-              >
+              <Button variant="ghost" size="sm" onClick={() => setDismissed(true)}>
                 Later
               </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleStartUpdate}
-                className="gap-1.5"
-              >
+              <Button variant="default" size="sm" onClick={handleStartUpdate} className="gap-1.5">
                 <DownloadCloud className="size-3.5" />
                 Download & Install
               </Button>
@@ -162,18 +144,10 @@ export function UpdateToast() {
                 <span className="truncate">{progress.error || "Update failed"}</span>
               </div>
               <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="xs"
-                  onClick={() => setDismissed(true)}
-                >
+                <Button variant="outline" size="xs" onClick={() => setDismissed(true)}>
                   Close
                 </Button>
-                <Button
-                  variant="default"
-                  size="xs"
-                  onClick={handleStartUpdate}
-                >
+                <Button variant="default" size="xs" onClick={handleStartUpdate}>
                   Retry
                 </Button>
               </div>

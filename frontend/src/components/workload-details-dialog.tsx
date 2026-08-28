@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,16 +6,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ContextInput } from "@/components/context-input"
-import { Spinner } from "@/components/ui/spinner"
-import { models } from "../../wailsjs/go/models"
-import { TelepresenceService } from "@/services/telepresence"
-import { CoreService } from "@/services/core"
-import { useLoadingStore } from "@/stores/useLoadingStore"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ContextInput } from "@/components/context-input";
+import { Spinner } from "@/components/ui/spinner";
+import { models } from "../../wailsjs/go/models";
+import { TelepresenceService } from "@/services/telepresence";
+import { CoreService } from "@/services/core";
+import { useLoadingStore } from "@/stores/useLoadingStore";
 import {
   Check,
   Copy,
@@ -29,15 +29,14 @@ import {
   Terminal,
   Trash2,
   ExternalLink,
-  Shield,
   FileCode,
-} from "lucide-react"
+} from "lucide-react";
 
 interface WorkloadDetailsDialogProps {
-  workload: models.Workload | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess?: () => void
+  workload: models.Workload | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 function CopyButton({
@@ -47,25 +46,25 @@ function CopyButton({
   variant = "ghost",
   className = "",
 }: {
-  text: string
-  label?: string
-  size?: "sm" | "icon-sm" | "icon"
-  variant?: "ghost" | "outline" | "secondary" | "default"
-  className?: string
+  text: string;
+  label?: string;
+  size?: "sm" | "icon-sm" | "icon";
+  variant?: "ghost" | "outline" | "secondary" | "default";
+  className?: string;
 }) {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!text) return
+    e.stopPropagation();
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy", err)
+      console.error("Failed to copy", err);
     }
-  }
+  };
 
   return (
     <Button
@@ -83,7 +82,7 @@ function CopyButton({
       )}
       {size === "sm" && <span className="ml-1 text-xs">{copied ? "Copied" : label}</span>}
     </Button>
-  )
+  );
 }
 
 export function WorkloadDetailsDialog({
@@ -92,84 +91,83 @@ export function WorkloadDetailsDialog({
   onOpenChange,
   onSuccess,
 }: WorkloadDetailsDialogProps) {
-  const [envSearch, setEnvSearch] = useState("")
+  const [envSearch, setEnvSearch] = useState("");
 
-  const isDetaching = useLoadingStore((state) =>
+  const isDetaching = useLoadingStore(state =>
     workload ? state.isLoading(`detach-${workload.name}`) : false
-  )
-  const startLoading = useLoadingStore((state) => state.startLoading)
-  const stopLoading = useLoadingStore((state) => state.stopLoading)
-
-  if (!workload) return null
-
-  const interceptInfo = workload.intercept_info?.[0]
-  const spec = interceptInfo?.spec
-  const isReplaced = Boolean(spec?.replace)
-  const isAttached = Boolean(interceptInfo)
+  );
+  const startLoading = useLoadingStore(state => state.startLoading);
+  const stopLoading = useLoadingStore(state => state.stopLoading);
+  const interceptInfo = workload?.intercept_info?.[0];
+  const spec = interceptInfo?.spec;
+  const isReplaced = Boolean(spec?.replace);
+  const isAttached = Boolean(interceptInfo);
 
   const envEntries = useMemo(() => {
-    if (!interceptInfo?.environment) return []
-    return Object.entries(interceptInfo.environment)
-  }, [interceptInfo?.environment])
+    if (!interceptInfo?.environment) return [];
+    return Object.entries(interceptInfo.environment);
+  }, [interceptInfo]);
 
   const filteredEnv = useMemo(() => {
-    if (!envSearch.trim()) return envEntries
-    const q = envSearch.toLowerCase()
+    if (!envSearch.trim()) return envEntries;
+    const q = envSearch.toLowerCase();
     return envEntries.filter(
       ([k, v]) => k.toLowerCase().includes(q) || String(v).toLowerCase().includes(q)
-    )
-  }, [envEntries, envSearch])
+    );
+  }, [envEntries, envSearch]);
 
   const headerEntries = useMemo(() => {
-    if (!spec?.header_filters) return []
-    return Object.entries(spec.header_filters)
-  }, [spec?.header_filters])
+    if (!spec?.header_filters) return [];
+    return Object.entries(spec.header_filters);
+  }, [spec]);
 
   const mountEntries = useMemo(() => {
-    if (!interceptInfo?.mounts) return []
-    return Object.entries(interceptInfo.mounts)
-  }, [interceptInfo?.mounts])
+    if (!interceptInfo?.mounts) return [];
+    return Object.entries(interceptInfo.mounts);
+  }, [interceptInfo]);
 
   const handleCopyAllEnv = (format: "env" | "json") => {
-    if (!interceptInfo?.environment) return
+    if (!interceptInfo?.environment) return;
     if (format === "json") {
-      navigator.clipboard.writeText(JSON.stringify(interceptInfo.environment, null, 2))
+      navigator.clipboard.writeText(JSON.stringify(interceptInfo.environment, null, 2));
     } else {
       const text = Object.entries(interceptInfo.environment)
         .map(([k, v]) => `${k}=${v}`)
-        .join("\n")
-      navigator.clipboard.writeText(text)
+        .join("\n");
+      navigator.clipboard.writeText(text);
     }
-  }
+  };
 
   const handleDetach = async () => {
-    if (!workload) return
-    startLoading(`detach-${workload.name}`)
+    if (!workload) return;
+    startLoading(`detach-${workload.name}`);
     try {
       await TelepresenceService.detachWorkload({
         attachment_name: workload.name,
         namespace: workload.namespace,
-      })
+      });
       CoreService.notify(
         isReplaced ? "Telepresence Replace Detached" : "Telepresence Detach Active",
         `Successfully detached ${workload.name}`
-      )
-      onSuccess?.()
-      onOpenChange(false)
+      );
+      onSuccess?.();
+      onOpenChange(false);
     } catch (error) {
-      CoreService.notify("Telepresence Detach Error", `Detach failed: ${String(error)}`)
+      CoreService.notify("Telepresence Detach Error", `Detach failed: ${String(error)}`);
     } finally {
-      stopLoading(`detach-${workload.name}`)
+      stopLoading(`detach-${workload.name}`);
     }
-  }
+  };
 
-  const targetHost = spec?.target_host || "127.0.0.1"
-  const targetPort = spec?.target_port || 0
-  const targetEndpoint = targetPort ? `${targetHost}:${targetPort}` : targetHost
+  const targetHost = spec?.target_host || "127.0.0.1";
+  const targetPort = spec?.target_port || 0;
+  const targetEndpoint = targetPort ? `${targetHost}:${targetPort}` : targetHost;
 
   const formattedDate = interceptInfo?.modified_at?.seconds
     ? new Date(interceptInfo.modified_at.seconds * 1000).toLocaleString()
-    : "N/A"
+    : "N/A";
+
+  if (!workload) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -314,7 +312,6 @@ export function WorkloadDetailsDialog({
               </TabsTrigger>
             </TabsList>
 
-
             {/* Overview Tab */}
             <TabsContent
               value="overview"
@@ -352,7 +349,7 @@ export function WorkloadDetailsDialog({
                   <div className="p-3 flex items-center justify-between">
                     <span className="text-muted-foreground text-xs">Remote Pod Name</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-xs truncate max-w-[280px]">
+                      <span className="font-mono text-xs truncate max-w-70">
                         {interceptInfo.pod_name}
                       </span>
                       <CopyButton text={interceptInfo.pod_name} size="icon-sm" />
@@ -384,7 +381,7 @@ export function WorkloadDetailsDialog({
                   <div className="p-3 flex items-center justify-between">
                     <span className="text-muted-foreground text-xs">Intercept ID</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[11px] text-muted-foreground truncate max-w-[260px]">
+                      <span className="font-mono text-[11px] text-muted-foreground truncate max-w-65">
                         {interceptInfo.id}
                       </span>
                       <CopyButton text={interceptInfo.id} size="icon-sm" />
@@ -406,7 +403,8 @@ export function WorkloadDetailsDialog({
               {headerEntries.length > 0 ? (
                 <div className="space-y-2">
                   <div className="text-xs text-muted-foreground">
-                    This intercept is filtered. Traffic matching the following HTTP headers is forwarded to your local target:
+                    This intercept is filtered. Traffic matching the following HTTP headers is
+                    forwarded to your local target:
                   </div>
                   <div className="rounded-lg border overflow-hidden">
                     <table className="w-full text-xs text-left">
@@ -434,7 +432,9 @@ export function WorkloadDetailsDialog({
               ) : (
                 <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground space-y-2">
                   <Globe className="size-8 mx-auto opacity-40 text-primary" />
-                  <div className="font-semibold text-foreground text-sm">Global Intercept (All Traffic)</div>
+                  <div className="font-semibold text-foreground text-sm">
+                    Global Intercept (All Traffic)
+                  </div>
                   <p className="text-xs max-w-md mx-auto">
                     No HTTP header filters were specified. All inbound traffic to this workload is
                     currently intercepted and forwarded to your local instance.
@@ -489,7 +489,9 @@ export function WorkloadDetailsDialog({
 
                   {mountEntries.length > 0 && (
                     <div className="space-y-1.5">
-                      <div className="text-xs font-medium text-muted-foreground">Remote Mount Mappings</div>
+                      <div className="text-xs font-medium text-muted-foreground">
+                        Remote Mount Mappings
+                      </div>
                       <div className="rounded-lg border overflow-hidden">
                         <table className="w-full text-xs text-left">
                           <thead className="bg-muted/50 border-b font-medium text-muted-foreground">
@@ -514,7 +516,9 @@ export function WorkloadDetailsDialog({
               ) : (
                 <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground space-y-2">
                   <Folder className="size-8 mx-auto opacity-40 text-primary" />
-                  <div className="font-semibold text-foreground text-sm">Volume Mounts Disabled</div>
+                  <div className="font-semibold text-foreground text-sm">
+                    Volume Mounts Disabled
+                  </div>
                   <p className="text-xs max-w-md mx-auto">
                     Remote filesystem mounting was not enabled for this interception/replacement.
                   </p>
@@ -533,7 +537,7 @@ export function WorkloadDetailsDialog({
                     <ContextInput
                       placeholder="Filter environment variables..."
                       value={envSearch}
-                      onChange={(e) => setEnvSearch(e.target.value)}
+                      onChange={e => setEnvSearch(e.target.value)}
                       className="h-8 text-xs max-w-xs"
                     />
                     <div className="flex items-center gap-1 shrink-0">
@@ -560,7 +564,7 @@ export function WorkloadDetailsDialog({
                   </div>
 
                   <div className="rounded-lg border overflow-hidden flex-1 min-h-0">
-                    <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                    <div className="max-h-75 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
                       <table className="w-full text-xs text-left">
                         <thead className="bg-muted/50 border-b font-medium text-muted-foreground sticky top-0">
                           <tr>
@@ -576,7 +580,7 @@ export function WorkloadDetailsDialog({
                                 <td className="p-2.5 font-semibold text-foreground select-all align-top">
                                   {key}
                                 </td>
-                                <td className="p-2.5 text-muted-foreground break-all select-all align-top max-w-[280px]">
+                                <td className="p-2.5 text-muted-foreground break-all select-all align-top max-w-70">
                                   {String(val)}
                                 </td>
                                 <td className="p-2.5 text-right align-top">
@@ -599,9 +603,12 @@ export function WorkloadDetailsDialog({
               ) : (
                 <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground space-y-2">
                   <Terminal className="size-8 mx-auto opacity-40 text-primary" />
-                  <div className="font-semibold text-foreground text-sm">No Environment Captured</div>
+                  <div className="font-semibold text-foreground text-sm">
+                    No Environment Captured
+                  </div>
                   <p className="text-xs max-w-md mx-auto">
-                    No remote container environment variables were received in the intercept metadata.
+                    No remote container environment variables were received in the intercept
+                    metadata.
                   </p>
                 </div>
               )}
@@ -630,5 +637,5 @@ export function WorkloadDetailsDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

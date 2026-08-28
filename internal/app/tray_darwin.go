@@ -10,4 +10,3 @@ func (a *App) setTrayIcon() {
 
 func (a *App) updateTrayMenu(connected bool) {
 }
-

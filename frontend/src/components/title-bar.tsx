@@ -1,25 +1,26 @@
-import React, { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback } from "react";
 import {
   WindowMinimise,
   WindowToggleMaximise,
   WindowIsMaximised,
   WindowHide,
   Quit,
-} from "../../wailsjs/runtime/runtime"
-import { Minus, Square, Copy, X, Terminal, AlertTriangle, Settings } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { ModeToggle } from "./mode-toggle"
-import Logo from "@/assets/images/logo.svg?react"
-import { useSettingsStore } from "@/stores/useSettingsStore"
+} from "../../wailsjs/runtime/runtime";
+import { Minus, Square, Copy, X, Terminal, AlertTriangle, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ModeToggle } from "./mode-toggle";
+import Logo from "@/assets/images/logo.svg?react";
+import { useSettingsStore } from "@/stores/useSettingsStore";
+import { models } from "../../wailsjs/go/models";
 
 interface TitleBarProps {
-  isConnected: boolean
-  report?: any
-  isLogsOpen: boolean
-  onToggleLogs: () => void
-  onOpenSettings?: () => void
-  onReplaySplash?: () => void
+  isConnected: boolean;
+  report?: models.SystemToolsReport | null;
+  isLogsOpen: boolean;
+  onToggleLogs: () => void;
+  onOpenSettings?: () => void;
+  onReplaySplash?: () => void;
 }
 
 export function TitleBar({
@@ -30,43 +31,44 @@ export function TitleBar({
   onOpenSettings,
   onReplaySplash,
 }: TitleBarProps) {
-  const [isMaximized, setIsMaximized] = useState(false)
-  const closeToTray = useSettingsStore((state) => state.settings.closeToTray)
+  const [isMaximized, setIsMaximized] = useState(false);
+  const closeToTray = useSettingsStore(state => state.settings.closeToTray);
 
-  const checkMaximized = useCallback(async () => {
-    try {
-      const max = await WindowIsMaximised()
-      setIsMaximized(max)
-    } catch {
-      // Fallback in web dev mode
-    }
-  }, [])
+  const checkMaximized = useCallback(() => {
+    WindowIsMaximised()
+      .then(max => {
+        setIsMaximized(max);
+      })
+      .catch(() => {
+        // Fallback in web dev mode
+      });
+  }, []);
 
   useEffect(() => {
-    checkMaximized()
+    checkMaximized();
     const handleResize = () => {
-      checkMaximized()
-    }
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [checkMaximized])
+      checkMaximized();
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [checkMaximized]);
 
   const handleMinimize = () => {
-    WindowMinimise()
-  }
+    WindowMinimise();
+  };
 
   const handleToggleMaximize = async () => {
-    WindowToggleMaximise()
-    setTimeout(checkMaximized, 100)
-  }
+    WindowToggleMaximise();
+    setTimeout(checkMaximized, 100);
+  };
 
   const handleClose = () => {
     if (closeToTray) {
-      WindowHide()
+      WindowHide();
     } else {
-      Quit()
+      Quit();
     }
-  }
+  };
 
   return (
     <header
@@ -181,11 +183,7 @@ export function TitleBar({
             title={isMaximized ? "Restore Down" : "Maximize"}
             aria-label={isMaximized ? "Restore Window" : "Maximize Window"}
           >
-            {isMaximized ? (
-              <Copy className="size-3 rotate-180" />
-            ) : (
-              <Square className="size-3" />
-            )}
+            {isMaximized ? <Copy className="size-3 rotate-180" /> : <Square className="size-3" />}
           </button>
 
           <button
@@ -200,5 +198,5 @@ export function TitleBar({
         </div>
       </div>
     </header>
-  )
+  );
 }

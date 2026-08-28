@@ -41,7 +41,25 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": [
         "warn",
-        { allowConstantExport: true },
+        {
+          allowConstantExport: true,
+          allowExportNames: [
+            "badgeVariants",
+            "buttonVariants",
+            "buttonGroupVariants",
+            "tabsListVariants",
+            "tabsTriggerVariants",
+            "useTheme",
+            "useToast",
+            "toast",
+            "reducer",
+            "createToastManager",
+            "useToastManager",
+            "Select",
+            "SelectGroup",
+            "SelectValue",
+          ],
+        },
       ],
 
       // Dead Code / Unused Imports & Variables
@@ -62,7 +80,7 @@ export default tseslint.config(
       "no-console": ["warn", { allow: ["warn", "error", "info"] }],
       "prefer-const": "error",
       "no-var": "error",
-      "eqeqeq": ["error", "always", { null: "ignore" }],
+      eqeqeq: ["error", "always", { null: "ignore" }],
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/explicit-module-boundary-types": "off",
       "@typescript-eslint/no-non-null-assertion": "off",

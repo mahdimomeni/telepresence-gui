@@ -1,29 +1,19 @@
-import React from "react"
-import { models } from "@/../wailsjs/go/models"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { models } from "@/../wailsjs/go/models";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import {
-  Terminal,
-  FileText,
-  Download,
-  WrapText,
-  ArrowDownToLine,
-  Layers,
-  CheckCircle2,
-} from "lucide-react"
+} from "@/components/ui/select";
+import { Terminal, FileText, WrapText, ArrowDownToLine, CheckCircle2 } from "lucide-react";
 
 interface LogsTabProps {
-  settings: models.AppSettings
-  onChange: <K extends keyof models.AppSettings>(key: K, value: models.AppSettings[K]) => void
+  settings: models.AppSettings;
+  onChange: <K extends keyof models.AppSettings>(key: K, value: models.AppSettings[K]) => void;
 }
 
 export function LogsTab({ settings, onChange }: LogsTabProps) {
@@ -51,16 +41,24 @@ export function LogsTab({ settings, onChange }: LogsTabProps) {
             </div>
             <Select
               value={String(settings.maxLogLines)}
-              onValueChange={(val) => onChange("maxLogLines", Number(val) || 2000)}
+              onValueChange={val => onChange("maxLogLines", Number(val) || 2000)}
             >
               <SelectTrigger className="w-full h-8 text-xs font-mono">
                 <SelectValue placeholder="Select log buffer limit" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="500" className="text-xs">500 Lines (Low memory footprint)</SelectItem>
-                <SelectItem value="1000" className="text-xs">1,000 Lines (Standard)</SelectItem>
-                <SelectItem value="2000" className="text-xs">2,000 Lines (Recommended)</SelectItem>
-                <SelectItem value="5000" className="text-xs">5,000 Lines (Extended debugging)</SelectItem>
+                <SelectItem value="500" className="text-xs">
+                  500 Lines (Low memory footprint)
+                </SelectItem>
+                <SelectItem value="1000" className="text-xs">
+                  1,000 Lines (Standard)
+                </SelectItem>
+                <SelectItem value="2000" className="text-xs">
+                  2,000 Lines (Recommended)
+                </SelectItem>
+                <SelectItem value="5000" className="text-xs">
+                  5,000 Lines (Extended debugging)
+                </SelectItem>
               </SelectContent>
             </Select>
             <p className="text-[11px] text-muted-foreground">
@@ -77,17 +75,27 @@ export function LogsTab({ settings, onChange }: LogsTabProps) {
             </div>
             <Select
               value={settings.defaultLogLevel}
-              onValueChange={(val) => onChange("defaultLogLevel", val || "all")}
+              onValueChange={val => onChange("defaultLogLevel", val || "all")}
             >
               <SelectTrigger className="w-full h-8 text-xs font-mono">
                 <SelectValue placeholder="Select default category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-xs">All Logs (Default)</SelectItem>
-                <SelectItem value="error" className="text-xs">Errors Only</SelectItem>
-                <SelectItem value="warn" className="text-xs">Warnings & Errors</SelectItem>
-                <SelectItem value="commands" className="text-xs">Command Executions (CLI)</SelectItem>
-                <SelectItem value="daemon" className="text-xs">Daemon System Streams</SelectItem>
+                <SelectItem value="all" className="text-xs">
+                  All Logs (Default)
+                </SelectItem>
+                <SelectItem value="error" className="text-xs">
+                  Errors Only
+                </SelectItem>
+                <SelectItem value="warn" className="text-xs">
+                  Warnings & Errors
+                </SelectItem>
+                <SelectItem value="commands" className="text-xs">
+                  Command Executions (CLI)
+                </SelectItem>
+                <SelectItem value="daemon" className="text-xs">
+                  Daemon System Streams
+                </SelectItem>
               </SelectContent>
             </Select>
             <p className="text-[11px] text-muted-foreground">
@@ -100,7 +108,10 @@ export function LogsTab({ settings, onChange }: LogsTabProps) {
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
                 <ArrowDownToLine className="size-3.5 text-primary" />
-                <Label htmlFor="auto-scroll-toggle" className="text-xs font-semibold text-foreground cursor-pointer">
+                <Label
+                  htmlFor="auto-scroll-toggle"
+                  className="text-xs font-semibold text-foreground cursor-pointer"
+                >
                   Auto-Scroll to Bottom
                 </Label>
               </div>
@@ -111,7 +122,7 @@ export function LogsTab({ settings, onChange }: LogsTabProps) {
             <Switch
               id="auto-scroll-toggle"
               checked={settings.autoScrollLogs}
-              onCheckedChange={(checked) => onChange("autoScrollLogs", checked)}
+              onCheckedChange={checked => onChange("autoScrollLogs", checked)}
             />
           </div>
 
@@ -120,7 +131,10 @@ export function LogsTab({ settings, onChange }: LogsTabProps) {
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
                 <WrapText className="size-3.5 text-primary" />
-                <Label htmlFor="wrap-lines-toggle" className="text-xs font-semibold text-foreground cursor-pointer">
+                <Label
+                  htmlFor="wrap-lines-toggle"
+                  className="text-xs font-semibold text-foreground cursor-pointer"
+                >
                   Word Wrap Long Lines
                 </Label>
               </div>
@@ -131,7 +145,7 @@ export function LogsTab({ settings, onChange }: LogsTabProps) {
             <Switch
               id="wrap-lines-toggle"
               checked={settings.wrapLogLines}
-              onCheckedChange={(checked) => onChange("wrapLogLines", checked)}
+              onCheckedChange={checked => onChange("wrapLogLines", checked)}
             />
           </div>
         </div>
@@ -148,7 +162,8 @@ export function LogsTab({ settings, onChange }: LogsTabProps) {
 
         <div className="grid gap-3 rounded-xl border border-border/60 bg-card/40 p-4">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            The application continuously monitors and tails official Telepresence diagnostic files generated by the background daemon:
+            The application continuously monitors and tails official Telepresence diagnostic files
+            generated by the background daemon:
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
@@ -185,5 +200,5 @@ export function LogsTab({ settings, onChange }: LogsTabProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

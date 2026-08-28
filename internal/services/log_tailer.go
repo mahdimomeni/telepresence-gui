@@ -118,7 +118,7 @@ func (t *LogTailer) tailFile(filePath, fileName string) {
 	// Read initial tail (last ~4KB) to capture recent context
 	stat, err := file.Stat()
 	if err == nil && stat.Size() > 0 {
-		var seekPos int64 = 0
+		var seekPos int64
 		if stat.Size() > 8192 {
 			seekPos = stat.Size() - 8192
 		}
@@ -130,7 +130,7 @@ func (t *LogTailer) tailFile(filePath, fileName string) {
 		}
 		for {
 			line, err := reader.ReadString('\n')
-			if len(line) > 0 {
+			if line != "" {
 				trimmed := strings.TrimRight(line, "\r\n")
 				if trimmed != "" {
 					t.emitLog(fileName, trimmed)
@@ -174,7 +174,7 @@ func (t *LogTailer) tailFile(filePath, fileName string) {
 
 			for {
 				line, err := reader.ReadString('\n')
-				if len(line) > 0 {
+				if line != "" {
 					trimmed := strings.TrimRight(line, "\r\n")
 					if trimmed != "" {
 						t.emitLog(fileName, trimmed)
@@ -203,7 +203,7 @@ func getTelepresenceLogDirs() []string {
 	homeDir, _ := os.UserHomeDir()
 
 	switch runtime.GOOS {
-	case "windows":
+	case osWindows:
 		if localApp := os.Getenv("LOCALAPPDATA"); localApp != "" {
 			dirs = append(dirs,
 				filepath.Join(localApp, "Telepresence", "Logs"),

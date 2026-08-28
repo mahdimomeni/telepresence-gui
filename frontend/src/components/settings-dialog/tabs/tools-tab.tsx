@@ -1,23 +1,13 @@
-import React from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Spinner } from "@/components/ui/spinner"
-import {
-  Wrench,
-  CheckCircle2,
-  AlertTriangle,
-  RefreshCw,
-  ExternalLink,
-  Terminal,
-  FolderOpen,
-} from "lucide-react"
-import { useToolsStore } from "@/stores/useToolsStore"
-import { BrowserOpenURL } from "@/../wailsjs/runtime/runtime"
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Wrench, CheckCircle2, AlertTriangle, RefreshCw, ExternalLink } from "lucide-react";
+import { useToolsStore } from "@/stores/useToolsStore";
+import { BrowserOpenURL } from "@/../wailsjs/runtime/runtime";
 
 export function ToolsTab() {
-  const report = useToolsStore((state) => state.report)
-  const isChecking = useToolsStore((state) => state.isChecking)
-  const checkTools = useToolsStore((state) => state.checkTools)
+  const report = useToolsStore(state => state.report);
+  const isChecking = useToolsStore(state => state.isChecking);
+  const checkTools = useToolsStore(state => state.checkTools);
 
   return (
     <div className="space-y-6 animate-page-enter">
@@ -82,7 +72,7 @@ export function ToolsTab() {
 
       {/* Individual Tools List */}
       <div className="space-y-3">
-        {report?.tools.map((tool) => (
+        {report?.tools.map(tool => (
           <div
             key={tool.name}
             className="p-4 rounded-xl border border-border/60 bg-card/40 hover-card-glow space-y-2.5 transition-all"
@@ -114,9 +104,7 @@ export function ToolsTab() {
                       {tool.installed ? "Installed" : "Not Found"}
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {tool.description}
-                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{tool.description}</p>
                 </div>
               </div>
 
@@ -140,7 +128,7 @@ export function ToolsTab() {
                 {tool.version && (
                   <div className="p-2 rounded bg-background/60 border border-border/40 flex items-center justify-between">
                     <span className="text-[10px] text-muted-foreground">Version</span>
-                    <span className="font-semibold text-foreground truncate max-w-[180px]">
+                    <span className="font-semibold text-foreground truncate max-w-45">
                       {tool.version}
                     </span>
                   </div>
@@ -148,7 +136,7 @@ export function ToolsTab() {
                 {tool.path && (
                   <div className="p-2 rounded bg-background/60 border border-border/40 flex items-center justify-between">
                     <span className="text-[10px] text-muted-foreground">Path</span>
-                    <span className="text-foreground truncate max-w-[180px]" title={tool.path}>
+                    <span className="text-foreground truncate max-w-45" title={tool.path}>
                       {tool.path}
                     </span>
                   </div>
@@ -174,5 +162,5 @@ export function ToolsTab() {
         ))}
       </div>
     </div>
-  )
+  );
 }

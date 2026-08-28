@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react"
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   Terminal,
-  ChevronUp,
   ChevronDown,
   Trash2,
   Copy,
@@ -15,93 +14,84 @@ import {
   Minimize2,
   AlertCircle,
   AlertTriangle,
-  Info,
-  CheckCircle2,
-} from "lucide-react"
-import { EventsOn, EventsOff } from "../../wailsjs/runtime/runtime"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { useSettingsStore } from "@/stores/useSettingsStore"
+} from "lucide-react";
+import { EventsOn, EventsOff } from "../../wailsjs/runtime/runtime";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 
-const MAX_LINE_LENGTH = 4000
+const MAX_LINE_LENGTH = 4000;
 
-export type LogLevel = "error" | "warn" | "info" | "success" | "debug" | "system"
-export type LogCategory = "all" | "error" | "warn" | "info" | "commands" | "daemon"
+export type LogLevel = "error" | "warn" | "info" | "success" | "debug" | "system";
+export type LogCategory = "all" | "error" | "warn" | "info" | "commands" | "daemon";
 
 export interface ParsedLog {
-  id: string
-  raw: string
-  timestamp: string
-  level: LogLevel
-  source: string
-  message: string
+  id: string;
+  raw: string;
+  timestamp: string;
+  level: LogLevel;
+  source: string;
+  message: string;
 }
 
 function getFormattedTime(): string {
-  const d = new Date()
-  return (
-    d.toTimeString().split(" ")[0] +
-    "." +
-    String(d.getMilliseconds()).padStart(3, "0")
-  )
+  const d = new Date();
+  return d.toTimeString().split(" ")[0] + "." + String(d.getMilliseconds()).padStart(3, "0");
 }
 
 function parseLogLine(raw: string, index: number): ParsedLog {
-  let text = raw.trim()
+  let text = raw.trim();
   if (text.length > MAX_LINE_LENGTH) {
-    text = text.slice(0, MAX_LINE_LENGTH) + "... [line truncated]"
+    text = text.slice(0, MAX_LINE_LENGTH) + "... [line truncated]";
   }
-  let timestamp = getFormattedTime()
-  let source = "app"
-  let level: LogLevel = "info"
+  let timestamp = getFormattedTime();
+  let source = "app";
+  let level: LogLevel = "info";
 
   // 1. Check for leading bracket tag: [connector], [daemon], [cli], [Connect], [Intercept Error], etc.
-  const bracketMatch = text.match(/^\[([A-Za-z0-9\s_-]+)\]\s*(.*)$/)
+  const bracketMatch = text.match(/^\[([A-Za-z0-9\s_-]+)\]\s*(.*)$/);
   if (bracketMatch) {
-    const rawTag = bracketMatch[1].trim()
-    text = bracketMatch[2]
+    const rawTag = bracketMatch[1].trim();
+    text = bracketMatch[2];
 
-    const lowerTag = rawTag.toLowerCase()
+    const lowerTag = rawTag.toLowerCase();
     if (lowerTag.includes("error") || lowerTag.includes("fail")) {
-      level = "error"
-      source = rawTag.replace(/error/i, "").trim().toLowerCase() || "error"
+      level = "error";
+      source = rawTag.replace(/error/i, "").trim().toLowerCase() || "error";
     } else if (lowerTag.includes("warn")) {
-      level = "warn"
-      source = rawTag.replace(/warn/i, "").trim().toLowerCase() || "warn"
+      level = "warn";
+      source = rawTag.replace(/warn/i, "").trim().toLowerCase() || "warn";
     } else {
-      source = lowerTag
+      source = lowerTag;
     }
   }
 
   // 2. Check for Telepresence timestamp pattern e.g. "2026-08-28 02:58:56.0194 INFO ..."
-  const tpTimeMatch = text.match(/^(\d{4}-\d{2}-\d{2}[ T])?(\d{2}:\d{2}:\d{2}(\.\d+)?)\s+([A-Z]+)?\s*(.*)$/)
+  const tpTimeMatch = text.match(
+    /^(\d{4}-\d{2}-\d{2}[ T])?(\d{2}:\d{2}:\d{2}(\.\d+)?)\s+([A-Z]+)?\s*(.*)$/
+  );
   if (tpTimeMatch) {
     if (tpTimeMatch[2]) {
-      timestamp = tpTimeMatch[2]
+      timestamp = tpTimeMatch[2];
     }
-    const tpLevel = (tpTimeMatch[4] || "").toUpperCase()
+    const tpLevel = (tpTimeMatch[4] || "").toUpperCase();
     if (tpLevel === "ERROR" || tpLevel === "FATAL") {
-      level = "error"
+      level = "error";
     } else if (tpLevel === "WARN" || tpLevel === "WARNING") {
-      level = "warn"
+      level = "warn";
     } else if (tpLevel === "INFO") {
-      if (level !== "error" && level !== "warn") level = "info"
+      if (level !== "error" && level !== "warn") level = "info";
     } else if (tpLevel === "DEBUG" || tpLevel === "TRACE") {
-      level = "debug"
+      level = "debug";
     }
     if (tpTimeMatch[5]) {
-      text = tpTimeMatch[5]
+      text = tpTimeMatch[5];
     }
   }
 
   // 3. Substring content inspections for level inference if not already identified
-  const lowerMsg = text.toLowerCase()
+  const lowerMsg = text.toLowerCase();
   if (level === "info") {
     if (
       lowerMsg.includes("error") ||
@@ -111,16 +101,16 @@ function parseLogLine(raw: string, index: number): ParsedLog {
       lowerMsg.includes("is not allowed") ||
       lowerMsg.includes("not found in %path%")
     ) {
-      level = "error"
+      level = "error";
     } else if (lowerMsg.includes("warn") || lowerMsg.includes("warning")) {
-      level = "warn"
+      level = "warn";
     } else if (
       lowerMsg.includes("success") ||
       lowerMsg.includes("connected") ||
       lowerMsg.includes("ready") ||
       lowerMsg.includes("applied successfully")
     ) {
-      level = "success"
+      level = "success";
     }
   }
 
@@ -131,118 +121,137 @@ function parseLogLine(raw: string, index: number): ParsedLog {
     level,
     source: source || "system",
     message: text || raw,
-  }
+  };
 }
 
 interface LogPanelProps {
-  isOpen?: boolean
-  onOpenChange?: (open: boolean) => void
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOpen }: LogPanelProps) {
-  const [internalOpen, setInternalOpen] = useState(false)
-  const isControlled = controlledOpen !== undefined
-  const isOpen = isControlled ? controlledOpen : internalOpen
-  const setIsOpen = isControlled ? (setControlledOpen ?? (() => {})) : setInternalOpen
+export function LogPanel({
+  isOpen: controlledOpen,
+  onOpenChange: setControlledOpen,
+}: LogPanelProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : internalOpen;
+  const setIsOpen = isControlled ? (setControlledOpen ?? (() => {})) : setInternalOpen;
 
-  const appSettings = useSettingsStore((state) => state.settings)
-  const maxLogLines = appSettings.maxLogLines || 2000
+  const appSettings = useSettingsStore(state => state.settings);
+  const maxLogLines = appSettings.maxLogLines || 2000;
 
-  const [logs, setLogs] = useState<ParsedLog[]>([])
-  const [filterCategory, setFilterCategory] = useState<LogCategory>((appSettings.defaultLogLevel as LogCategory) || "all")
-  const [filterQuery, setFilterQuery] = useState("")
-  const [autoScroll, setAutoScroll] = useState(appSettings.autoScrollLogs ?? true)
-  const [wrapLines, setWrapLines] = useState(appSettings.wrapLogLines ?? true)
-  const [isExpandedHeight, setIsExpandedHeight] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [isUserScrolledUp, setIsUserScrolledUp] = useState(false)
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const [logs, setLogs] = useState<ParsedLog[]>([]);
+  const [filterCategory, setFilterCategory] = useState<LogCategory>(
+    (appSettings.defaultLogLevel as LogCategory) || "all"
+  );
+  const [filterQuery, setFilterQuery] = useState("");
+  const [autoScroll, setAutoScroll] = useState(appSettings.autoScrollLogs ?? true);
+  const [wrapLines, setWrapLines] = useState(appSettings.wrapLogLines ?? true);
+  const [isExpandedHeight, setIsExpandedHeight] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const getViewport = useCallback(() => {
     return (
       scrollRef.current?.querySelector<HTMLElement>(
         '[data-slot="scroll-area-viewport"], [data-radix-scroll-area-viewport]'
       ) || scrollRef.current
-    )
-  }, [])
+    );
+  }, []);
 
-  const scrollToBottom = useCallback((smooth = false) => {
-    const viewport = getViewport()
-    if (viewport) {
-      if (smooth) {
-        viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" })
-      } else {
-        viewport.scrollTop = viewport.scrollHeight
+  const scrollToBottom = useCallback(
+    (smooth = false) => {
+      const viewport = getViewport();
+      if (viewport) {
+        if (smooth) {
+          viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
+        } else {
+          viewport.scrollTop = viewport.scrollHeight;
+        }
+      } else if (bottomRef.current) {
+        bottomRef.current.scrollIntoView({
+          behavior: smooth ? "smooth" : "auto",
+          block: "nearest",
+        });
       }
-    } else if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "nearest" })
-    }
-  }, [getViewport])
+    },
+    [getViewport]
+  );
 
   useEffect(() => {
     EventsOn("daemon-log", (newLine: string) => {
-      if (!newLine || typeof newLine !== "string") return
-      setLogs((prevLogs) => {
-        const parsed = parseLogLine(newLine, prevLogs.length)
-        const updated = [...prevLogs, parsed]
-        return updated.length > maxLogLines ? updated.slice(-maxLogLines) : updated
-      })
-    })
+      if (!newLine || typeof newLine !== "string") return;
+      setLogs(prevLogs => {
+        const parsed = parseLogLine(newLine, prevLogs.length);
+        const updated = [...prevLogs, parsed];
+        return updated.length > maxLogLines ? updated.slice(-maxLogLines) : updated;
+      });
+    });
 
     return () => {
-      EventsOff("daemon-log")
-    }
-  }, [maxLogLines])
+      EventsOff("daemon-log");
+    };
+  }, [maxLogLines]);
 
   // Synchronize with app settings preferences
   useEffect(() => {
-    if (appSettings.autoScrollLogs !== undefined) {
-      setAutoScroll(appSettings.autoScrollLogs)
-    }
-  }, [appSettings.autoScrollLogs])
-
-  useEffect(() => {
-    if (appSettings.wrapLogLines !== undefined) {
-      setWrapLines(appSettings.wrapLogLines)
-    }
-  }, [appSettings.wrapLogLines])
-
-  useEffect(() => {
-    if (appSettings.defaultLogLevel) {
-      setFilterCategory(appSettings.defaultLogLevel as LogCategory)
-    }
-  }, [appSettings.defaultLogLevel])
+    const unsub = useSettingsStore.subscribe((state, prevState) => {
+      if (
+        state.settings.autoScrollLogs !== prevState.settings.autoScrollLogs &&
+        state.settings.autoScrollLogs !== undefined
+      ) {
+        setAutoScroll(state.settings.autoScrollLogs);
+      }
+      if (
+        state.settings.wrapLogLines !== prevState.settings.wrapLogLines &&
+        state.settings.wrapLogLines !== undefined
+      ) {
+        setWrapLines(state.settings.wrapLogLines);
+      }
+      if (
+        state.settings.defaultLogLevel !== prevState.settings.defaultLogLevel &&
+        state.settings.defaultLogLevel
+      ) {
+        setFilterCategory(state.settings.defaultLogLevel as LogCategory);
+      }
+    });
+    return unsub;
+  }, []);
 
   // Listen for scroll events to detect if user has scrolled away from the bottom
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return;
 
-    const viewport = getViewport()
-    if (!viewport) return
+    const viewport = getViewport();
+    if (!viewport) return;
 
     const handleScroll = () => {
-      const threshold = 40
+      const threshold = 40;
       const isNearBottom =
-        viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= threshold
-      setIsUserScrolledUp(!isNearBottom)
-    }
+        viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= threshold;
+      setIsUserScrolledUp(!isNearBottom);
+    };
 
-    viewport.addEventListener("scroll", handleScroll, { passive: true })
+    viewport.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
-      viewport.removeEventListener("scroll", handleScroll)
-    }
-  }, [isOpen, getViewport])
+      viewport.removeEventListener("scroll", handleScroll);
+    };
+  }, [isOpen, getViewport]);
 
   // Auto-scroll when logs update or preferences change
   useEffect(() => {
-    if (isOpen && autoScroll && !isUserScrolledUp) {
-      scrollToBottom()
-      const rafId = requestAnimationFrame(() => {
-        scrollToBottom()
-      })
-      return () => cancelAnimationFrame(rafId)
+    if (!isOpen || !autoScroll || isUserScrolledUp) {
+      return;
     }
+
+    scrollToBottom();
+    const rafId = requestAnimationFrame(() => {
+      scrollToBottom();
+    });
+    return () => cancelAnimationFrame(rafId);
   }, [
     logs,
     isOpen,
@@ -253,32 +262,35 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
     wrapLines,
     isExpandedHeight,
     scrollToBottom,
-  ])
+  ]);
 
   // Reset scrolled state when opening console
   useEffect(() => {
-    if (isOpen) {
-      setIsUserScrolledUp(false)
+    if (!isOpen) return;
+
+    const rafId = requestAnimationFrame(() => {
+      setIsUserScrolledUp(false);
       if (autoScroll) {
-        requestAnimationFrame(() => scrollToBottom())
+        scrollToBottom();
       }
-    }
-  }, [isOpen, autoScroll, scrollToBottom])
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [isOpen, autoScroll, scrollToBottom]);
 
   // Counts by category
   const counts = useMemo(() => {
-    let error = 0
-    let warn = 0
-    let info = 0
-    let commands = 0
-    let daemon = 0
+    let error = 0;
+    let warn = 0;
+    let info = 0;
+    let commands = 0;
+    let daemon = 0;
 
     for (const item of logs) {
-      if (item.level === "error") error++
-      if (item.level === "warn") warn++
-      if (item.level === "info" || item.level === "success") info++
+      if (item.level === "error") error++;
+      if (item.level === "warn") warn++;
+      if (item.level === "info" || item.level === "success") info++;
 
-      const src = item.source.toLowerCase()
+      const src = item.source.toLowerCase();
       if (
         src.includes("connect") ||
         src.includes("intercept") ||
@@ -286,7 +298,7 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
         src.includes("detach") ||
         src.includes("cli")
       ) {
-        commands++
+        commands++;
       }
       if (
         src.includes("connector") ||
@@ -294,95 +306,95 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
         src.includes("userd") ||
         src.includes("rootd")
       ) {
-        daemon++
+        daemon++;
       }
     }
 
-    return { total: logs.length, error, warn, info, commands, daemon }
-  }, [logs])
+    return { total: logs.length, error, warn, info, commands, daemon };
+  }, [logs]);
 
   // Filter logs based on category and search text
   const filteredLogs = useMemo(() => {
-    let result = logs
+    let result = logs;
 
     if (filterCategory === "error") {
-      result = result.filter((l) => l.level === "error")
+      result = result.filter(l => l.level === "error");
     } else if (filterCategory === "warn") {
-      result = result.filter((l) => l.level === "warn")
+      result = result.filter(l => l.level === "warn");
     } else if (filterCategory === "info") {
-      result = result.filter((l) => l.level === "info" || l.level === "success")
+      result = result.filter(l => l.level === "info" || l.level === "success");
     } else if (filterCategory === "commands") {
-      result = result.filter((l) => {
-        const src = l.source.toLowerCase()
+      result = result.filter(l => {
+        const src = l.source.toLowerCase();
         return (
           src.includes("connect") ||
           src.includes("intercept") ||
           src.includes("replace") ||
           src.includes("detach") ||
           src.includes("cli")
-        )
-      })
+        );
+      });
     } else if (filterCategory === "daemon") {
-      result = result.filter((l) => {
-        const src = l.source.toLowerCase()
+      result = result.filter(l => {
+        const src = l.source.toLowerCase();
         return (
           src.includes("connector") ||
           src.includes("daemon") ||
           src.includes("userd") ||
           src.includes("rootd")
-        )
-      })
+        );
+      });
     }
 
     if (filterQuery.trim()) {
-      const q = filterQuery.toLowerCase()
+      const q = filterQuery.toLowerCase();
       result = result.filter(
-        (l) =>
+        l =>
           l.raw.toLowerCase().includes(q) ||
           l.source.toLowerCase().includes(q) ||
           l.message.toLowerCase().includes(q)
-      )
+      );
     }
 
-    return result
-  }, [logs, filterCategory, filterQuery])
+    return result;
+  }, [logs, filterCategory, filterQuery]);
 
   const handleCopyLogs = useCallback(async () => {
-    if (filteredLogs.length === 0) return
+    if (filteredLogs.length === 0) return;
     try {
       const text = filteredLogs
-        .map((l) => `[${l.timestamp}] [${l.level.toUpperCase()}] [${l.source}] ${l.message}`)
-        .join("\n")
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+        .map(l => `[${l.timestamp}] [${l.level.toUpperCase()}] [${l.source}] ${l.message}`)
+        .join("\n");
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy logs", err)
+      console.error("Failed to copy logs", err);
     }
-  }, [filteredLogs])
+  }, [filteredLogs]);
 
   const handleExportLogs = useCallback(() => {
-    if (logs.length === 0) return
+    if (logs.length === 0) return;
     const text = logs
-      .map((l) => `[${l.timestamp}] [${l.level.toUpperCase()}] [${l.source}] ${l.message}`)
-      .join("\n")
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    const dateStr = new Date().toISOString().replace(/[:.]/g, "-")
-    link.href = url
-    link.download = `telepresence-logs-${dateStr}.log`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }, [logs])
+      .map(l => `[${l.timestamp}] [${l.level.toUpperCase()}] [${l.source}] ${l.message}`)
+      .join("\n");
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().replace(/[:.]/g, "-");
+    link.href = url;
+    link.download = `telepresence-logs-${dateStr}.log`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [logs]);
 
   const highlightMatch = useCallback(
     (text: string) => {
-      if (!filterQuery.trim()) return text
-      const regex = new RegExp(`(${filterQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi")
-      const parts = text.split(regex)
+      if (!filterQuery.trim()) return text;
+      const regex = new RegExp(`(${filterQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+      const parts = text.split(regex);
       return parts.map((part, i) =>
         regex.test(part) ? (
           <mark key={i} className="bg-amber-400/30 text-amber-200 rounded-xs px-0.5 font-bold">
@@ -391,43 +403,43 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
         ) : (
           part
         )
-      )
+      );
     },
     [filterQuery]
-  )
+  );
 
   const getLevelBadgeClass = (level: LogLevel) => {
     switch (level) {
       case "error":
-        return "bg-rose-500/20 text-rose-300 border-rose-500/40"
+        return "bg-rose-500/20 text-rose-300 border-rose-500/40";
       case "warn":
-        return "bg-amber-500/20 text-amber-300 border-amber-500/40"
+        return "bg-amber-500/20 text-amber-300 border-amber-500/40";
       case "success":
-        return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+        return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
       case "debug":
-        return "bg-purple-500/20 text-purple-300 border-purple-500/40"
+        return "bg-purple-500/20 text-purple-300 border-purple-500/40";
       default:
-        return "bg-sky-500/15 text-sky-300 border-sky-500/30"
+        return "bg-sky-500/15 text-sky-300 border-sky-500/30";
     }
-  }
+  };
 
   const getLogTextClass = (level: LogLevel) => {
     switch (level) {
       case "error":
-        return "text-rose-400 font-medium"
+        return "text-rose-400 font-medium";
       case "warn":
-        return "text-amber-300"
+        return "text-amber-300";
       case "success":
-        return "text-emerald-300"
+        return "text-emerald-300";
       case "debug":
-        return "text-purple-300"
+        return "text-purple-300";
       default:
-        return "text-zinc-300"
+        return "text-zinc-300";
     }
-  }
+  };
 
   if (!isOpen) {
-    return null
+    return null;
   }
 
   return (
@@ -438,9 +450,14 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
           <div className="flex items-center justify-center size-5 rounded bg-primary/15 text-primary border border-primary/20">
             <Terminal className="size-3" />
           </div>
-          <span className="font-semibold text-zinc-200 tracking-tight">Telepresence Console & Daemon Logs</span>
+          <span className="font-semibold text-zinc-200 tracking-tight">
+            Telepresence Console & Daemon Logs
+          </span>
           {logs.length > 0 && (
-            <Badge variant="secondary" className="h-4 px-1.5 py-0 text-[10px] font-mono bg-zinc-800 text-zinc-300">
+            <Badge
+              variant="secondary"
+              className="h-4 px-1.5 py-0 text-[10px] font-mono bg-zinc-800 text-zinc-300"
+            >
               {logs.length}
             </Badge>
           )}
@@ -453,7 +470,7 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
               {counts.error} {counts.error === 1 ? "error" : "errors"}
             </Badge>
           )}
-          <span className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-mono hidden sm:inline-flex ml-1">
+          <span className="items-center gap-1.5 text-[10px] text-emerald-400 font-mono hidden sm:inline-flex ml-1">
             <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Live Stream
           </span>
@@ -492,7 +509,7 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
               type="text"
               placeholder="Filter logs..."
               value={filterQuery}
-              onChange={(e) => setFilterQuery(e.target.value)}
+              onChange={e => setFilterQuery(e.target.value)}
               className="w-full h-6.5 pl-7 pr-6 rounded bg-zinc-950/90 border border-zinc-700/60 text-xs text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-primary transition-colors"
             />
             {filterQuery && (
@@ -524,8 +541,8 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
                 filterCategory === "error"
                   ? "bg-rose-500/30 text-rose-300 font-semibold border border-rose-500/40"
                   : counts.error > 0
-                  ? "text-rose-400 hover:bg-rose-500/15"
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+                    ? "text-rose-400 hover:bg-rose-500/15"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
               }`}
             >
               {counts.error > 0 && <AlertCircle className="size-2.5" />}
@@ -537,8 +554,8 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
                 filterCategory === "warn"
                   ? "bg-amber-500/30 text-amber-300 font-semibold border border-amber-500/40"
                   : counts.warn > 0
-                  ? "text-amber-400 hover:bg-amber-500/15"
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+                    ? "text-amber-400 hover:bg-amber-500/15"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
               }`}
             >
               {counts.warn > 0 && <AlertTriangle className="size-2.5" />}
@@ -582,14 +599,16 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
               autoScroll ? "text-primary bg-primary/10" : "text-zinc-400 hover:text-zinc-100"
             }`}
             onClick={() => {
-              const next = !autoScroll
-              setAutoScroll(next)
+              const next = !autoScroll;
+              setAutoScroll(next);
               if (next) {
-                setIsUserScrolledUp(false)
-                scrollToBottom(true)
+                setIsUserScrolledUp(false);
+                scrollToBottom(true);
               }
             }}
-            title={autoScroll ? "Auto-scroll ON (click to pause)" : "Auto-scroll OFF (click to enable)"}
+            title={
+              autoScroll ? "Auto-scroll ON (click to pause)" : "Auto-scroll OFF (click to enable)"
+            }
           >
             <ArrowDownToLine className="size-3" />
             <span className="hidden sm:inline">Auto-scroll</span>
@@ -633,8 +652,8 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
             size="sm"
             className="h-6 px-2 text-[11px] text-zinc-400 hover:text-rose-400 gap-1 cursor-pointer"
             onClick={() => {
-              setLogs([])
-              setIsUserScrolledUp(false)
+              setLogs([]);
+              setIsUserScrolledUp(false);
             }}
             disabled={logs.length === 0}
             title="Clear current logs"
@@ -650,15 +669,18 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
         <ScrollArea
           ref={scrollRef}
           className={`${
-            isExpandedHeight ? "h-96 sm:h-[480px]" : "h-64"
+            isExpandedHeight ? "h-96 sm:h-120" : "h-64"
           } w-full px-3 py-2 font-mono text-[11px] leading-5 tracking-tight transition-all duration-200`}
         >
           {logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-52 text-zinc-500 italic space-y-1.5">
               <Terminal className="size-7 opacity-35 text-zinc-400 mb-1" />
-              <span className="font-semibold text-zinc-400">Waiting for Telepresence daemon logs...</span>
+              <span className="font-semibold text-zinc-400">
+                Waiting for Telepresence daemon logs...
+              </span>
               <span className="text-[10px] text-zinc-500">
-                Cluster connection events, traffic manager routing, and intercept output will stream here in real time.
+                Cluster connection events, traffic manager routing, and intercept output will stream
+                here in real time.
               </span>
             </div>
           ) : filteredLogs.length === 0 ? (
@@ -677,8 +699,8 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
                     log.level === "error"
                       ? "bg-rose-950/20"
                       : log.level === "warn"
-                      ? "bg-amber-950/15"
-                      : ""
+                        ? "bg-amber-950/15"
+                        : ""
                   }`}
                 >
                   {/* Line Number */}
@@ -700,12 +722,12 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
                     {log.level === "error"
                       ? "ERR"
                       : log.level === "warn"
-                      ? "WRN"
-                      : log.level === "success"
-                      ? "OK"
-                      : log.level === "debug"
-                      ? "DBG"
-                      : "INF"}
+                        ? "WRN"
+                        : log.level === "success"
+                          ? "OK"
+                          : log.level === "debug"
+                            ? "DBG"
+                            : "INF"}
                   </span>
 
                   {/* Source Tag */}
@@ -732,9 +754,9 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
         {isUserScrolledUp && filteredLogs.length > 0 && (
           <button
             onClick={() => {
-              setIsUserScrolledUp(false)
-              if (!autoScroll) setAutoScroll(true)
-              scrollToBottom(true)
+              setIsUserScrolledUp(false);
+              if (!autoScroll) setAutoScroll(true);
+              scrollToBottom(true);
             }}
             className="absolute bottom-3 right-5 z-20 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all cursor-pointer animate-in fade-in slide-in-from-bottom-2 duration-150 border border-primary/20"
           >
@@ -744,5 +766,5 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
         )}
       </div>
     </div>
-  )
+  );
 }

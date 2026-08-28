@@ -1,37 +1,33 @@
-import { type ReactTable, type RowData } from "@tanstack/react-table"
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react"
+import { type ReactTable, type RowData } from "@tanstack/react-table";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
-import { type DataTableFeatures } from "./data-table-features"
+import { type DataTableFeatures } from "./data-table-features";
 
 interface DataTablePaginationProps<TData extends RowData> {
-  table: ReactTable<DataTableFeatures, TData>
+  table: ReactTable<DataTableFeatures, TData>;
 }
 
 export function DataTablePagination<TData extends RowData>({
   table,
 }: DataTablePaginationProps<TData>) {
-  const filteredCount = table.getFilteredRowModel().rows.length
-  const pageCount = Math.max(1, table.getPageCount())
-  const currentPage = table.state.pagination.pageIndex + 1
+  const filteredCount = table.getFilteredRowModel().rows.length;
+  const pageCount = Math.max(1, table.getPageCount());
+  const currentPage = table.state.pagination.pageIndex + 1;
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 py-1 text-xs">
       <div className="text-muted-foreground">
-        Showing <span className="font-semibold text-foreground">{filteredCount}</span> workload{filteredCount === 1 ? "" : "s"}
+        Showing <span className="font-semibold text-foreground">{filteredCount}</span> workload
+        {filteredCount === 1 ? "" : "s"}
       </div>
 
       <div className="flex items-center gap-4 sm:gap-6">
@@ -39,15 +35,15 @@ export function DataTablePagination<TData extends RowData>({
           <span className="text-muted-foreground text-xs whitespace-nowrap">Rows:</span>
           <Select
             value={`${table.state.pagination.pageSize}`}
-            onValueChange={(value) => {
-              if (value) table.setPageSize(Number(value))
+            onValueChange={value => {
+              if (value) table.setPageSize(Number(value));
             }}
           >
-            <SelectTrigger className="h-7 w-[68px] text-xs">
+            <SelectTrigger className="h-7 w-17 text-xs">
               <SelectValue placeholder={table.state.pagination.pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[10, 20, 30, 50].map((pageSize) => (
+              {[10, 20, 30, 50].map(pageSize => (
                 <SelectItem key={pageSize} value={`${pageSize}`} className="text-xs">
                   {pageSize}
                 </SelectItem>
@@ -55,7 +51,6 @@ export function DataTablePagination<TData extends RowData>({
             </SelectContent>
           </Select>
         </div>
-
 
         <div className="text-xs text-muted-foreground whitespace-nowrap">
           Page <span className="font-semibold text-foreground">{currentPage}</span> of{" "}
@@ -110,6 +105,5 @@ export function DataTablePagination<TData extends RowData>({
         </div>
       </div>
     </div>
-  )
+  );
 }
-

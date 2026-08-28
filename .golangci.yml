@@ -90,7 +90,6 @@ linters-settings:
   unused:
     field-writes-are-uses: false
     post-statements-are-reads: false
-    exported-is-used: true
 
 issues:
   max-issues-per-linter: 0

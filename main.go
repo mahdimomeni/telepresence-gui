@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"encoding/json"
+	"runtime"
 	"telepresence-gui/internal/app"
 	"telepresence-gui/internal/cli"
 	"telepresence-gui/internal/services"
@@ -53,6 +54,16 @@ func main() {
 	updateService := services.NewUpdateService("mahdimomeni", "telepresence-gui", appVersion)
 	toolService := services.NewToolCheckerService(runner)
 
+	var trayIcon []byte
+	switch runtime.GOOS {
+	case "linux":
+		trayIcon = linuxTrayIcon
+	case "darwin":
+		trayIcon = darwinTrayIcon
+	default:
+		trayIcon = windowsTrayIcon
+	}
+
 	// Instantiate the Presentation App Layer
 	application := app.NewApp(
 		teleService,
@@ -60,9 +71,7 @@ func main() {
 		configService,
 		updateService,
 		toolService,
-		linuxTrayIcon,
-		darwinTrayIcon,
-		windowsTrayIcon,
+		trayIcon,
 	)
 
 	// Create application with options

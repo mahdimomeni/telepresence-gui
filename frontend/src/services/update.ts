@@ -15,20 +15,6 @@ export interface UpdateProgress {
   error?: string;
 }
 
-declare global {
-  interface Window {
-    go?: {
-      app?: {
-        App?: {
-          CheckForUpdates?: () => Promise<UpdateInfo>;
-          DownloadAndInstallUpdate?: () => Promise<void>;
-          RestartApp?: () => Promise<void>;
-        };
-      };
-    };
-  }
-}
-
 export const UpdateService = {
   async checkForUpdates(): Promise<UpdateInfo | null> {
     try {
@@ -46,7 +32,9 @@ export const UpdateService = {
     if (app && typeof app.DownloadAndInstallUpdate === "function") {
       await app.DownloadAndInstallUpdate();
     } else {
-      console.error("[UpdateService] DownloadAndInstallUpdate is not available on window.go.app.App");
+      console.error(
+        "[UpdateService] DownloadAndInstallUpdate is not available on window.go.app.App"
+      );
       throw new Error("Backend update method not found. Please restart Wails dev server.");
     }
   },

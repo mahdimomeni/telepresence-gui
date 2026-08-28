@@ -101,4 +101,3 @@ func (s *KubeService) GetKubeInfo(ctx context.Context, kubeConfigPath string) (m
 
 	return info, nil
 }
-

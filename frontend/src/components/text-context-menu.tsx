@@ -1,12 +1,4 @@
-import {
-  CheckCheck,
-  ClipboardPaste,
-  Copy,
-  Redo2,
-  Scissors,
-  Trash2,
-  Undo2,
-} from "lucide-react"
+import { CheckCheck, ClipboardPaste, Copy, Redo2, Scissors, Trash2, Undo2 } from "lucide-react";
 
 import {
   ContextMenu,
@@ -15,129 +7,127 @@ import {
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu"
-import { useState } from "react"
+} from "@/components/ui/context-menu";
+import { useState } from "react";
 
 interface TextContextMenuProps {
-  children: React.ReactNode
-  targetRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>
-  className: string | undefined
+  children: React.ReactNode;
+  targetRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>;
+  className: string | undefined;
 }
 
 export function TextContextMenu({ children, targetRef, className }: TextContextMenuProps) {
-  const [canCopy, setCanCopy] = useState(false)
-  const [canSelectAll, setCanSelectAll] = useState(false)
-  
+  const [canCopy, setCanCopy] = useState(false);
+  const [canSelectAll, setCanSelectAll] = useState(false);
+
   const handleOpenChange = (open: boolean) => {
     if (open && targetRef.current) {
-      const el = targetRef.current
-      const start = el.selectionStart ?? 0
-      const end = el.selectionEnd ?? 0
-      const totalLength = el.value.length
-      const isPassword = el.type === "password"
+      const el = targetRef.current;
+      const start = el.selectionStart ?? 0;
+      const end = el.selectionEnd ?? 0;
+      const totalLength = el.value.length;
+      const isPassword = el.type === "password";
 
-      const selectedLength = end - start
+      const selectedLength = end - start;
 
-      setCanCopy(selectedLength > 0 && !isPassword)
+      setCanCopy(selectedLength > 0 && !isPassword);
 
-      const isEverythingSelected = totalLength > 0 && selectedLength === totalLength
-      const isEmpty = totalLength === 0
+      const isEverythingSelected = totalLength > 0 && selectedLength === totalLength;
+      const isEmpty = totalLength === 0;
 
-      setCanSelectAll(!isEmpty && !isEverythingSelected)
+      setCanSelectAll(!isEmpty && !isEverythingSelected);
     }
-  }
+  };
 
   const handleCut = async () => {
-    const el = targetRef.current
-    if (!el) return
+    const el = targetRef.current;
+    if (!el) return;
 
-    const start = el.selectionStart ?? 0
-    const end = el.selectionEnd ?? 0
-    const selectedText = el.value.substring(start, end)
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const selectedText = el.value.substring(start, end);
 
     if (selectedText) {
-      await navigator.clipboard.writeText(selectedText)
-      el.setRangeText("", start, end, "end")
-      el.dispatchEvent(new Event("input", { bubbles: true }))
+      await navigator.clipboard.writeText(selectedText);
+      el.setRangeText("", start, end, "end");
+      el.dispatchEvent(new Event("input", { bubbles: true }));
     }
-  }
+  };
 
   const handleCopy = async () => {
-    const el = targetRef.current
-    if (!el) return
+    const el = targetRef.current;
+    if (!el) return;
 
-    const start = el.selectionStart ?? 0
-    const end = el.selectionEnd ?? 0
-    const selectedText = el.value.substring(start, end)
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const selectedText = el.value.substring(start, end);
 
     if (selectedText) {
-      await navigator.clipboard.writeText(selectedText)
+      await navigator.clipboard.writeText(selectedText);
     }
-  }
+  };
 
   const handlePaste = async () => {
-    const el = targetRef.current
-    if (!el) return
+    const el = targetRef.current;
+    if (!el) return;
 
     try {
-      const text = await navigator.clipboard.readText()
-      const start = el.selectionStart ?? el.value.length
-      const end = el.selectionEnd ?? el.value.length
+      const text = await navigator.clipboard.readText();
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
 
-      el.setRangeText(text, start, end, "end")
-      el.dispatchEvent(new Event("input", { bubbles: true }))
-      el.focus()
+      el.setRangeText(text, start, end, "end");
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.focus();
     } catch {
-      console.warn("Clipboard read permission denied")
+      console.warn("Clipboard read permission denied");
     }
-  }
+  };
 
   const handleDelete = () => {
-    const el = targetRef.current
-    if (!el) return
+    const el = targetRef.current;
+    if (!el) return;
 
-    const start = el.selectionStart ?? 0
-    const end = el.selectionEnd ?? 0
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
 
     if (start !== end) {
-      el.setRangeText("", start, end, "end")
-      el.dispatchEvent(new Event("input", { bubbles: true }))
-      el.focus()
+      el.setRangeText("", start, end, "end");
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.focus();
     }
-  }
+  };
 
   const handleSelectAll = () => {
-    const el = targetRef.current
-    if (!el) return
-    el.focus()
-    el.select()
-  }
+    const el = targetRef.current;
+    if (!el) return;
+    el.focus();
+    el.select();
+  };
 
   const executeCommand = (command: "undo" | "redo") => {
-  if (typeof document !== "undefined") {
+    if (typeof document !== "undefined") {
       // Cast to access the method without triggering the TS deprecation notice
       const doc = document as unknown as {
-        execCommand?: (commandId: string, showUI?: boolean, value?: string) => boolean
-      }
-      doc.execCommand?.(command, false)
+        execCommand?: (commandId: string, showUI?: boolean, value?: string) => boolean;
+      };
+      doc.execCommand?.(command, false);
     }
-  }
+  };
 
   const handleUndo = () => {
-    targetRef.current?.focus()
-    executeCommand("undo")
-  }
+    targetRef.current?.focus();
+    executeCommand("undo");
+  };
 
   const handleRedo = () => {
-    targetRef.current?.focus()
-    executeCommand("redo")
-  }
+    targetRef.current?.focus();
+    executeCommand("redo");
+  };
 
   return (
     <ContextMenu onOpenChange={handleOpenChange}>
-      <ContextMenuTrigger className={className}>
-        {children}
-      </ContextMenuTrigger>
+      <ContextMenuTrigger className={className}>{children}</ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuGroup>
           <ContextMenuItem onClick={handleUndo}>
@@ -177,5 +167,5 @@ export function TextContextMenu({ children, targetRef, className }: TextContextM
         </ContextMenuGroup>
       </ContextMenuContent>
     </ContextMenu>
-  )
+  );
 }

@@ -1,9 +1,9 @@
-import React, { useState } from "react"
-import { models } from "@/../wailsjs/go/models"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import { models } from "@/../wailsjs/go/models";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Info,
   Sparkles,
@@ -13,45 +13,45 @@ import {
   CheckCircle2,
   AlertCircle,
   Download,
-} from "lucide-react"
-import Github from "@/assets/images/github.svg?react"
-import Logo from "@/assets/images/logo.svg?react"
-import { BrowserOpenURL } from "@/../wailsjs/runtime/runtime"
-import { UpdateService, type UpdateInfo } from "@/services/update"
+} from "lucide-react";
+import Github from "@/assets/images/github.svg?react";
+import Logo from "@/assets/images/logo.svg?react";
+import { BrowserOpenURL } from "@/../wailsjs/runtime/runtime";
+import { UpdateService, type UpdateInfo } from "@/services/update";
 
 interface AboutTabProps {
-  settings: models.AppSettings
-  onChange: <K extends keyof models.AppSettings>(key: K, value: models.AppSettings[K]) => void
+  settings: models.AppSettings;
+  onChange: <K extends keyof models.AppSettings>(key: K, value: models.AppSettings[K]) => void;
 }
 
 export function AboutTab({ settings, onChange }: AboutTabProps) {
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
-  const [updateStatus, setUpdateStatus] = useState<string | null>(null)
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
 
   const handleCheckUpdate = async () => {
-    setIsCheckingUpdate(true)
-    setUpdateStatus(null)
+    setIsCheckingUpdate(true);
+    setUpdateStatus(null);
     try {
-      const info = await UpdateService.checkForUpdates()
-      setUpdateInfo(info)
+      const info = await UpdateService.checkForUpdates();
+      setUpdateInfo(info);
       if (!info?.available) {
-        setUpdateStatus("You are running the latest version!")
+        setUpdateStatus("You are running the latest version!");
       }
-    } catch (err) {
-      setUpdateStatus("Failed to check for updates. Please verify your internet connection.")
+    } catch {
+      setUpdateStatus("Failed to check for updates. Please verify your internet connection.");
     } finally {
-      setIsCheckingUpdate(false)
+      setIsCheckingUpdate(false);
     }
-  }
+  };
 
   const handleInstallUpdate = async () => {
     try {
-      await UpdateService.downloadAndInstall()
+      await UpdateService.downloadAndInstall();
     } catch (err) {
-      console.error("Update failed", err)
+      console.error("Update failed", err);
     }
-  }
+  };
 
   return (
     <div className="space-y-6 animate-page-enter">
@@ -65,16 +65,18 @@ export function AboutTab({ settings, onChange }: AboutTabProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold tracking-tight text-foreground">
-            Telepresence GUI
-          </h2>
-          <Badge variant="outline" className="font-mono text-xs text-primary border-primary/40 bg-primary/10">
+          <h2 className="text-xl font-bold tracking-tight text-foreground">Telepresence GUI</h2>
+          <Badge
+            variant="outline"
+            className="font-mono text-xs text-primary border-primary/40 bg-primary/10"
+          >
             v{__APP_VERSION__}
           </Badge>
         </div>
 
         <p className="text-xs text-muted-foreground max-w-sm mt-1">
-          Modern, high-performance desktop controller for Kubernetes local traffic interception and workload replacing.
+          Modern, high-performance desktop controller for Kubernetes local traffic interception and
+          workload replacing.
         </p>
 
         <div className="flex items-center gap-3 mt-4 text-xs font-mono text-muted-foreground/70">
@@ -90,25 +92,27 @@ export function AboutTab({ settings, onChange }: AboutTabProps) {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <RefreshCw className="size-4 text-primary" />
-          <h3 className="text-sm font-semibold tracking-tight text-foreground">
-            Software Updates
-          </h3>
+          <h3 className="text-sm font-semibold tracking-tight text-foreground">Software Updates</h3>
         </div>
 
         <div className="grid gap-3 rounded-xl border border-border/60 bg-card/40 p-4">
           <div className="flex items-center justify-between gap-3 pb-3 border-b border-border/40">
             <div className="space-y-0.5">
-              <Label htmlFor="auto-update-toggle" className="text-xs font-semibold text-foreground cursor-pointer">
+              <Label
+                htmlFor="auto-update-toggle"
+                className="text-xs font-semibold text-foreground cursor-pointer"
+              >
                 Check for Updates on Startup
               </Label>
               <p className="text-[11px] text-muted-foreground">
-                Silently check GitHub releases upon app launch and notify when a newer release is published.
+                Silently check GitHub releases upon app launch and notify when a newer release is
+                published.
               </p>
             </div>
             <Switch
               id="auto-update-toggle"
               checked={settings.autoCheckUpdates}
-              onCheckedChange={(checked) => onChange("autoCheckUpdates", checked)}
+              onCheckedChange={checked => onChange("autoCheckUpdates", checked)}
             />
           </div>
 
@@ -126,7 +130,9 @@ export function AboutTab({ settings, onChange }: AboutTabProps) {
               disabled={isCheckingUpdate}
               className="h-8 px-3 text-xs gap-1.5 active:scale-95 transition-transform"
             >
-              <RefreshCw className={`size-3.5 ${isCheckingUpdate ? "animate-spin text-primary" : ""}`} />
+              <RefreshCw
+                className={`size-3.5 ${isCheckingUpdate ? "animate-spin text-primary" : ""}`}
+              />
               <span>{isCheckingUpdate ? "Checking Releases..." : "Check for Updates Now"}</span>
             </Button>
           </div>
@@ -207,7 +213,9 @@ export function AboutTab({ settings, onChange }: AboutTabProps) {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => BrowserOpenURL("https://github.com/mahdimomeni/telepresence-gui/releases")}
+            onClick={() =>
+              BrowserOpenURL("https://github.com/mahdimomeni/telepresence-gui/releases")
+            }
             className="h-9 justify-between text-xs px-3 bg-card/40 hover-card-glow cursor-pointer"
           >
             <div className="flex items-center gap-2">
@@ -233,5 +241,5 @@ export function AboutTab({ settings, onChange }: AboutTabProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

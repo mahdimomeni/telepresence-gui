@@ -89,7 +89,7 @@ func (a *App) setupSystemTray() {
 
 func (a *App) setTrayIcon() {
 	if tray != nil {
-		tray.SetIcon(a.windowsTrayIcon)
+		tray.SetIcon(a.trayIcon)
 	}
 }
 
@@ -102,4 +102,3 @@ func (a *App) updateTrayMenu(connected bool) {
 		}
 	}
 }
-

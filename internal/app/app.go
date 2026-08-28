@@ -30,9 +30,7 @@ type App struct {
 	lastListRaw   string
 	pollInterval  time.Duration
 
-	linuxTrayIcon   []byte
-	darwinTrayIcon  []byte
-	windowsTrayIcon []byte
+	trayIcon []byte
 }
 
 func NewApp(
@@ -41,21 +39,17 @@ func NewApp(
 	configService *services.ConfigService,
 	updateService *services.UpdateService,
 	toolService *services.ToolCheckerService,
-	linuxTrayIcon []byte,
-	darwinTrayIcon []byte,
-	windowsTrayIcon []byte,
+	trayIcon []byte,
 ) *App {
 	return &App{
-		teleService:     teleService,
-		kubeService:     kubeService,
-		configService:   configService,
-		updateService:   updateService,
-		toolService:     toolService,
-		logTailer:       services.NewLogTailer(),
-		pollInterval:    4 * time.Second,
-		linuxTrayIcon:   linuxTrayIcon,
-		darwinTrayIcon:  darwinTrayIcon,
-		windowsTrayIcon: windowsTrayIcon,
+		teleService:   teleService,
+		kubeService:   kubeService,
+		configService: configService,
+		updateService: updateService,
+		toolService:   toolService,
+		logTailer:     services.NewLogTailer(),
+		pollInterval:  4 * time.Second,
+		trayIcon:      trayIcon,
 	}
 }
 
@@ -208,7 +202,7 @@ func (a *App) OnSecondInstanceLaunch(secondInstanceData options.SecondInstanceDa
 	go runtime.EventsEmit(a.ctx, "launchArgs", secondInstanceArgs)
 }
 
-func (a *App) Notify(title string, body string) error {
+func (a *App) Notify(title, body string) error {
 	if !runtime.IsNotificationAvailable(a.ctx) {
 		return nil
 	}
@@ -278,7 +272,7 @@ func (a *App) ListWorkloads() ([]models.Workload, error) {
 }
 
 func (a *App) InterceptWorkload(config models.InterceptConfig) error {
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Intercept] Starting intercept for \"%s\" (Port: %s, Namespace: %s)...", config.Workload, config.Port, config.Namespace))
+	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Intercept] Starting intercept for %q (Port: %s, Namespace: %s)...", config.Workload, config.Port, config.Namespace))
 	out, err := a.teleService.Intercept(a.ctx, config)
 	if out != "" {
 		for _, line := range strings.Split(out, "\n") {
@@ -288,16 +282,16 @@ func (a *App) InterceptWorkload(config models.InterceptConfig) error {
 		}
 	}
 	if err != nil {
-		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Intercept Error] Failed to intercept \"%s\": %v", config.Workload, err))
+		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Intercept Error] Failed to intercept %q: %v", config.Workload, err))
 		return err
 	}
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Intercept] Successfully intercepted workload \"%s\"", config.Workload))
-	a.notifyIntercept("Workload Intercepted", fmt.Sprintf("Successfully intercepted workload \"%s\"", config.Workload))
+	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Intercept] Successfully intercepted workload %q", config.Workload))
+	a.notifyIntercept("Workload Intercepted", fmt.Sprintf("Successfully intercepted workload %q", config.Workload))
 	return nil
 }
 
 func (a *App) ReplaceWorkload(config models.ReplaceConfig) error {
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Replace] Starting replace for \"%s\" (Port: %s, Container: %s)...", config.Workload, config.Port, config.Container))
+	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Replace] Starting replace for %q (Port: %s, Container: %s)...", config.Workload, config.Port, config.Container))
 	out, err := a.teleService.Replace(a.ctx, config)
 	if out != "" {
 		for _, line := range strings.Split(out, "\n") {
@@ -307,16 +301,16 @@ func (a *App) ReplaceWorkload(config models.ReplaceConfig) error {
 		}
 	}
 	if err != nil {
-		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Replace Error] Failed to replace \"%s\": %v", config.Workload, err))
+		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Replace Error] Failed to replace %q: %v", config.Workload, err))
 		return err
 	}
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Replace] Successfully replaced workload \"%s\"", config.Workload))
-	a.notifyIntercept("Workload Replaced", fmt.Sprintf("Successfully replaced workload \"%s\"", config.Workload))
+	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Replace] Successfully replaced workload %q", config.Workload))
+	a.notifyIntercept("Workload Replaced", fmt.Sprintf("Successfully replaced workload %q", config.Workload))
 	return nil
 }
 
 func (a *App) DetachWorkload(config models.DetachConfig) error {
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Detach] Detaching workload/intercept \"%s\" (Namespace: %s)...", config.AttachmentName, config.Namespace))
+	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Detach] Detaching workload/intercept %q (Namespace: %s)...", config.AttachmentName, config.Namespace))
 	out, err := a.teleService.Detach(a.ctx, config)
 	if out != "" {
 		for _, line := range strings.Split(out, "\n") {
@@ -326,11 +320,11 @@ func (a *App) DetachWorkload(config models.DetachConfig) error {
 		}
 	}
 	if err != nil {
-		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Detach Error] Failed to detach \"%s\": %v", config.AttachmentName, err))
+		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Detach Error] Failed to detach %q: %v", config.AttachmentName, err))
 		return err
 	}
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Detach] Successfully detached workload \"%s\"", config.AttachmentName))
-	a.notifyIntercept("Workload Detached", fmt.Sprintf("Successfully detached workload \"%s\"", config.AttachmentName))
+	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Detach] Successfully detached workload %q", config.AttachmentName))
+	a.notifyIntercept("Workload Detached", fmt.Sprintf("Successfully detached workload %q", config.AttachmentName))
 	return nil
 }
 
@@ -346,7 +340,7 @@ func (a *App) GetKubeInfo(kubeConfigPath string) (models.KubeInfo, error) {
 	return info, nil
 }
 
-func (a *App) notifyConnect(title string, body string) {
+func (a *App) notifyConnect(title, body string) {
 	settings, err := a.configService.LoadAppSettings()
 	if err == nil && settings != nil {
 		if !settings.EnableNotifications || !settings.NotifyOnConnect {
@@ -356,7 +350,7 @@ func (a *App) notifyConnect(title string, body string) {
 	_ = a.Notify(title, body)
 }
 
-func (a *App) notifyIntercept(title string, body string) {
+func (a *App) notifyIntercept(title, body string) {
 	settings, err := a.configService.LoadAppSettings()
 	if err == nil && settings != nil {
 		if !settings.EnableNotifications || !settings.NotifyOnIntercept {
@@ -448,5 +442,3 @@ func (a *App) ResetAppSettings() (models.AppSettings, error) {
 	runtime.EventsEmit(a.ctx, "daemon-log", "[Settings] Application preferences reset to factory defaults.")
 	return *settings, nil
 }
-
-

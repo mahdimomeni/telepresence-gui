@@ -1,45 +1,32 @@
-import React from "react"
-import { models } from "@/../wailsjs/go/models"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import {
-  Sun,
-  Moon,
-  Laptop,
-  Sparkles,
-  Bell,
-  Radio,
-  Minimize2,
-  Tv,
-  RotateCcw,
-  CheckCircle2,
-  BellRing,
-} from "lucide-react"
-import { CoreService } from "@/services/core"
-import { useTheme } from "@/components/theme-provider"
+import { models } from "@/../wailsjs/go/models";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Sun, Moon, Laptop, Sparkles, Bell, Tv, RotateCcw, BellRing } from "lucide-react";
+import { CoreService } from "@/services/core";
+import { useTheme } from "@/components/theme-provider";
 
 interface GeneralTabProps {
-  settings: models.AppSettings
-  onChange: <K extends keyof models.AppSettings>(key: K, value: models.AppSettings[K]) => void
-  onReplaySplash?: () => void
+  settings: models.AppSettings;
+  onChange: <K extends keyof models.AppSettings>(key: K, value: models.AppSettings[K]) => void;
+  onReplaySplash?: () => void;
 }
 
 export function GeneralTab({ settings, onChange, onReplaySplash }: GeneralTabProps) {
-  const { setTheme } = useTheme()
+  const { setTheme } = useTheme();
 
   const handleThemeChange = (theme: "dark" | "light" | "system") => {
-    onChange("theme", theme)
-    setTheme(theme)
-  }
+    onChange("theme", theme);
+    setTheme(theme);
+  };
 
   const handleTestNotification = async () => {
     await CoreService.notify(
       "Telepresence GUI Notification Test",
       "Desktop notifications are active and working properly!"
-    )
-  }
+    );
+  };
 
   return (
     <div className="space-y-6 animate-page-enter">
@@ -104,7 +91,10 @@ export function GeneralTab({ settings, onChange, onReplaySplash }: GeneralTabPro
           {/* Ambient Glows Toggle */}
           <div className="flex items-center justify-between gap-3 pt-1">
             <div className="space-y-0.5">
-              <Label htmlFor="glow-toggle" className="text-xs font-semibold text-foreground cursor-pointer">
+              <Label
+                htmlFor="glow-toggle"
+                className="text-xs font-semibold text-foreground cursor-pointer"
+              >
                 Ambient Cyber Glow Effects
               </Label>
               <p className="text-[11px] text-muted-foreground">
@@ -114,7 +104,7 @@ export function GeneralTab({ settings, onChange, onReplaySplash }: GeneralTabPro
             <Switch
               id="glow-toggle"
               checked={settings.enableGlowEffects}
-              onCheckedChange={(checked) => onChange("enableGlowEffects", checked)}
+              onCheckedChange={checked => onChange("enableGlowEffects", checked)}
             />
           </div>
 
@@ -122,12 +112,16 @@ export function GeneralTab({ settings, onChange, onReplaySplash }: GeneralTabPro
           <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/40">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
-                <Label htmlFor="splash-toggle" className="text-xs font-semibold text-foreground cursor-pointer">
+                <Label
+                  htmlFor="splash-toggle"
+                  className="text-xs font-semibold text-foreground cursor-pointer"
+                >
                   Show Boot Sequence on Launch
                 </Label>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Display the orbital boot and engine initialization animation when launching the application.
+                Display the orbital boot and engine initialization animation when launching the
+                application.
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -146,7 +140,7 @@ export function GeneralTab({ settings, onChange, onReplaySplash }: GeneralTabPro
               <Switch
                 id="splash-toggle"
                 checked={settings.showSplashScreen}
-                onCheckedChange={(checked) => onChange("showSplashScreen", checked)}
+                onCheckedChange={checked => onChange("showSplashScreen", checked)}
               />
             </div>
           </div>
@@ -167,38 +161,49 @@ export function GeneralTab({ settings, onChange, onReplaySplash }: GeneralTabPro
           <div className="flex items-center justify-between gap-3 pb-3 border-b border-border/40">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
-                <Label htmlFor="close-tray-toggle" className="text-xs font-semibold text-foreground cursor-pointer">
+                <Label
+                  htmlFor="close-tray-toggle"
+                  className="text-xs font-semibold text-foreground cursor-pointer"
+                >
                   Hide to System Tray on Close
                 </Label>
-                <Badge variant="outline" className="text-[9px] h-4 font-mono px-1 py-0 text-muted-foreground">
+                <Badge
+                  variant="outline"
+                  className="text-[9px] h-4 font-mono px-1 py-0 text-muted-foreground"
+                >
                   Recommended
                 </Badge>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Clicking the window close [X] button hides the GUI to the background tray without disconnecting active Telepresence intercepts.
+                Clicking the window close [X] button hides the GUI to the background tray without
+                disconnecting active Telepresence intercepts.
               </p>
             </div>
             <Switch
               id="close-tray-toggle"
               checked={settings.closeToTray}
-              onCheckedChange={(checked) => onChange("closeToTray", checked)}
+              onCheckedChange={checked => onChange("closeToTray", checked)}
             />
           </div>
 
           {/* Start Minimized */}
           <div className="flex items-center justify-between gap-3 pt-1">
             <div className="space-y-0.5">
-              <Label htmlFor="start-min-toggle" className="text-xs font-semibold text-foreground cursor-pointer">
+              <Label
+                htmlFor="start-min-toggle"
+                className="text-xs font-semibold text-foreground cursor-pointer"
+              >
                 Start Minimized
               </Label>
               <p className="text-[11px] text-muted-foreground">
-                Launch the application directly in the system tray upon system startup without popping open the main window.
+                Launch the application directly in the system tray upon system startup without
+                popping open the main window.
               </p>
             </div>
             <Switch
               id="start-min-toggle"
               checked={settings.startMinimized}
-              onCheckedChange={(checked) => onChange("startMinimized", checked)}
+              onCheckedChange={checked => onChange("startMinimized", checked)}
             />
           </div>
         </div>
@@ -230,25 +235,34 @@ export function GeneralTab({ settings, onChange, onReplaySplash }: GeneralTabPro
           {/* Master Notification Switch */}
           <div className="flex items-center justify-between gap-3 pb-3 border-b border-border/40">
             <div className="space-y-0.5">
-              <Label htmlFor="notif-master-toggle" className="text-xs font-semibold text-foreground cursor-pointer">
+              <Label
+                htmlFor="notif-master-toggle"
+                className="text-xs font-semibold text-foreground cursor-pointer"
+              >
                 Enable System Desktop Notifications
               </Label>
               <p className="text-[11px] text-muted-foreground">
-                Show native OS toast notifications for cluster connections, intercepts, and warnings.
+                Show native OS toast notifications for cluster connections, intercepts, and
+                warnings.
               </p>
             </div>
             <Switch
               id="notif-master-toggle"
               checked={settings.enableNotifications}
-              onCheckedChange={(checked) => onChange("enableNotifications", checked)}
+              onCheckedChange={checked => onChange("enableNotifications", checked)}
             />
           </div>
 
           {/* Sub-toggles */}
-          <div className={`space-y-3 transition-opacity ${settings.enableNotifications ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+          <div
+            className={`space-y-3 transition-opacity ${settings.enableNotifications ? "opacity-100" : "opacity-40 pointer-events-none"}`}
+          >
             <div className="flex items-center justify-between gap-3">
               <div className="space-y-0.5">
-                <Label htmlFor="notif-conn-toggle" className="text-xs font-medium text-foreground cursor-pointer">
+                <Label
+                  htmlFor="notif-conn-toggle"
+                  className="text-xs font-medium text-foreground cursor-pointer"
+                >
                   Notify on Cluster Connect & Disconnect
                 </Label>
                 <p className="text-[10px] text-muted-foreground">
@@ -259,13 +273,16 @@ export function GeneralTab({ settings, onChange, onReplaySplash }: GeneralTabPro
                 id="notif-conn-toggle"
                 checked={settings.notifyOnConnect}
                 disabled={!settings.enableNotifications}
-                onCheckedChange={(checked) => onChange("notifyOnConnect", checked)}
+                onCheckedChange={checked => onChange("notifyOnConnect", checked)}
               />
             </div>
 
             <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/30">
               <div className="space-y-0.5">
-                <Label htmlFor="notif-inter-toggle" className="text-xs font-medium text-foreground cursor-pointer">
+                <Label
+                  htmlFor="notif-inter-toggle"
+                  className="text-xs font-medium text-foreground cursor-pointer"
+                >
                   Notify on Intercept & Replace Actions
                 </Label>
                 <p className="text-[10px] text-muted-foreground">
@@ -276,12 +293,12 @@ export function GeneralTab({ settings, onChange, onReplaySplash }: GeneralTabPro
                 id="notif-inter-toggle"
                 checked={settings.notifyOnIntercept}
                 disabled={!settings.enableNotifications}
-                onCheckedChange={(checked) => onChange("notifyOnIntercept", checked)}
+                onCheckedChange={checked => onChange("notifyOnIntercept", checked)}
               />
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

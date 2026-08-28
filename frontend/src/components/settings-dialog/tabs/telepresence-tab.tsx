@@ -1,68 +1,87 @@
-import React, { useEffect, useState, useCallback } from "react"
-import { models } from "@/../wailsjs/go/models"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Switch } from "@/components/ui/switch"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Spinner } from "@/components/ui/spinner"
+import { useEffect, useState, useCallback } from "react";
+import { models } from "@/../wailsjs/go/models";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import {
-  Network,
-  FolderOpen,
-  Sliders,
-  Clock,
-} from "lucide-react"
-import { CoreService } from "@/services/core"
-import { KubeService } from "@/services/kube"
+} from "@/components/ui/select";
+import { Network, FolderOpen, Sliders, Clock } from "lucide-react";
+import { CoreService } from "@/services/core";
+import { KubeService } from "@/services/kube";
 
 interface TelepresenceTabProps {
-  settings: models.AppSettings
-  onChange: <K extends keyof models.AppSettings>(key: K, value: models.AppSettings[K]) => void
+  settings: models.AppSettings;
+  onChange: <K extends keyof models.AppSettings>(key: K, value: models.AppSettings[K]) => void;
 }
 
 export function TelepresenceTab({ settings, onChange }: TelepresenceTabProps) {
-  const [contexts, setContexts] = useState<string[]>([])
-  const [isLoadingKube, setIsLoadingKube] = useState(false)
+  const [contexts, setContexts] = useState<string[]>([]);
+  const [isLoadingKube, setIsLoadingKube] = useState(false);
 
-  const loadKubeContexts = useCallback(async (path: string) => {
-    setIsLoadingKube(true)
-    try {
-      const info = await KubeService.getInfo(path)
-      if (info && info.contexts && info.contexts.length > 0) {
-        setContexts(info.contexts)
-        if (!settings.defaultContext && info.currentContext) {
-          onChange("defaultContext", info.currentContext)
+  const loadKubeContexts = useCallback(
+    async (path: string) => {
+      setIsLoadingKube(true);
+      try {
+        const info = await KubeService.getInfo(path);
+        if (info && info.contexts && info.contexts.length > 0) {
+          setContexts(info.contexts);
+          if (!settings.defaultContext && info.currentContext) {
+            onChange("defaultContext", info.currentContext);
+          }
         }
+      } catch (err) {
+        console.warn("Failed to load contexts from kubeconfig path:", err);
+      } finally {
+        setIsLoadingKube(false);
       }
-    } catch (err) {
-      console.warn("Failed to load contexts from kubeconfig path:", err)
-    } finally {
-      setIsLoadingKube(false)
-    }
-  }, [settings.defaultContext, onChange])
+    },
+    [settings.defaultContext, onChange]
+  );
 
   useEffect(() => {
-    loadKubeContexts(settings.defaultKubeconfig)
-  }, []) // Run on mount
+    let ignore = false;
+    KubeService.getInfo(settings.defaultKubeconfig)
+      .then(info => {
+        if (!ignore && info?.contexts && info.contexts.length > 0) {
+          setContexts(info.contexts);
+          if (!settings.defaultContext && info.currentContext) {
+            onChange("defaultContext", info.currentContext);
+          }
+        }
+      })
+      .catch(err => {
+        console.warn("Failed to load contexts from kubeconfig path:", err);
+      })
+      .finally(() => {
+        if (!ignore) {
+          setIsLoadingKube(false);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [settings.defaultKubeconfig, settings.defaultContext, onChange]);
 
   const handleBrowseKubeconfig = async () => {
-    const filePath = await CoreService.browseFile("Select Kubernetes Kubeconfig File")
+    const filePath = await CoreService.browseFile("Select Kubernetes Kubeconfig File");
     if (filePath) {
-      onChange("defaultKubeconfig", filePath)
-      loadKubeContexts(filePath)
+      onChange("defaultKubeconfig", filePath);
+      loadKubeContexts(filePath);
     }
-  }
+  };
 
   const handleKubeconfigBlur = () => {
-    loadKubeContexts(settings.defaultKubeconfig)
-  }
+    loadKubeContexts(settings.defaultKubeconfig);
+  };
 
   return (
     <div className="space-y-6 animate-page-enter">
@@ -88,7 +107,7 @@ export function TelepresenceTab({ settings, onChange }: TelepresenceTabProps) {
               id="default-namespace"
               placeholder="default"
               value={settings.defaultNamespace}
-              onChange={(e) => onChange("defaultNamespace", e.target.value.trim())}
+              onChange={e => onChange("defaultNamespace", e.target.value.trim())}
               className="h-8 text-xs font-mono"
             />
             <p className="text-[11px] text-muted-foreground">
@@ -109,7 +128,7 @@ export function TelepresenceTab({ settings, onChange }: TelepresenceTabProps) {
                 id="default-kubeconfig"
                 placeholder="Leave blank to use default (~/.kube/config or $KUBECONFIG)"
                 value={settings.defaultKubeconfig}
-                onChange={(e) => onChange("defaultKubeconfig", e.target.value)}
+                onChange={e => onChange("defaultKubeconfig", e.target.value)}
                 onBlur={handleKubeconfigBlur}
                 className="h-8 text-xs font-mono flex-1"
               />
@@ -125,7 +144,8 @@ export function TelepresenceTab({ settings, onChange }: TelepresenceTabProps) {
               </Button>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Optional custom kubeconfig path. If blank, standard system kubeconfig location is used.
+              Optional custom kubeconfig path. If blank, standard system kubeconfig location is
+              used.
             </p>
           </div>
 
@@ -144,13 +164,15 @@ export function TelepresenceTab({ settings, onChange }: TelepresenceTabProps) {
             {contexts.length > 0 ? (
               <Select
                 value={settings.defaultContext}
-                onValueChange={(val) => onChange("defaultContext", val || "")}
+                onValueChange={val => onChange("defaultContext", val || "")}
               >
                 <SelectTrigger id="default-context" className="w-full h-8 text-xs font-mono">
-                  <SelectValue placeholder={settings.defaultContext || "Select target cluster context"} />
+                  <SelectValue
+                    placeholder={settings.defaultContext || "Select target cluster context"}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {contexts.map((ctx) => (
+                  {contexts.map(ctx => (
                     <SelectItem key={ctx} value={ctx} className="text-xs font-mono">
                       {ctx}
                     </SelectItem>
@@ -162,7 +184,7 @@ export function TelepresenceTab({ settings, onChange }: TelepresenceTabProps) {
                 id="default-context"
                 placeholder="e.g. minikube, gke_project_region_cluster"
                 value={settings.defaultContext}
-                onChange={(e) => onChange("defaultContext", e.target.value.trim())}
+                onChange={e => onChange("defaultContext", e.target.value.trim())}
                 className="h-8 text-xs font-mono"
               />
             )}
@@ -177,13 +199,15 @@ export function TelepresenceTab({ settings, onChange }: TelepresenceTabProps) {
               <Label htmlFor="default-manager-ns" className="text-xs font-semibold text-foreground">
                 Traffic Manager Namespace
               </Label>
-              <span className="text-[10px] text-muted-foreground font-mono">--manager-namespace</span>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                --manager-namespace
+              </span>
             </div>
             <Input
               id="default-manager-ns"
               placeholder="e.g. ambassador (optional)"
               value={settings.managerNamespace}
-              onChange={(e) => onChange("managerNamespace", e.target.value.trim())}
+              onChange={e => onChange("managerNamespace", e.target.value.trim())}
               className="h-8 text-xs font-mono"
             />
             <p className="text-[11px] text-muted-foreground">
@@ -220,11 +244,12 @@ export function TelepresenceTab({ settings, onChange }: TelepresenceTabProps) {
               max={600}
               step={5}
               value={settings.requestTimeoutSeconds}
-              onChange={(e) => onChange("requestTimeoutSeconds", Number(e.target.value) || 60)}
+              onChange={e => onChange("requestTimeoutSeconds", Number(e.target.value) || 60)}
               className="h-8 text-xs font-mono"
             />
             <p className="text-[11px] text-muted-foreground">
-              Maximum seconds to wait for Telepresence CLI operations (connect, intercept, list) before aborting.
+              Maximum seconds to wait for Telepresence CLI operations (connect, intercept, list)
+              before aborting.
             </p>
           </div>
 
@@ -240,16 +265,24 @@ export function TelepresenceTab({ settings, onChange }: TelepresenceTabProps) {
             </div>
             <Select
               value={String(settings.pollIntervalSeconds)}
-              onValueChange={(val) => onChange("pollIntervalSeconds", Number(val) || 4)}
+              onValueChange={val => onChange("pollIntervalSeconds", Number(val) || 4)}
             >
               <SelectTrigger id="poll-interval" className="w-full h-8 text-xs font-mono">
                 <SelectValue placeholder="Select heartbeat interval" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2" className="text-xs">2 Seconds (High frequency - fast updates)</SelectItem>
-                <SelectItem value="4" className="text-xs">4 Seconds (Recommended - balanced)</SelectItem>
-                <SelectItem value="8" className="text-xs">8 Seconds (Low resource consumption)</SelectItem>
-                <SelectItem value="15" className="text-xs">15 Seconds (Minimal background load)</SelectItem>
+                <SelectItem value="2" className="text-xs">
+                  2 Seconds (High frequency - fast updates)
+                </SelectItem>
+                <SelectItem value="4" className="text-xs">
+                  4 Seconds (Recommended - balanced)
+                </SelectItem>
+                <SelectItem value="8" className="text-xs">
+                  8 Seconds (Low resource consumption)
+                </SelectItem>
+                <SelectItem value="15" className="text-xs">
+                  15 Seconds (Minimal background load)
+                </SelectItem>
               </SelectContent>
             </Select>
             <p className="text-[11px] text-muted-foreground">
@@ -273,19 +306,23 @@ export function TelepresenceTab({ settings, onChange }: TelepresenceTabProps) {
           <div className="flex items-center justify-between gap-3 pb-3 border-b border-border/40">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
-                <Label htmlFor="docker-mode-toggle" className="text-xs font-semibold text-foreground cursor-pointer">
+                <Label
+                  htmlFor="docker-mode-toggle"
+                  className="text-xs font-semibold text-foreground cursor-pointer"
+                >
                   Default Docker Daemon Mode
                 </Label>
                 <span className="text-[10px] text-muted-foreground font-mono">--docker</span>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Run the Telepresence User Daemon inside a local Docker container rather than natively on host.
+                Run the Telepresence User Daemon inside a local Docker container rather than
+                natively on host.
               </p>
             </div>
             <Switch
               id="docker-mode-toggle"
               checked={settings.dockerDaemonMode}
-              onCheckedChange={(checked) => onChange("dockerDaemonMode", checked)}
+              onCheckedChange={checked => onChange("dockerDaemonMode", checked)}
             />
           </div>
 
@@ -293,19 +330,25 @@ export function TelepresenceTab({ settings, onChange }: TelepresenceTabProps) {
           <div className="flex items-center justify-between gap-3 pb-3 border-b border-border/40">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
-                <Label htmlFor="insecure-tls-toggle" className="text-xs font-semibold text-foreground cursor-pointer">
+                <Label
+                  htmlFor="insecure-tls-toggle"
+                  className="text-xs font-semibold text-foreground cursor-pointer"
+                >
                   Insecure Skip TLS Verify
                 </Label>
-                <span className="text-[10px] text-muted-foreground font-mono">--insecure-skip-tls-verify</span>
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  --insecure-skip-tls-verify
+                </span>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Skip cluster server TLS certificate verification. Useful for development or self-signed clusters.
+                Skip cluster server TLS certificate verification. Useful for development or
+                self-signed clusters.
               </p>
             </div>
             <Switch
               id="insecure-tls-toggle"
               checked={settings.insecureSkipTLS}
-              onCheckedChange={(checked) => onChange("insecureSkipTLS", checked)}
+              onCheckedChange={checked => onChange("insecureSkipTLS", checked)}
             />
           </div>
 
@@ -313,23 +356,29 @@ export function TelepresenceTab({ settings, onChange }: TelepresenceTabProps) {
           <div className="flex items-center justify-between gap-3">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
-                <Label htmlFor="compression-toggle" className="text-xs font-semibold text-foreground cursor-pointer">
+                <Label
+                  htmlFor="compression-toggle"
+                  className="text-xs font-semibold text-foreground cursor-pointer"
+                >
                   Disable Response Compression
                 </Label>
-                <span className="text-[10px] text-muted-foreground font-mono">--disable-compression</span>
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  --disable-compression
+                </span>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Prevent gRPC / HTTP response compression between user daemon and cluster traffic manager.
+                Prevent gRPC / HTTP response compression between user daemon and cluster traffic
+                manager.
               </p>
             </div>
             <Switch
               id="compression-toggle"
               checked={settings.disableCompression}
-              onCheckedChange={(checked) => onChange("disableCompression", checked)}
+              onCheckedChange={checked => onChange("disableCompression", checked)}
             />
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

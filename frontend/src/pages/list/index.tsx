@@ -1,117 +1,108 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
-import {
-  RefreshCw,
-  ServerOff,
-  Radio,
-  Layers,
-  CheckCircle2,
-  AlertTriangle,
-  LogOut,
-  Boxes,
-  HelpCircle,
-} from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Spinner } from "@/components/ui/spinner"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { models } from "@/../wailsjs/go/models"
-import { getColumns } from "./columns"
-import { DataTable } from "./data-table"
-import { EventsOff, EventsOn } from "../../../wailsjs/runtime/runtime"
-import { useLoadingStore } from "@/stores/useLoadingStore"
-import { TelepresenceService } from "@/services/telepresence"
-import { CoreService } from "@/services/core"
-import { InterceptDialog } from "@/components/intercept-dialog"
-import { ReplaceDialog } from "@/components/replace-dialog"
-import { WorkloadDetailsDialog } from "@/components/workload-details-dialog"
-import { InterceptRowDetails } from "./intercept-row-details"
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { RefreshCw, ServerOff, Radio, Layers, AlertTriangle, LogOut, Boxes } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { models } from "@/../wailsjs/go/models";
+import { getColumns } from "./columns";
+import { DataTable } from "./data-table";
+import { EventsOff, EventsOn } from "../../../wailsjs/runtime/runtime";
+import { useLoadingStore } from "@/stores/useLoadingStore";
+import { TelepresenceService } from "@/services/telepresence";
+import { CoreService } from "@/services/core";
+import { InterceptDialog } from "@/components/intercept-dialog";
+import { ReplaceDialog } from "@/components/replace-dialog";
+import { WorkloadDetailsDialog } from "@/components/workload-details-dialog";
+import { InterceptRowDetails } from "./intercept-row-details";
 
 export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
-  const [workloads, setWorkloads] = useState<models.Workload[]>([])
-  const [error, setError] = useState("")
-  const [interceptTarget, setInterceptTarget] = useState<string | null>(null)
-  const [replaceTarget, setReplaceTarget] = useState<string | null>(null)
-  const [selectedWorkloadForDetails, setSelectedWorkloadForDetails] = useState<models.Workload | null>(null)
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
+  const [workloads, setWorkloads] = useState<models.Workload[]>([]);
+  const [error, setError] = useState("");
+  const [interceptTarget, setInterceptTarget] = useState<string | null>(null);
+  const [replaceTarget, setReplaceTarget] = useState<string | null>(null);
+  const [selectedWorkloadForDetails, setSelectedWorkloadForDetails] =
+    useState<models.Workload | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  const isScanning = useLoadingStore((state) => state.isLoading("workloads"))
-  const isDisconnecting = useLoadingStore((state) => state.isLoading("connection"))
-  const loading = isScanning || isDisconnecting
+  const isScanning = useLoadingStore(state => state.isLoading("workloads"));
+  const isDisconnecting = useLoadingStore(state => state.isLoading("connection"));
+  const loading = isScanning || isDisconnecting;
 
-  const startLoading = useLoadingStore((state) => state.startLoading)
-  const stopLoading = useLoadingStore((state) => state.stopLoading)
-  const setLoading = useLoadingStore((state) => state.setLoading)
+  const startLoading = useLoadingStore(state => state.startLoading);
+  const stopLoading = useLoadingStore(state => state.stopLoading);
+  const setLoading = useLoadingStore(state => state.setLoading);
 
   const fetchWorkloads = useCallback(async () => {
-    startLoading("workloads")
-    setError("")
+    startLoading("workloads");
+    setError("");
 
     try {
-      const data = await TelepresenceService.listWorkloads()
-      setWorkloads(data || [])
+      const data = await TelepresenceService.listWorkloads();
+      setWorkloads(data || []);
     } catch (err) {
-      console.error(err)
-      setError(String(err))
-      CoreService.notify("Telepresence Workloads Fetch Error", String(err))
+      console.error(err);
+      setError(String(err));
+      CoreService.notify("Telepresence Workloads Fetch Error", String(err));
     } finally {
-      stopLoading("workloads")
+      stopLoading("workloads");
     }
-  }, [startLoading, stopLoading])
+  }, [startLoading, stopLoading]);
 
   const handleDisconnect = useCallback(async () => {
-    startLoading("connection")
+    startLoading("connection");
 
     try {
-      await TelepresenceService.disconnect()
-      onDisconnect()
+      await TelepresenceService.disconnect();
+      onDisconnect();
     } catch (err) {
-      CoreService.notify("Telepresence Disconnection Error", String(err))
+      CoreService.notify("Telepresence Disconnection Error", String(err));
     } finally {
-      stopLoading("connection")
+      stopLoading("connection");
     }
-  }, [startLoading, stopLoading, onDisconnect])
+  }, [startLoading, stopLoading, onDisconnect]);
 
   const handleOpenIntercept = useCallback((name: string) => {
-    setInterceptTarget(name)
-  }, [])
+    setInterceptTarget(name);
+  }, []);
 
   const handleCloseIntercept = useCallback((isOpen: boolean) => {
     if (!isOpen) {
-      setInterceptTarget(null)
+      setInterceptTarget(null);
     }
-  }, [])
+  }, []);
 
   const handleOpenReplace = useCallback((name: string) => {
-    setReplaceTarget(name)
-  }, [])
+    setReplaceTarget(name);
+  }, []);
 
   const handleCloseReplace = useCallback((isOpen: boolean) => {
     if (!isOpen) {
-      setReplaceTarget(null)
+      setReplaceTarget(null);
     }
-  }, [])
+  }, []);
 
   const handleOpenDetails = useCallback((workload: models.Workload) => {
-    setSelectedWorkloadForDetails(workload)
-  }, [])
+    setSelectedWorkloadForDetails(workload);
+  }, []);
 
   const handleToggleExpand = useCallback((workloadName: string) => {
-    setExpandedRows((prev) => {
-      const next = new Set(prev)
+    setExpandedRows(prev => {
+      const next = new Set(prev);
       if (next.has(workloadName)) {
-        next.delete(workloadName)
+        next.delete(workloadName);
       } else {
-        next.add(workloadName)
+        next.add(workloadName);
       }
-      return next
-    })
-  }, [])
+      return next;
+    });
+  }, []);
 
   const isRowExpanded = useCallback(
     (workload: models.Workload) => expandedRows.has(workload.name),
     [expandedRows]
-  )
+  );
 
   const renderSubRow = useCallback(
     (workload: models.Workload) => {
@@ -121,10 +112,10 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
           onFetchWorkloads={fetchWorkloads}
           onOpenDetails={handleOpenDetails}
         />
-      )
+      );
     },
     [fetchWorkloads, handleOpenDetails]
-  )
+  );
 
   const columns = useMemo(
     () =>
@@ -144,28 +135,28 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
       expandedRows,
       handleToggleExpand,
     ]
-  )
+  );
 
   // Workload metrics summary
   const metrics = useMemo(() => {
-    let intercepted = 0
-    let replaced = 0
-    let incompatible = 0
-    let degraded = 0
+    let intercepted = 0;
+    let replaced = 0;
+    let incompatible = 0;
+    let degraded = 0;
 
     for (const w of workloads) {
-      const isAttached = Boolean(w.intercept_info && w.intercept_info.length > 0)
+      const isAttached = Boolean(w.intercept_info && w.intercept_info.length > 0);
       if (isAttached) {
         if (w.intercept_info![0]?.spec?.replace) {
-          replaced++
+          replaced++;
         } else {
-          intercepted++
+          intercepted++;
         }
       }
       if (w.not_interceptable_reason) {
-        incompatible++
+        incompatible++;
       } else if (w.desired_replicas > 0 && w.ready_replicas < w.desired_replicas) {
-        degraded++
+        degraded++;
       }
     }
 
@@ -176,46 +167,58 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
       incompatible,
       degraded,
       active: intercepted + replaced,
-    }
-  }, [workloads])
+    };
+  }, [workloads]);
 
   const activeNamespace = useMemo(() => {
     if (workloads.length > 0 && workloads[0]?.namespace) {
-      return workloads[0].namespace
+      return workloads[0].namespace;
     }
-    return "default"
-  }, [workloads])
+    return "default";
+  }, [workloads]);
 
   // Keep selectedWorkloadForDetails in sync with latest workloads array
-  useEffect(() => {
-    if (selectedWorkloadForDetails) {
-      const updated = workloads.find(
-        (w) =>
+  const activeSelectedWorkload = useMemo(() => {
+    if (!selectedWorkloadForDetails) return null;
+    return (
+      workloads.find(
+        w =>
           w.name === selectedWorkloadForDetails.name &&
           w.namespace === selectedWorkloadForDetails.namespace
-      )
-      if (updated) {
-        setSelectedWorkloadForDetails(updated)
-      }
-    }
-  }, [workloads, selectedWorkloadForDetails])
+      ) || selectedWorkloadForDetails
+    );
+  }, [workloads, selectedWorkloadForDetails]);
 
   useEffect(() => {
-    fetchWorkloads()
+    let ignore = false;
+    TelepresenceService.listWorkloads()
+      .then(data => {
+        if (!ignore) {
+          setWorkloads(data || []);
+        }
+      })
+      .catch(err => {
+        if (!ignore) {
+          console.error(err);
+          setError(String(err));
+          CoreService.notify("Telepresence Workloads Fetch Error", String(err));
+        }
+      });
 
     EventsOn("workloads-changed", (updatedWorkloads: models.Workload[]) => {
-      setWorkloads(updatedWorkloads || [])
-    })
+      setWorkloads(updatedWorkloads || []);
+    });
 
     EventsOn("connection-pending", (status: boolean) => {
-      setLoading("connection", status)
-    })
+      setLoading("connection", status);
+    });
 
     return () => {
-      EventsOff("workloads-changed")
-      EventsOff("connection-pending")
-    }
-  }, [fetchWorkloads, setLoading])
+      ignore = true;
+      EventsOff("workloads-changed");
+      EventsOff("connection-pending");
+    };
+  }, [setLoading]);
 
   return (
     <Card className="w-full max-w-5xl bg-card/90 backdrop-blur-md border-border/60 shadow-2xl shadow-black/25 flex flex-col hover-card-glow transition-all">
@@ -223,7 +226,9 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
       <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-border/40 shrink-0">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <CardTitle className="text-xl font-bold tracking-tight">Active Workload Session</CardTitle>
+            <CardTitle className="text-xl font-bold tracking-tight">
+              Active Workload Session
+            </CardTitle>
             <Badge variant="secondary" className="gap-1 font-mono text-xs px-2 py-0.5 shadow-xs">
               ns: <span className="font-semibold text-foreground">{activeNamespace}</span>
             </Badge>
@@ -270,8 +275,12 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-3 rounded-lg border bg-card/60 flex items-center justify-between animate-stagger-1 hover-card-glow transition-all">
               <div>
-                <span className="text-[11px] font-medium text-muted-foreground">Total Workloads</span>
-                <div className="text-lg font-bold font-mono leading-tight mt-0.5">{metrics.total}</div>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Total Workloads
+                </span>
+                <div className="text-lg font-bold font-mono leading-tight mt-0.5">
+                  {metrics.total}
+                </div>
               </div>
               <div className="p-2 rounded-md bg-muted text-muted-foreground shadow-xs">
                 <Boxes className="size-4" />
@@ -294,7 +303,9 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
 
             <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 flex items-center justify-between animate-stagger-3 hover-card-glow transition-all">
               <div>
-                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">Replaced</span>
+                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                  Replaced
+                </span>
                 <div className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400 leading-tight mt-0.5">
                   {metrics.replaced}
                 </div>
@@ -306,7 +317,9 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
 
             <div className="p-3 rounded-lg border bg-card/60 flex items-center justify-between animate-stagger-4 hover-card-glow transition-all">
               <div>
-                <span className="text-[11px] font-medium text-muted-foreground">Degraded / Issues</span>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Degraded / Issues
+                </span>
                 <div className="text-lg font-bold font-mono text-muted-foreground leading-tight mt-0.5">
                   {metrics.incompatible + metrics.degraded}
                 </div>
@@ -344,12 +357,20 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
               <ServerOff className="size-8 opacity-60" />
             </div>
             <div className="text-center space-y-1">
-              <p className="font-semibold text-foreground text-sm">No workloads found in this namespace</p>
+              <p className="font-semibold text-foreground text-sm">
+                No workloads found in this namespace
+              </p>
               <p className="text-xs max-w-sm text-muted-foreground">
-                Verify that your Kubernetes deployments or services are deployed in namespace &quot;{activeNamespace}&quot;.
+                Verify that your Kubernetes deployments or services are deployed in namespace &quot;
+                {activeNamespace}&quot;.
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={fetchWorkloads} className="h-8 gap-1.5 text-xs mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchWorkloads}
+              className="h-8 gap-1.5 text-xs mt-2"
+            >
               <RefreshCw className="size-3.5" />
               Rescan Namespace
             </Button>
@@ -382,17 +403,17 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
           />
         )}
 
-        {selectedWorkloadForDetails && (
+        {activeSelectedWorkload && (
           <WorkloadDetailsDialog
-            workload={selectedWorkloadForDetails}
-            open={Boolean(selectedWorkloadForDetails)}
-            onOpenChange={(isOpen) => {
-              if (!isOpen) setSelectedWorkloadForDetails(null)
+            workload={activeSelectedWorkload}
+            open={Boolean(activeSelectedWorkload)}
+            onOpenChange={isOpen => {
+              if (!isOpen) setSelectedWorkloadForDetails(null);
             }}
             onSuccess={fetchWorkloads}
           />
         )}
       </CardContent>
     </Card>
-  )
-}
+  );
+}

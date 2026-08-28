@@ -1,14 +1,14 @@
-import React, { useState } from "react"
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Spinner } from "@/components/ui/spinner"
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Settings,
   Sparkles,
@@ -17,55 +17,57 @@ import {
   Wrench,
   Info,
   RotateCcw,
-  Check,
   Save,
   CheckCircle2,
-} from "lucide-react"
-import { useSettingsStore } from "@/stores/useSettingsStore"
-import { GeneralTab } from "./tabs/general-tab"
-import { TelepresenceTab } from "./tabs/telepresence-tab"
-import { LogsTab } from "./tabs/logs-tab"
-import { ToolsTab } from "./tabs/tools-tab"
-import { AboutTab } from "./tabs/about-tab"
+} from "lucide-react";
+import { useSettingsStore } from "@/stores/useSettingsStore";
+import { GeneralTab } from "./tabs/general-tab";
+import { TelepresenceTab } from "./tabs/telepresence-tab";
+import { LogsTab } from "./tabs/logs-tab";
+import { ToolsTab } from "./tabs/tools-tab";
+import { AboutTab } from "./tabs/about-tab";
 
 interface SettingsDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onReplaySplash?: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onReplaySplash?: () => void;
 }
 
 export function SettingsDialog({ open, onOpenChange, onReplaySplash }: SettingsDialogProps) {
-  const [activeTab, setActiveTab] = useState("general")
+  const [activeTab, setActiveTab] = useState("general");
 
-  const settings = useSettingsStore((state) => state.settings)
-  const isSaving = useSettingsStore((state) => state.isSaving)
-  const updateField = useSettingsStore((state) => state.updateField)
-  const saveSettings = useSettingsStore((state) => state.saveSettings)
-  const resetSettings = useSettingsStore((state) => state.resetSettings)
+  const settings = useSettingsStore(state => state.settings);
+  const isSaving = useSettingsStore(state => state.isSaving);
+  const updateField = useSettingsStore(state => state.updateField);
+  const saveSettings = useSettingsStore(state => state.saveSettings);
+  const resetSettings = useSettingsStore(state => state.resetSettings);
 
-  const [hasChanges, setHasChanges] = useState(false)
-  const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [_hasChanges, setHasChanges] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  const handleFieldChange = <K extends keyof typeof settings>(key: K, value: (typeof settings)[K]) => {
-    updateField(key, value)
-    setHasChanges(true)
-  }
+  const handleFieldChange = <K extends keyof typeof settings>(
+    key: K,
+    value: (typeof settings)[K]
+  ) => {
+    updateField(key, value);
+    setHasChanges(true);
+  };
 
   const handleSave = async () => {
-    const success = await saveSettings()
+    const success = await saveSettings();
     if (success) {
-      setHasChanges(false)
-      setStatusMessage("Settings saved successfully!")
-      setTimeout(() => setStatusMessage(null), 3000)
+      setHasChanges(false);
+      setStatusMessage("Settings saved successfully!");
+      setTimeout(() => setStatusMessage(null), 3000);
     }
-  }
+  };
 
   const handleReset = async () => {
-    await resetSettings()
-    setHasChanges(false)
-    setStatusMessage("Restored factory defaults.")
-    setTimeout(() => setStatusMessage(null), 3000)
-  }
+    await resetSettings();
+    setHasChanges(false);
+    setStatusMessage("Restored factory defaults.");
+    setTimeout(() => setStatusMessage(null), 3000);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -88,7 +90,11 @@ export function SettingsDialog({ open, onOpenChange, onReplaySplash }: SettingsD
         </DialogHeader>
 
         {/* Tab Navigation & Body */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="flex-1 flex flex-col min-h-0"
+        >
           <div className="px-4 sm:px-5 pt-3 pb-2 border-b border-border/40 bg-muted/20 shrink-0">
             <TabsList className="grid grid-cols-5 w-full h-auto p-1 bg-muted/50 gap-1">
               <TabsTrigger
@@ -145,8 +151,8 @@ export function SettingsDialog({ open, onOpenChange, onReplaySplash }: SettingsD
                 settings={settings}
                 onChange={handleFieldChange}
                 onReplaySplash={() => {
-                  onOpenChange(false)
-                  onReplaySplash?.()
+                  onOpenChange(false);
+                  onReplaySplash?.();
                 }}
               />
             </TabsContent>
@@ -226,5 +232,5 @@ export function SettingsDialog({ open, onOpenChange, onReplaySplash }: SettingsD
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

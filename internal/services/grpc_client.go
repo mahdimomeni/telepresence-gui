@@ -22,6 +22,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+const osWindows = "windows"
+
 // DaemonPortInfo represents rootd daemon.json content
 type DaemonPortInfo struct {
 	DaemonPort int `json:"daemon_port"`
@@ -33,7 +35,6 @@ type TelepresenceGRPCClient struct {
 	daemonConn   *grpc.ClientConn
 	client       connector.ConnectorClient
 	daemonClient daemon.DaemonClient
-	activeSocket string
 	isConnected  bool
 
 	watchCancel context.CancelFunc
@@ -48,7 +49,7 @@ func NewTelepresenceGRPCClient() *TelepresenceGRPCClient {
 func (g *TelepresenceGRPCClient) LocatePossibleSockets() []string {
 	var candidates []string
 
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == osWindows {
 		localAppData := os.Getenv("LOCALAPPDATA")
 		if localAppData != "" {
 			candidates = append(candidates,
@@ -92,25 +93,25 @@ func (g *TelepresenceGRPCClient) LocatePossibleSockets() []string {
 
 // LocateRootDaemonPort checks rootd/daemon.json for active root daemon port
 func (g *TelepresenceGRPCClient) LocateRootDaemonPort() int {
-	var daemonJsonPath string
-	if runtime.GOOS == "windows" {
+	var daemonJSONPath string
+	if runtime.GOOS == osWindows {
 		localAppData := os.Getenv("LOCALAPPDATA")
 		if localAppData != "" {
-			daemonJsonPath = filepath.Join(localAppData, "telepresence", "rootd", "daemon.json")
+			daemonJSONPath = filepath.Join(localAppData, "telepresence", "rootd", "daemon.json")
 		}
 	} else {
 		if xdgRuntime := os.Getenv("XDG_RUNTIME_DIR"); xdgRuntime != "" {
-			daemonJsonPath = filepath.Join(xdgRuntime, "telepresence", "rootd", "daemon.json")
+			daemonJSONPath = filepath.Join(xdgRuntime, "telepresence", "rootd", "daemon.json")
 		}
-		if daemonJsonPath == "" || !fileExists(daemonJsonPath) {
+		if daemonJSONPath == "" || !fileExists(daemonJSONPath) {
 			if home := os.Getenv("HOME"); home != "" {
-				daemonJsonPath = filepath.Join(home, ".cache", "telepresence", "rootd", "daemon.json")
+				daemonJSONPath = filepath.Join(home, ".cache", "telepresence", "rootd", "daemon.json")
 			}
 		}
 	}
 
-	if daemonJsonPath != "" && fileExists(daemonJsonPath) {
-		data, err := os.ReadFile(daemonJsonPath)
+	if daemonJSONPath != "" && fileExists(daemonJSONPath) {
+		data, err := os.ReadFile(daemonJSONPath)
 		if err == nil {
 			var info DaemonPortInfo
 			if err := json.Unmarshal(data, &info); err == nil && info.DaemonPort > 0 {
@@ -138,25 +139,20 @@ func (g *TelepresenceGRPCClient) Connect(ctx context.Context) error {
 	candidates := g.LocatePossibleSockets()
 	var dialErr error
 	var connectedConn *grpc.ClientConn
-	var matchedSocket string
 
 	for _, socketPath := range candidates {
 		if !fileExists(socketPath) {
 			continue
 		}
 
-		dialCtx, cancel := context.WithTimeout(ctx, 1500*time.Millisecond)
-		conn, err := grpc.DialContext(
-			dialCtx,
+		conn, err := grpc.NewClient(
 			"passthrough:///userd",
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithBlock(),
 			grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
 				var d net.Dialer
 				return d.DialContext(ctx, "unix", socketPath)
 			}),
 		)
-		cancel()
 
 		if err == nil {
 			// Verify by calling Version or Status
@@ -167,7 +163,6 @@ func (g *TelepresenceGRPCClient) Connect(ctx context.Context) error {
 
 			if testErr == nil {
 				connectedConn = conn
-				matchedSocket = socketPath
 				g.client = client
 				break
 			}
@@ -185,23 +180,26 @@ func (g *TelepresenceGRPCClient) Connect(ctx context.Context) error {
 	}
 
 	g.conn = connectedConn
-	g.activeSocket = matchedSocket
 	g.isConnected = true
 
 	// Also try connecting to Root Daemon if port is available
 	if rootPort := g.LocateRootDaemonPort(); rootPort > 0 {
 		rootTarget := fmt.Sprintf("127.0.0.1:%d", rootPort)
-		rootCtx, rootCancel := context.WithTimeout(ctx, 1500*time.Millisecond)
-		dConn, dErr := grpc.DialContext(
-			rootCtx,
+		dConn, dErr := grpc.NewClient(
 			rootTarget,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithBlock(),
 		)
-		rootCancel()
 		if dErr == nil {
-			g.daemonConn = dConn
-			g.daemonClient = daemon.NewDaemonClient(dConn)
+			daemonCli := daemon.NewDaemonClient(dConn)
+			rootCtx, rootCancel := context.WithTimeout(ctx, 1500*time.Millisecond)
+			_, vErr := daemonCli.Version(rootCtx, &emptypb.Empty{})
+			rootCancel()
+			if vErr == nil {
+				g.daemonConn = dConn
+				g.daemonClient = daemonCli
+			} else {
+				_ = dConn.Close()
+			}
 		}
 	}
 
@@ -226,7 +224,6 @@ func (g *TelepresenceGRPCClient) Disconnect() {
 	g.client = nil
 	g.daemonClient = nil
 	g.isConnected = false
-	g.activeSocket = ""
 }
 
 func (g *TelepresenceGRPCClient) IsConnected() bool {

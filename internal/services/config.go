@@ -24,7 +24,7 @@ func NewConfigServiceWithDir(dir string) *ConfigService {
 
 func (s *ConfigService) getAppDir() (string, error) {
 	if s.customDir != "" {
-		if err := os.MkdirAll(s.customDir, 0755); err != nil {
+		if err := os.MkdirAll(s.customDir, 0o755); err != nil {
 			return "", err
 		}
 		return s.customDir, nil
@@ -35,7 +35,7 @@ func (s *ConfigService) getAppDir() (string, error) {
 		return "", err
 	}
 	appDir := filepath.Join(configDir, "telepresence-gui")
-	if err := os.MkdirAll(appDir, 0755); err != nil {
+	if err := os.MkdirAll(appDir, 0o755); err != nil {
 		return "", err
 	}
 	return appDir, nil
@@ -69,7 +69,7 @@ func (s *ConfigService) SaveConnectConfig(config models.ConnectConfig) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filePath, data, 0644)
+	return os.WriteFile(filePath, data, 0o600)
 }
 
 func (s *ConfigService) LoadConnectConfig() (*models.ConnectConfig, error) {
@@ -103,7 +103,7 @@ func (s *ConfigService) SaveAppSettings(settings models.AppSettings) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filePath, data, 0644)
+	return os.WriteFile(filePath, data, 0o600)
 }
 
 func (s *ConfigService) LoadAppSettings() (*models.AppSettings, error) {
@@ -154,4 +154,3 @@ func (s *ConfigService) ResetAppSettings() (*models.AppSettings, error) {
 	}
 	return &defaults, nil
 }
-

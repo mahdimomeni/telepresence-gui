@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,37 +7,39 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Spinner } from "@/components/ui/spinner"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronDownIcon, ChevronUpIcon, Laptop, Container, Hammer, Layers } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { models } from "../../wailsjs/go/models"
-import { useLoadingStore } from "@/stores/useLoadingStore"
-import { TelepresenceService } from "@/services/telepresence"
-import { CoreService } from "@/services/core"
-import { ContextInput } from "@/components/context-input"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDownIcon, ChevronUpIcon, Laptop, Container, Hammer, Layers } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { models } from "../../wailsjs/go/models";
+import { useLoadingStore } from "@/stores/useLoadingStore";
+import { TelepresenceService } from "@/services/telepresence";
+import { CoreService } from "@/services/core";
+import { ContextInput } from "@/components/context-input";
 
 interface ReplaceDialogProps {
-  workloadName: string
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess?: () => void
+  workloadName: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
-type ExecutionMode = "local" | "docker-run" | "docker-build"
+type ExecutionMode = "local" | "docker-run" | "docker-build";
 
 export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: ReplaceDialogProps) {
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false)
-  const loading = useLoadingStore((state) => state.isLoading(`replace-${workloadName}`))
-  const startLoading = useLoadingStore((state) => state.startLoading)
-  const stopLoading = useLoadingStore((state) => state.stopLoading)
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const loading = useLoadingStore(state => state.isLoading(`replace-${workloadName}`));
+  const startLoading = useLoadingStore(state => state.startLoading);
+  const stopLoading = useLoadingStore(state => state.stopLoading);
 
-  const [mode, setMode] = useState<ExecutionMode>("local")
-  const [toPodInput, setToPodInput] = useState("")
-  const [dockerBuildOptInput, setDockerBuildOptInput] = useState("")
+  const [mode, setMode] = useState<ExecutionMode>("local");
+  const [toPodInput, setToPodInput] = useState("");
+  const [dockerBuildOptInput, setDockerBuildOptInput] = useState("");
+  const [envFormat, setEnvFormat] = useState("docker");
+  const [envFile, setEnvFile] = useState("");
 
   const [replaceConfig, setReplaceConfig] = useState<models.ReplaceConfig>(
     new models.ReplaceConfig({
@@ -59,76 +61,67 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
       docker_mount: "",
       namespace: "",
     })
-  )
-
-  useEffect(() => {
-    setReplaceConfig((prev) => ({ ...prev, workload: workloadName }))
-  }, [workloadName])
-
-  const [envFormat, setEnvFormat] = useState("docker")
-  const [envFile, setEnvFile] = useState("")
-
-  useEffect(() => {
-    const isJson = envFormat === "json"
-    const finalEnvFile = !isJson ? envFile : ""
-    const finalEnvJson = isJson ? envFile : ""
-    const finalSyntax = (!isJson && envFormat !== "docker") ? envFormat : ""
-
-    setReplaceConfig((prev) => ({
-      ...prev,
-      env_file: finalEnvFile,
-      env_json: finalEnvJson,
-      env_syntax: finalSyntax,
-    }))
-  }, [envFormat, envFile])
+  );
 
   const handleModeChange = (newMode: string) => {
-    const m = newMode as ExecutionMode
-    setMode(m)
-    setReplaceConfig((prev) => ({
+    const m = newMode as ExecutionMode;
+    setMode(m);
+    setReplaceConfig(prev => ({
       ...prev,
       docker_run: m === "docker-run",
-      docker_build: m === "docker-build" ? (prev.docker_build || "./") : "",
-    }))
-  }
+      docker_build: m === "docker-build" ? prev.docker_build || "./" : "",
+    }));
+  };
 
-  const handleFieldChange = (key: keyof models.ReplaceConfig, value: any) => {
-    setReplaceConfig((prev) => ({ ...prev, [key]: value }))
-  }
+  const handleFieldChange = (
+    key: keyof models.ReplaceConfig,
+    value: models.ReplaceConfig[keyof models.ReplaceConfig]
+  ) => {
+    setReplaceConfig(prev => ({ ...prev, [key]: value }));
+  };
 
   const handleReplace = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    startLoading(`replace-${workloadName}`)
+    e.preventDefault();
+    startLoading(`replace-${workloadName}`);
 
     try {
       const toPodList = toPodInput
         .split(",")
-        .map((p) => p.trim())
-        .filter(Boolean)
+        .map(p => p.trim())
+        .filter(Boolean);
 
       const buildOptsList = dockerBuildOptInput
         .split(",")
-        .map((o) => o.trim())
-        .filter(Boolean)
+        .map(o => o.trim())
+        .filter(Boolean);
+
+      const isJson = envFormat === "json";
+      const finalEnvFile = !isJson ? envFile : "";
+      const finalEnvJson = isJson ? envFile : "";
+      const finalSyntax = !isJson && envFormat !== "docker" ? envFormat : "";
 
       const configToSubmit: models.ReplaceConfig = {
         ...replaceConfig,
+        workload: workloadName,
+        env_file: finalEnvFile,
+        env_json: finalEnvJson,
+        env_syntax: finalSyntax,
         docker_run: mode === "docker-run",
         docker_build: mode === "docker-build" ? replaceConfig.docker_build : "",
         to_pod: toPodList,
         docker_build_opt: buildOptsList,
-      }
+      };
 
-      await TelepresenceService.replaceWorkload(configToSubmit)
-      CoreService.notify("Telepresence Replace Active", `Successfully replaced ${workloadName}`)
-      onOpenChange(false)
-      if (onSuccess) onSuccess()
+      await TelepresenceService.replaceWorkload(configToSubmit);
+      CoreService.notify("Telepresence Replace Active", `Successfully replaced ${workloadName}`);
+      onOpenChange(false);
+      if (onSuccess) onSuccess();
     } catch (error) {
-      CoreService.notify("Telepresence Replace Error", `Replace failed: ${String(error)}`)
+      CoreService.notify("Telepresence Replace Error", `Replace failed: ${String(error)}`);
     } finally {
-      stopLoading(`replace-${workloadName}`)
+      stopLoading(`replace-${workloadName}`);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal={loading}>
@@ -142,15 +135,13 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
               <DialogTitle>Replace Workload</DialogTitle>
             </div>
             <DialogDescription className="text-xs">
-              Removes remote container from <strong className="text-foreground">{workloadName}</strong> and reroutes all traffic, environment, and volumes to your workstation.
+              Removes remote container from{" "}
+              <strong className="text-foreground">{workloadName}</strong> and reroutes all traffic,
+              environment, and volumes to your workstation.
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs
-            value={mode}
-            onValueChange={handleModeChange}
-            className="w-full mt-4"
-          >
+          <Tabs value={mode} onValueChange={handleModeChange} className="w-full mt-4">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="local" className="gap-1.5 text-xs">
                 <Laptop className="size-3.5" />
@@ -166,7 +157,6 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
               </TabsTrigger>
             </TabsList>
 
-
             <div className="grid gap-3 py-4">
               {/* Port */}
               <div className="grid grid-cols-4 items-center gap-3">
@@ -177,7 +167,7 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                   <ContextInput
                     id="replace-port"
                     value={replaceConfig.port}
-                    onChange={(e) => handleFieldChange("port", e.target.value)}
+                    onChange={e => handleFieldChange("port", e.target.value)}
                     placeholder="all, or 8080, or 8080:80"
                     disabled={loading}
                     className="h-8 text-sm"
@@ -196,7 +186,7 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                 <ContextInput
                   id="replace-container"
                   value={replaceConfig.container}
-                  onChange={(e) => handleFieldChange("container", e.target.value)}
+                  onChange={e => handleFieldChange("container", e.target.value)}
                   className="col-span-3 h-8 text-sm"
                   placeholder="Leave empty if single container"
                   disabled={loading}
@@ -211,7 +201,7 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                 <ContextInput
                   id="replace-address"
                   value={replaceConfig.address}
-                  onChange={(e) => handleFieldChange("address", e.target.value)}
+                  onChange={e => handleFieldChange("address", e.target.value)}
                   className="col-span-3 h-8 text-sm"
                   placeholder="127.0.0.1"
                   disabled={loading}
@@ -228,12 +218,16 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                     <ContextInput
                       id="replace-envFile"
                       value={envFile}
-                      onChange={(e) => setEnvFile(e.target.value)}
+                      onChange={e => setEnvFile(e.target.value)}
                       className="flex-1 h-8 text-sm"
                       placeholder="/path/to/output.env"
                       disabled={loading}
                     />
-                    <Select value={envFormat} onValueChange={(val) => val && setEnvFormat(val)} disabled={loading}>
+                    <Select
+                      value={envFormat}
+                      onValueChange={val => val && setEnvFormat(val)}
+                      disabled={loading}
+                    >
                       <SelectTrigger className="w-28 h-8 text-xs">
                         <SelectValue placeholder="Format" />
                       </SelectTrigger>
@@ -259,7 +253,7 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                   <ContextInput
                     id="replace-dockerArgs"
                     value={replaceConfig.docker_args}
-                    onChange={(e) => handleFieldChange("docker_args", e.target.value)}
+                    onChange={e => handleFieldChange("docker_args", e.target.value)}
                     className="col-span-3 h-8 text-sm"
                     placeholder="-it --rm ubuntu:20.04 /bin/bash"
                     required={mode === "docker-run"}
@@ -273,7 +267,7 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                   <ContextInput
                     id="replace-dockerMount"
                     value={replaceConfig.docker_mount}
-                    onChange={(e) => handleFieldChange("docker_mount", e.target.value)}
+                    onChange={e => handleFieldChange("docker_mount", e.target.value)}
                     className="col-span-3 h-8 text-sm"
                     placeholder="Defaults to mount point"
                     disabled={loading}
@@ -290,7 +284,7 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                   <ContextInput
                     id="replace-dockerBuild"
                     value={replaceConfig.docker_build}
-                    onChange={(e) => handleFieldChange("docker_build", e.target.value)}
+                    onChange={e => handleFieldChange("docker_build", e.target.value)}
                     className="col-span-3 h-8 text-sm"
                     placeholder="./ or /path/to/docker/context"
                     required={mode === "docker-build"}
@@ -304,7 +298,7 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                   <ContextInput
                     id="replace-dockerBuildOpt"
                     value={dockerBuildOptInput}
-                    onChange={(e) => setDockerBuildOptInput(e.target.value)}
+                    onChange={e => setDockerBuildOptInput(e.target.value)}
                     className="col-span-3 h-8 text-sm"
                     placeholder="tag=mytag, target=dev"
                     disabled={loading}
@@ -317,7 +311,7 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                   <ContextInput
                     id="replace-dockerDebug"
                     value={replaceConfig.docker_debug}
-                    onChange={(e) => handleFieldChange("docker_debug", e.target.value)}
+                    onChange={e => handleFieldChange("docker_debug", e.target.value)}
                     className="col-span-3 h-8 text-sm"
                     placeholder="Optional debug context"
                     disabled={loading}
@@ -330,7 +324,7 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                   <ContextInput
                     id="replace-dockerArgs-build"
                     value={replaceConfig.docker_args}
-                    onChange={(e) => handleFieldChange("docker_args", e.target.value)}
+                    onChange={e => handleFieldChange("docker_args", e.target.value)}
                     className="col-span-3 h-8 text-sm"
                     placeholder="-it IMAGE /bin/bash"
                     disabled={loading}
@@ -339,14 +333,26 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
               </TabsContent>
 
               {/* ADVANCED SECTION */}
-              <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen} className="w-full mt-2">
+              <Collapsible
+                open={isAdvancedOpen}
+                onOpenChange={setIsAdvancedOpen}
+                className="w-full mt-2"
+              >
                 <CollapsibleTrigger
                   render={
-                    <Button variant="ghost" size="sm" className="w-full flex justify-between text-muted-foreground" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full flex justify-between text-muted-foreground"
+                    />
                   }
                 >
                   <span>Advanced Settings</span>
-                  {isAdvancedOpen ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
+                  {isAdvancedOpen ? (
+                    <ChevronUpIcon className="h-4 w-4" />
+                  ) : (
+                    <ChevronDownIcon className="h-4 w-4" />
+                  )}
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-3 pt-3 border-t mt-2">
                   <div className="grid grid-cols-4 items-center gap-3">
@@ -356,7 +362,7 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                     <ContextInput
                       id="replace-mount"
                       value={replaceConfig.mount}
-                      onChange={(e) => handleFieldChange("mount", e.target.value)}
+                      onChange={e => handleFieldChange("mount", e.target.value)}
                       className="col-span-3 h-8 text-xs"
                       placeholder="true (default), false, /path, /path:ro"
                       disabled={loading}
@@ -370,7 +376,7 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                     <ContextInput
                       id="replace-toPod"
                       value={toPodInput}
-                      onChange={(e) => setToPodInput(e.target.value)}
+                      onChange={e => setToPodInput(e.target.value)}
                       className="col-span-3 h-8 text-xs"
                       placeholder="e.g. 9090, 53/UDP"
                       disabled={loading}
@@ -384,8 +390,12 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
                     <ContextInput
                       id="replace-localMountPort"
                       type="number"
-                      value={replaceConfig.local_mount_port ? String(replaceConfig.local_mount_port) : ""}
-                      onChange={(e) => handleFieldChange("local_mount_port", parseInt(e.target.value, 10) || 0)}
+                      value={
+                        replaceConfig.local_mount_port ? String(replaceConfig.local_mount_port) : ""
+                      }
+                      onChange={e =>
+                        handleFieldChange("local_mount_port", parseInt(e.target.value, 10) || 0)
+                      }
                       className="col-span-3 h-8 text-xs"
                       placeholder="Expose local port for external mounter"
                       disabled={loading}
@@ -397,7 +407,12 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
           </Tabs>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
@@ -408,5 +423,5 @@ export function ReplaceDialog({ workloadName, open, onOpenChange, onSuccess }: R
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

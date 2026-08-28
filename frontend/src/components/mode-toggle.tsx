@@ -1,25 +1,25 @@
-import { Moon, Sun } from "lucide-react"
+import { Moon, Sun } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useTheme } from "@/components/theme-provider"
-import { useSettingsStore } from "@/stores/useSettingsStore"
+} from "@/components/ui/dropdown-menu";
+import { useTheme } from "@/components/theme-provider";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 
 export function ModeToggle() {
-  const { theme, setTheme } = useTheme()
-  const updateField = useSettingsStore((state) => state.updateField)
-  const saveSettings = useSettingsStore((state) => state.saveSettings)
+  const { theme, setTheme } = useTheme();
+  const updateField = useSettingsStore(state => state.updateField);
+  const saveSettings = useSettingsStore(state => state.saveSettings);
 
   const handleSelectTheme = (newTheme: "light" | "dark" | "system") => {
-    setTheme(newTheme)
-    updateField("theme", newTheme)
-    saveSettings()
-  }
+    setTheme(newTheme);
+    updateField("theme", newTheme);
+    saveSettings();
+  };
 
   return (
     <DropdownMenu>
@@ -42,5 +42,5 @@ export function ModeToggle() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

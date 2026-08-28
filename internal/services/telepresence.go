@@ -161,7 +161,7 @@ func (s *TelepresenceService) Start(ctx context.Context, config models.ConnectCo
 		return output, err
 	}
 
-	if len(output) != 0 {
+	if output != "" {
 		var res models.TelepresenceResponse
 		if err := json.Unmarshal([]byte(output), &res); err != nil {
 			return output, err

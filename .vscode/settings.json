@@ -1,0 +1,9 @@
+{
+  "css.lint.unknownAtRules": "ignore",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "prettier.requireConfig": true,
+  "prettier.configPath": "./frontend/.prettierrc.json",
+  "prettier.prettierPath": "./frontend/node_modules/prettier",
+  "prettier.ignorePath": "./frontend/.prettierignore"
+}

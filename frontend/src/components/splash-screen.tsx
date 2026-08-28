@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react"
-import { Radio, Terminal, Cpu, ShieldCheck, Zap, Sparkles } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useEffect, useState } from "react";
+import { Radio, Terminal, Cpu, ShieldCheck, Zap, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface SplashScreenProps {
-  onComplete: () => void
-  durationMs?: number
+  onComplete: () => void;
+  durationMs?: number;
 }
 
 const BOOT_STEPS = [
@@ -13,51 +13,52 @@ const BOOT_STEPS = [
   { id: 2, text: "Scanning kubeconfig & active namespaces...", icon: ShieldCheck },
   { id: 3, text: "Hooking Telepresence daemon event streams...", icon: Terminal },
   { id: 4, text: "Kubernetes interceptor engine ready.", icon: Zap },
-]
+];
 
 export function SplashScreen({ onComplete, durationMs = 2800 }: SplashScreenProps) {
-  const [progress, setProgress] = useState(0)
-  const [currentStepIndex, setCurrentStepIndex] = useState(0)
-  const [isFadingOut, setIsFadingOut] = useState(false)
+  const [progress, setProgress] = useState(0);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   useEffect(() => {
-    const startTime = Date.now()
+    const startTime = Date.now();
     const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime
-      const rawProgress = Math.min(100, Math.floor((elapsed / durationMs) * 100))
-      setProgress(rawProgress)
+      const elapsed = Date.now() - startTime;
+      const rawProgress = Math.min(100, Math.floor((elapsed / durationMs) * 100));
+      setProgress(rawProgress);
 
       const stepIndex = Math.min(
         BOOT_STEPS.length - 1,
         Math.floor((elapsed / durationMs) * BOOT_STEPS.length)
-      )
-      setCurrentStepIndex(stepIndex)
+      );
+      setCurrentStepIndex(stepIndex);
 
       if (elapsed >= durationMs) {
-        clearInterval(interval)
-        setIsFadingOut(true)
+        clearInterval(interval);
+        setIsFadingOut(true);
         setTimeout(() => {
-          onComplete()
-        }, 500) // smooth fade-out duration
+          onComplete();
+        }, 500); // smooth fade-out duration
       }
-    }, 30)
+    }, 30);
 
-    return () => clearInterval(interval)
-  }, [durationMs, onComplete])
+    return () => clearInterval(interval);
+  }, [durationMs, onComplete]);
 
   const handleSkip = () => {
-    setIsFadingOut(true)
+    setIsFadingOut(true);
     setTimeout(() => {
-      onComplete()
-    }, 300)
-  }
+      onComplete();
+    }, 300);
+  };
 
-  const CurrentStepIcon = BOOT_STEPS[currentStepIndex]?.icon || Terminal
+  const CurrentStepIcon = BOOT_STEPS[currentStepIndex]?.icon || Terminal;
 
   return (
     <div
-      className={`fixed inset-0 z-40 flex flex-col items-center justify-center bg-background text-foreground select-none overflow-hidden transition-all duration-500 ease-out pt-11 ${isFadingOut ? "opacity-0 scale-105 pointer-events-none" : "opacity-100 scale-100"
-        }`}
+      className={`fixed inset-0 z-40 flex flex-col items-center justify-center bg-background text-foreground select-none overflow-hidden transition-all duration-500 ease-out pt-11 ${
+        isFadingOut ? "opacity-0 scale-105 pointer-events-none" : "opacity-100 scale-100"
+      }`}
     >
       {/* Dynamic Cyber Grid Background */}
       <div className="absolute inset-0 cyber-grid-bg opacity-70 pointer-events-none" />
@@ -143,20 +144,21 @@ export function SplashScreen({ onComplete, durationMs = 2800 }: SplashScreenProp
           {/* Stepped Checkpoints */}
           <div className="grid grid-cols-4 gap-1.5 pt-1">
             {BOOT_STEPS.map((step, idx) => {
-              const isPassed = idx < currentStepIndex || progress === 100
-              const isCurrent = idx === currentStepIndex && progress < 100
+              const isPassed = idx < currentStepIndex || progress === 100;
+              const isCurrent = idx === currentStepIndex && progress < 100;
 
               return (
                 <div
                   key={step.id}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${isPassed
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    isPassed
                       ? "bg-primary shadow-[0_0_8px_var(--primary)]"
                       : isCurrent
                         ? "bg-primary/50 animate-pulse"
                         : "bg-muted"
-                    }`}
+                  }`}
                 />
-              )
+              );
             })}
           </div>
         </div>
@@ -164,7 +166,7 @@ export function SplashScreen({ onComplete, durationMs = 2800 }: SplashScreenProp
         {/* Progress Bar with Shimmer Highlight */}
         <div className="w-full h-1.5 bg-muted/60 rounded-full overflow-hidden relative shadow-inner">
           <div
-            className="h-full bg-gradient-to-r from-primary/80 via-primary to-orange-400 transition-all duration-75 rounded-full relative"
+            className="h-full bg-linear-to-r from-primary/80 via-primary to-orange-400 transition-all duration-75 rounded-full relative"
             style={{ width: `${progress}%` }}
           >
             <div className="absolute inset-0 skeleton-shimmer opacity-60" />
@@ -178,5 +180,5 @@ export function SplashScreen({ onComplete, durationMs = 2800 }: SplashScreenProp
         </div>
       </div>
     </div>
-  )
+  );
 }
