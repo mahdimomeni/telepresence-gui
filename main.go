@@ -51,6 +51,7 @@ func main() {
 	kubeService := services.NewKubeService(runner, configService)
 	teleService := services.NewTelepresenceService(runner)
 	updateService := services.NewUpdateService("mahdimomeni", "telepresence-gui", appVersion)
+	toolService := services.NewToolCheckerService(runner)
 
 	// Instantiate the Presentation App Layer
 	application := app.NewApp(
@@ -58,6 +59,7 @@ func main() {
 		kubeService,
 		configService,
 		updateService,
+		toolService,
 		linuxTrayIcon,
 		darwinTrayIcon,
 		windowsTrayIcon,

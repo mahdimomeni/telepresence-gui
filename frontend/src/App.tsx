@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ListPage } from './pages/list';
 import { BrowserOpenURL, EventsOff, EventsOn } from '../wailsjs/runtime/runtime';
 import { Button } from './components/ui/button';
-import { AtSign, Terminal, Activity, Radio, Sparkles } from 'lucide-react';
+import { AtSign, Terminal, Activity, Radio, Sparkles, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import Github from './assets/images/github.svg?react';
 import { Toaster } from './components/ui/toast';
 import { UpdateToast } from './components/update-toast';
@@ -12,11 +12,18 @@ import { LogPanel } from './components/log-panel';
 import { Badge } from './components/ui/badge';
 import { ModeToggle } from './components/mode-toggle';
 import { SplashScreen } from './components/splash-screen';
+import { useToolsStore } from './stores/useToolsStore';
+import { MissingToolsView } from './components/missing-tools-view';
 
 function App() {
     const [isConnected, setIsConnected] = useState(false)
     const [isLogsOpen, setIsLogsOpen] = useState(false)
     const [showSplash, setShowSplash] = useState(true)
+
+    const report = useToolsStore((state) => state.report)
+    const isCheckingTools = useToolsStore((state) => state.isChecking)
+    const checkTools = useToolsStore((state) => state.checkTools)
+    const setReport = useToolsStore((state) => state.setReport)
 
     const handleConnectSuccess = useCallback(() => {
         setIsConnected(true)
@@ -27,13 +34,20 @@ function App() {
     }, [])
 
     useEffect(() => {
+        // Initial tools check on startup
+        checkTools()
+
+        EventsOn("system-tools:status", (statusReport: any) => {
+            setReport(statusReport)
+        })
+
         EventsOn("connection-changed", (status: boolean) => {
             setIsConnected(status)
         })
 
         if (!import.meta.env.PROD) {
             return () => {
-                EventsOff("connection-changed", "connection-pending")
+                EventsOff("connection-changed", "connection-pending", "system-tools:status")
             }
         }
 
@@ -51,10 +65,10 @@ function App() {
         window.addEventListener('contextmenu', handleContextMenu)
 
         return () => {
-            EventsOff("connection-changed", "connection-pending")
+            EventsOff("connection-changed", "connection-pending", "system-tools:status")
             window.removeEventListener('contextmenu', handleContextMenu)
         }
-    }, [])
+    }, [checkTools, setReport])
 
     return (
         <ThemeProvider defaultTheme='dark' storageKey='vite-ui-theme'>
@@ -97,8 +111,16 @@ function App() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {/* Live Connection Status Indicator */}
-                        {isConnected ? (
+                        {/* Live Connection Status / Tools Status Indicator */}
+                        {report && !report.allInstalled ? (
+                            <Badge
+                                variant="outline"
+                                className="border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 gap-1.5 px-2.5 py-1 text-xs font-medium shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)] transition-all animate-pulse"
+                            >
+                                <AlertTriangle className="size-3 text-amber-500" />
+                                <span>Prerequisites Missing</span>
+                            </Badge>
+                        ) : isConnected ? (
                             <Badge
                                 variant="outline"
                                 className="border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 gap-1.5 px-2.5 py-1 text-xs font-medium shadow-[0_0_15px_-3px_rgba(16,185,129,0.3)] transition-all animate-pulse"
@@ -136,13 +158,21 @@ function App() {
 
                 {/* Main Content Area with View Enter Animation */}
                 <main className="relative z-10 w-full flex-1 flex items-center justify-center p-4">
-                    <div key={isConnected ? "connected" : "disconnected"} className="w-full flex items-center justify-center animate-page-enter">
-                        {!isConnected ? (
-                            <ConnectPage onConnectSuccess={handleConnectSuccess} />
-                        ) : (
-                            <ListPage onDisconnect={handleDisconnectSuccess} />
-                        )}
-                    </div>
+                    {report && !report.allInstalled ? (
+                        <MissingToolsView
+                            report={report}
+                            isChecking={isCheckingTools}
+                            onRecheck={checkTools}
+                        />
+                    ) : (
+                        <div key={isConnected ? "connected" : "disconnected"} className="w-full flex items-center justify-center animate-page-enter">
+                            {!isConnected ? (
+                                <ConnectPage onConnectSuccess={handleConnectSuccess} />
+                            ) : (
+                                <ListPage onDisconnect={handleDisconnectSuccess} />
+                            )}
+                        </div>
+                    )}
                 </main>
 
                 {/* Footer */}

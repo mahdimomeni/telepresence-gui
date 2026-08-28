@@ -359,6 +359,69 @@ export namespace models {
 	        this.namespace = source["namespace"];
 	    }
 	}
+	export class ToolCheckResult {
+	    name: string;
+	    displayName: string;
+	    description: string;
+	    required: boolean;
+	    installed: boolean;
+	    version?: string;
+	    path?: string;
+	    error?: string;
+	    docsUrl: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ToolCheckResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.displayName = source["displayName"];
+	        this.description = source["description"];
+	        this.required = source["required"];
+	        this.installed = source["installed"];
+	        this.version = source["version"];
+	        this.path = source["path"];
+	        this.error = source["error"];
+	        this.docsUrl = source["docsUrl"];
+	    }
+	}
+	export class SystemToolsReport {
+	    allInstalled: boolean;
+	    missingCount: number;
+	    tools: ToolCheckResult[];
+	
+	    static createFrom(source: any = {}) {
+	        return new SystemToolsReport(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.allInstalled = source["allInstalled"];
+	        this.missingCount = source["missingCount"];
+	        this.tools = this.convertValues(source["tools"], ToolCheckResult);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
 	
 	export class Workload {
 	    name: string;

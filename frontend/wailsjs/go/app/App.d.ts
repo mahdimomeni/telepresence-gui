@@ -6,6 +6,8 @@ import {options} from '../models';
 
 export function CheckForUpdates():Promise<services.UpdateInfo>;
 
+export function CheckSystemTools():Promise<models.SystemToolsReport>;
+
 export function DetachWorkload(arg1:models.DetachConfig):Promise<void>;
 
 export function DownloadAndInstallUpdate():Promise<void>;

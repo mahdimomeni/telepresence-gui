@@ -20,6 +20,7 @@ type App struct {
 	kubeService   *services.KubeService
 	configService *services.ConfigService
 	updateService *services.UpdateService
+	toolService   *services.ToolCheckerService
 	logTailer     *services.LogTailer
 
 	pollMu        sync.Mutex
@@ -38,6 +39,7 @@ func NewApp(
 	kubeService *services.KubeService,
 	configService *services.ConfigService,
 	updateService *services.UpdateService,
+	toolService *services.ToolCheckerService,
 	linuxTrayIcon []byte,
 	darwinTrayIcon []byte,
 	windowsTrayIcon []byte,
@@ -47,6 +49,7 @@ func NewApp(
 		kubeService:     kubeService,
 		configService:   configService,
 		updateService:   updateService,
+		toolService:     toolService,
 		logTailer:       services.NewLogTailer(),
 		linuxTrayIcon:   linuxTrayIcon,
 		darwinTrayIcon:  darwinTrayIcon,
@@ -73,6 +76,19 @@ func (a *App) Startup(ctx context.Context) {
 	a.setupSystemTray()
 
 	go func() {
+		time.Sleep(500 * time.Millisecond)
+		report, err := a.toolService.CheckTools(a.ctx)
+		if err == nil {
+			runtime.EventsEmit(a.ctx, "system-tools:status", report)
+			if !report.AllInstalled {
+				runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Tools Warning] %d required tool(s) missing. Telepresence and kubectl are required.", report.MissingCount))
+			} else {
+				runtime.EventsEmit(a.ctx, "daemon-log", "[Tools] All required tools (telepresence, kubectl) detected successfully.")
+			}
+		}
+	}()
+
+	go func() {
 		time.Sleep(2 * time.Second)
 		info, err := a.updateService.CheckForUpdate(a.ctx)
 		if err == nil && info != nil && info.Available {
@@ -80,6 +96,10 @@ func (a *App) Startup(ctx context.Context) {
 			runtime.EventsEmit(a.ctx, "update:available", info)
 		}
 	}()
+}
+
+func (a *App) CheckSystemTools() (models.SystemToolsReport, error) {
+	return a.toolService.CheckTools(a.ctx)
 }
 
 func (a *App) CheckForUpdates() (*services.UpdateInfo, error) {

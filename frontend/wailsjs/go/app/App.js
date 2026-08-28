@@ -6,6 +6,10 @@ export function CheckForUpdates() {
   return window['go']['app']['App']['CheckForUpdates']();
 }
 
+export function CheckSystemTools() {
+  return window['go']['app']['App']['CheckSystemTools']();
+}
+
 export function DetachWorkload(arg1) {
   return window['go']['app']['App']['DetachWorkload'](arg1);
 }
