@@ -1,0 +1,10 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/main.tsx!"],
+  "project": ["src/**/*.{ts,tsx}!"],
+  "ignoreDependencies": [
+    "@fontsource-variable/geist",
+    "tailwindcss",
+    "shadcn"
+  ]
+}

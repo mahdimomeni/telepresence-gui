@@ -74,12 +74,15 @@ wails dev
    Ensure all changes are well-structured, performant, and commented where necessary.
 3. **Validate Your Changes**:
    ```bash
-   # Validate Go codebase
+   # Validate Go codebase (Static Analysis & Vet)
    go vet ./...
-   go fmt ./...
+   golangci-lint run ./...
 
-   # Validate frontend build
-   cd frontend && npm run build && cd ..
+   # Validate Frontend (Typecheck, Lint, Formatting, Dead Code)
+   cd frontend
+   npm run validate
+   npm run deadcode
+   cd ..
    ```
 4. **Commit Your Changes**:
    Use [Conventional Commits](https://www.conventionalcommits.org/):
