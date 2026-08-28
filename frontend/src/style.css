@@ -213,7 +213,119 @@ textarea,
   background: color-mix(in oklch, var(--card) 80%, transparent);
 }
 
-/* Shimmer animation for skeletons */
+/* Cyber Grid Pattern Background */
+.cyber-grid-bg {
+  background-image: 
+    linear-gradient(to right, color-mix(in oklch, var(--border) 25%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklch, var(--border) 25%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 40%, transparent 95%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 40%, transparent 95%);
+}
+
+/* Atmospheric Glow Animations */
+@keyframes aurora-drift-1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.18;
+  }
+  33% {
+    transform: translate(6%, 8%) scale(1.15);
+    opacity: 0.28;
+  }
+  66% {
+    transform: translate(-5%, 4%) scale(0.95);
+    opacity: 0.22;
+  }
+}
+
+@keyframes aurora-drift-2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.12;
+  }
+  33% {
+    transform: translate(-8%, -6%) scale(1.1);
+    opacity: 0.22;
+  }
+  66% {
+    transform: translate(4%, -8%) scale(0.92);
+    opacity: 0.16;
+  }
+}
+
+.animate-aurora-1 {
+  animation: aurora-drift-1 16s ease-in-out infinite;
+}
+
+.animate-aurora-2 {
+  animation: aurora-drift-2 20s ease-in-out infinite;
+}
+
+/* Orbital Rotation Animations */
+@keyframes orbital-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbital-spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: orbital-spin 20s linear infinite;
+}
+
+.animate-spin-reverse-slow {
+  animation: orbital-spin-reverse 26s linear infinite;
+}
+
+.animate-spin-medium {
+  animation: orbital-spin 10s linear infinite;
+}
+
+/* Radar Scanner Animation */
+@keyframes radar-sweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-radar-sweep {
+  animation: radar-sweep 4s linear infinite;
+}
+
+/* Luminous Energy Pulse */
+@keyframes energy-pulse {
+  0%, 100% {
+    transform: scale(0.96);
+    opacity: 0.4;
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 60%, transparent);
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.9;
+    box-shadow: 0 0 30px 10px color-mix(in oklch, var(--primary) 30%, transparent);
+  }
+}
+
+.animate-energy-pulse {
+  animation: energy-pulse 3s ease-in-out infinite;
+}
+
+/* Shimmer animation for skeletons and text */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -232,4 +344,90 @@ textarea,
   );
   background-size: 200% 100%;
   animation: shimmer 2s infinite ease-in-out;
+}
+
+.text-gradient-shimmer {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--foreground) 70%, transparent) 0%,
+    var(--primary) 30%,
+    color-mix(in oklch, var(--foreground) 95%, transparent) 50%,
+    var(--primary) 70%,
+    color-mix(in oklch, var(--foreground) 70%, transparent) 100%
+  );
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Page & Element Transitions */
+@keyframes page-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-page-enter {
+  animation: page-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes stagger-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-stagger-1 {
+  animation: stagger-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+}
+
+.animate-stagger-2 {
+  animation: stagger-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+}
+
+.animate-stagger-3 {
+  animation: stagger-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.19s both;
+}
+
+.animate-stagger-4 {
+  animation: stagger-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.26s both;
+}
+
+/* Interactive Card & Button Polish */
+.hover-card-glow {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+}
+
+.hover-card-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -8px color-mix(in oklch, var(--primary) 12%, transparent);
+  border-color: color-mix(in oklch, var(--primary) 40%, var(--border));
+}
+
+/* Pulse Rings */
+@keyframes ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.animate-ripple {
+  animation: ripple 2.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
 }

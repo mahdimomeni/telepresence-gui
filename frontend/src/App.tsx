@@ -4,17 +4,19 @@ import { useCallback, useEffect, useState } from 'react';
 import { ListPage } from './pages/list';
 import { BrowserOpenURL, EventsOff, EventsOn } from '../wailsjs/runtime/runtime';
 import { Button } from './components/ui/button';
-import { AtSign, Terminal, Activity, Radio } from 'lucide-react';
+import { AtSign, Terminal, Activity, Radio, Sparkles } from 'lucide-react';
 import Github from './assets/images/github.svg?react';
 import { Toaster } from './components/ui/toast';
 import { UpdateToast } from './components/update-toast';
 import { LogPanel } from './components/log-panel';
 import { Badge } from './components/ui/badge';
 import { ModeToggle } from './components/mode-toggle';
+import { SplashScreen } from './components/splash-screen';
 
 function App() {
     const [isConnected, setIsConnected] = useState(false)
     const [isLogsOpen, setIsLogsOpen] = useState(false)
+    const [showSplash, setShowSplash] = useState(true)
 
     const handleConnectSuccess = useCallback(() => {
         setIsConnected(true)
@@ -56,25 +58,39 @@ function App() {
 
     return (
         <ThemeProvider defaultTheme='dark' storageKey='vite-ui-theme'>
+            {showSplash && (
+                <SplashScreen onComplete={() => setShowSplash(false)} />
+            )}
+
             <div id="App" className="relative min-h-screen bg-background text-foreground flex flex-col overflow-hidden pb-10">
-                {/* Atmospheric Ambient Glows */}
-                <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] bg-primary/20 rounded-full blur-[140px] pointer-events-none transform-gpu will-change-transform" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[45%] bg-blue-500/10 rounded-full blur-[140px] pointer-events-none transform-gpu will-change-transform" />
+                {/* Cyber Grid Background */}
+                <div className="absolute inset-0 cyber-grid-bg opacity-40 pointer-events-none" />
+
+                {/* Atmospheric Ambient Glows with Organic Drift */}
+                <div className="absolute top-[-15%] left-[-10%] w-[55%] h-[55%] bg-primary/20 rounded-full blur-[150px] pointer-events-none transform-gpu animate-aurora-1" />
+                <div className="absolute bottom-[-15%] right-[-10%] w-[55%] h-[55%] bg-cyan-500/10 rounded-full blur-[150px] pointer-events-none transform-gpu animate-aurora-2" />
 
                 {/* Top App Header */}
-                <header className="relative z-20 w-full border-b border-border/40 bg-card/60 backdrop-blur-md px-5 py-2.5 flex items-center justify-between shadow-xs">
-                    <div className="flex items-center gap-3">
-                        <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-xs border border-primary/20">
-                            <Radio className="size-4 animate-pulse" />
+                <header className="relative z-20 w-full border-b border-border/40 bg-card/60 backdrop-blur-md px-5 py-2.5 flex items-center justify-between shadow-xs transition-colors">
+                    <div 
+                        className="flex items-center gap-3 cursor-pointer group"
+                        onClick={() => setShowSplash(true)}
+                        title="Click to replay system boot sequence"
+                    >
+                        <div className="relative flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-xs border border-primary/20 transition-transform group-hover:scale-105 group-hover:border-primary/40">
+                            <Radio className="size-4 animate-pulse text-primary" />
+                            <div className="absolute inset-0 rounded-lg border border-primary/30 animate-ping opacity-25 pointer-events-none" />
                         </div>
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2">
-                                <span className="font-bold text-sm tracking-tight text-foreground">Telepresence</span>
-                                <Badge variant="outline" className="text-[10px] h-4.5 px-1.5 py-0 font-semibold font-mono text-muted-foreground border-border/80">
+                                <span className="font-bold text-sm tracking-tight text-foreground group-hover:text-primary transition-colors">
+                                    Telepresence
+                                </span>
+                                <Badge variant="outline" className="text-[10px] h-4.5 px-1.5 py-0 font-semibold font-mono text-muted-foreground border-border/80 group-hover:border-primary/30 transition-colors">
                                     GUI
                                 </Badge>
                             </div>
-                            <span className="text-[11px] text-muted-foreground leading-none">
+                            <span className="text-[11px] text-muted-foreground leading-none flex items-center gap-1">
                                 Kubernetes Local Interceptor
                             </span>
                         </div>
@@ -85,15 +101,15 @@ function App() {
                         {isConnected ? (
                             <Badge
                                 variant="outline"
-                                className="border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 gap-1.5 px-2.5 py-1 text-xs font-medium"
+                                className="border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 gap-1.5 px-2.5 py-1 text-xs font-medium shadow-[0_0_15px_-3px_rgba(16,185,129,0.3)] transition-all animate-pulse"
                             >
-                                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
                                 Active Session
                             </Badge>
                         ) : (
                             <Badge
                                 variant="outline"
-                                className="border-border bg-muted/40 text-muted-foreground gap-1.5 px-2.5 py-1 text-xs"
+                                className="border-border bg-muted/40 text-muted-foreground gap-1.5 px-2.5 py-1 text-xs transition-all"
                             >
                                 <span className="size-2 rounded-full bg-zinc-400 dark:bg-zinc-600" />
                                 Disconnected
@@ -107,7 +123,7 @@ function App() {
                             variant={isLogsOpen ? "secondary" : "ghost"}
                             size="sm"
                             onClick={() => setIsLogsOpen(!isLogsOpen)}
-                            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-transform active:scale-95"
                             title="Toggle Daemon Logs Console"
                         >
                             <Terminal className="size-3.5" />
@@ -118,13 +134,15 @@ function App() {
                     </div>
                 </header>
 
-                {/* Main Content Area */}
+                {/* Main Content Area with View Enter Animation */}
                 <main className="relative z-10 w-full flex-1 flex items-center justify-center p-4">
-                    {!isConnected ? (
-                        <ConnectPage onConnectSuccess={handleConnectSuccess} />
-                    ) : (
-                        <ListPage onDisconnect={handleDisconnectSuccess} />
-                    )}
+                    <div key={isConnected ? "connected" : "disconnected"} className="w-full flex items-center justify-center animate-page-enter">
+                        {!isConnected ? (
+                            <ConnectPage onConnectSuccess={handleConnectSuccess} />
+                        ) : (
+                            <ListPage onDisconnect={handleDisconnectSuccess} />
+                        )}
+                    </div>
                 </main>
 
                 {/* Footer */}
@@ -134,7 +152,7 @@ function App() {
                             variant="ghost" 
                             size="icon-xs"
                             onClick={() => BrowserOpenURL("https://github.com/mahdimomeni/telepresence-gui")}
-                            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer transition-transform hover:scale-110"
                             title="View source repository on GitHub"
                         >
                             <Github className="size-3.5" />
@@ -144,14 +162,14 @@ function App() {
                             variant="ghost" 
                             size="icon-xs"
                             onClick={() => BrowserOpenURL("mailto:mahdimomeni012@gmail.com")}
-                            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer transition-transform hover:scale-110"
                             title="Send feedback or report issue via Email"
                         >
                             <AtSign className="size-3.5" />
                             <span className="sr-only">Contact Email</span>
                         </Button>
                     </div>
-                    <span className="text-[11px]">Telepresence GUI v{__APP_VERSION__}</span>
+                    <span className="text-[11px] font-mono">Telepresence GUI v{__APP_VERSION__}</span>
                 </footer>
 
                 <Toaster />
@@ -161,6 +179,5 @@ function App() {
         </ThemeProvider>
     )
 }
-
 
 export default App

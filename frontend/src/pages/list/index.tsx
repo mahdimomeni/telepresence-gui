@@ -218,13 +218,13 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
   }, [fetchWorkloads, setLoading])
 
   return (
-    <Card className="w-full max-w-5xl bg-card/90 backdrop-blur-md border-border/60 shadow-2xl shadow-black/25 flex flex-col">
+    <Card className="w-full max-w-5xl bg-card/90 backdrop-blur-md border-border/60 shadow-2xl shadow-black/25 flex flex-col hover-card-glow transition-all">
       {/* Header Banner */}
       <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-border/40 shrink-0">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
             <CardTitle className="text-xl font-bold tracking-tight">Active Workload Session</CardTitle>
-            <Badge variant="secondary" className="gap-1 font-mono text-xs px-2 py-0.5">
+            <Badge variant="secondary" className="gap-1 font-mono text-xs px-2 py-0.5 shadow-xs">
               ns: <span className="font-semibold text-foreground">{activeNamespace}</span>
             </Badge>
           </div>
@@ -239,7 +239,7 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
             size="sm"
             onClick={fetchWorkloads}
             disabled={loading}
-            className="h-8 gap-1.5 text-xs"
+            className="h-8 gap-1.5 text-xs active:scale-95 transition-transform"
             title="Rescan cluster workloads"
           >
             <RefreshCw className={`size-3.5 ${isScanning ? "animate-spin text-primary" : ""}`} />
@@ -251,11 +251,11 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
             size="sm"
             onClick={handleDisconnect}
             disabled={loading}
-            className="h-8 gap-1.5 text-xs shadow-xs"
+            className="h-8 gap-1.5 text-xs shadow-xs active:scale-95 transition-transform"
             title="Disconnect Telepresence daemon"
           >
             {isDisconnecting ? (
-              <Spinner className="size-3.5" />
+              <Spinner className="size-3.5 animate-spin" />
             ) : (
               <LogOut className="size-3.5" />
             )}
@@ -265,20 +265,20 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
       </CardHeader>
 
       <CardContent className="pt-4 space-y-4">
-        {/* Metric Summary Cards */}
+        {/* Metric Summary Cards with Staggered Entrance and Hover Glow */}
         {workloads.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3 rounded-lg border bg-card/60 flex items-center justify-between">
+            <div className="p-3 rounded-lg border bg-card/60 flex items-center justify-between animate-stagger-1 hover-card-glow transition-all">
               <div>
                 <span className="text-[11px] font-medium text-muted-foreground">Total Workloads</span>
                 <div className="text-lg font-bold font-mono leading-tight mt-0.5">{metrics.total}</div>
               </div>
-              <div className="p-2 rounded-md bg-muted text-muted-foreground">
+              <div className="p-2 rounded-md bg-muted text-muted-foreground shadow-xs">
                 <Boxes className="size-4" />
               </div>
             </div>
 
-            <div className="p-3 rounded-lg border bg-card/60 flex items-center justify-between">
+            <div className="p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-between animate-stagger-2 hover-card-glow transition-all">
               <div>
                 <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                   Intercepted
@@ -287,31 +287,31 @@ export function ListPage({ onDisconnect }: { onDisconnect: () => void }) {
                   {metrics.intercepted}
                 </div>
               </div>
-              <div className="p-2 rounded-md bg-emerald-500/10 text-emerald-500">
-                <Radio className="size-4" />
+              <div className="p-2 rounded-md bg-emerald-500/15 text-emerald-500 shadow-xs">
+                <Radio className="size-4 animate-pulse" />
               </div>
             </div>
 
-            <div className="p-3 rounded-lg border bg-card/60 flex items-center justify-between">
+            <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 flex items-center justify-between animate-stagger-3 hover-card-glow transition-all">
               <div>
                 <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">Replaced</span>
                 <div className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400 leading-tight mt-0.5">
                   {metrics.replaced}
                 </div>
               </div>
-              <div className="p-2 rounded-md bg-amber-500/10 text-amber-500">
-                <Layers className="size-4" />
+              <div className="p-2 rounded-md bg-amber-500/15 text-amber-500 shadow-xs">
+                <Layers className="size-4 animate-pulse" />
               </div>
             </div>
 
-            <div className="p-3 rounded-lg border bg-card/60 flex items-center justify-between">
+            <div className="p-3 rounded-lg border bg-card/60 flex items-center justify-between animate-stagger-4 hover-card-glow transition-all">
               <div>
-                <span className="text-[11px] font-medium text-muted-foreground">Degraded / Incompatible</span>
+                <span className="text-[11px] font-medium text-muted-foreground">Degraded / Issues</span>
                 <div className="text-lg font-bold font-mono text-muted-foreground leading-tight mt-0.5">
                   {metrics.incompatible + metrics.degraded}
                 </div>
               </div>
-              <div className="p-2 rounded-md bg-muted text-muted-foreground">
+              <div className="p-2 rounded-md bg-muted text-muted-foreground shadow-xs">
                 <AlertTriangle className="size-4" />
               </div>
             </div>

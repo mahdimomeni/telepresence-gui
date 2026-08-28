@@ -176,11 +176,12 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
     }
 
     return (
-        <Card className="w-full max-w-2xl bg-card/90 backdrop-blur-md border-border/60 shadow-2xl shadow-black/25">
-            <CardHeader className="pb-4">
-                <div className="flex items-center gap-2.5">
-                    <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
-                        <PlugZap className="size-5" />
+        <Card className="w-full max-w-2xl bg-card/90 backdrop-blur-md border-border/60 shadow-2xl shadow-black/25 hover-card-glow transition-all">
+            <CardHeader className="pb-4 border-b border-border/30">
+                <div className="flex items-center gap-3">
+                    <div className="relative flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-xs">
+                        <PlugZap className="size-5 animate-pulse" />
+                        <div className="absolute inset-0 rounded-xl bg-primary/20 animate-ping opacity-20 pointer-events-none" />
                     </div>
                     <div>
                         <CardTitle className="text-xl font-bold tracking-tight">Establish Cluster Session</CardTitle>
@@ -192,28 +193,28 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
             </CardHeader>
             <form ref={formRef} onSubmit={handleConnect} onReset={handleReset}>
                 <fieldset disabled={loading} className="space-y-0 border-0 p-0 m-0 min-w-0">
-                    <CardContent className="pb-2">
+                    <CardContent className="pt-4 pb-2">
                         <Tabs defaultValue="core" className="w-full">
-                            <TabsList className="grid w-full grid-cols-4 mb-4">
-                                <TabsTrigger value="core" className="gap-1.5 text-xs">
+                            <TabsList className="grid w-full grid-cols-4 mb-4 bg-muted/50 p-1">
+                                <TabsTrigger value="core" className="gap-1.5 text-xs transition-all data-[state=active]:shadow-xs">
                                     <Radio className="size-3.5" />
                                     <span>Core</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="network" className="gap-1.5 text-xs">
+                                <TabsTrigger value="network" className="gap-1.5 text-xs transition-all data-[state=active]:shadow-xs">
                                     <Network className="size-3.5" />
                                     <span>Network</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="cluster" className="gap-1.5 text-xs">
+                                <TabsTrigger value="cluster" className="gap-1.5 text-xs transition-all data-[state=active]:shadow-xs">
                                     <ShieldCheck className="size-3.5" />
                                     <span>Cluster & Auth</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="advanced" className="gap-1.5 text-xs">
+                                <TabsTrigger value="advanced" className="gap-1.5 text-xs transition-all data-[state=active]:shadow-xs">
                                     <SlidersHorizontal className="size-3.5" />
                                     <span>Advanced</span>
                                 </TabsTrigger>
                             </TabsList>
 
-                            <TabsContent value="core" className="mt-0">
+                            <TabsContent value="core" className="mt-0 animate-page-enter">
                                 <CoreTab
                                     values={connectConfig}
                                     onChange={handleFieldChange}
@@ -221,7 +222,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                 />
                             </TabsContent>
 
-                            <TabsContent value="network" className="mt-0">
+                            <TabsContent value="network" className="mt-0 animate-page-enter">
                                 <NetworkTab
                                     values={connectConfig}
                                     onChange={handleFieldChange}
@@ -229,7 +230,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                 />
                             </TabsContent>
 
-                            <TabsContent value="cluster" className="mt-0">
+                            <TabsContent value="cluster" className="mt-0 animate-page-enter">
                                 <ClusterAuthTab
                                     values={connectConfig}
                                     onChange={handleFieldChange}
@@ -238,7 +239,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                 />
                             </TabsContent>
 
-                            <TabsContent value="advanced" className="mt-0">
+                            <TabsContent value="advanced" className="mt-0 animate-page-enter">
                                 <AdvancedTab
                                     values={connectConfig}
                                     onChange={handleFieldChange}
@@ -248,7 +249,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                         </Tabs>
 
                         {apiError.length !== 0 && (
-                            <Alert variant="destructive" className="mt-4 border-destructive/40 bg-destructive/10">
+                            <Alert variant="destructive" className="mt-4 border-destructive/40 bg-destructive/10 animate-page-enter">
                                 <AlertCircleIcon className="size-4 text-destructive" />
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
@@ -258,7 +259,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                                             variant="ghost"
                                             size="sm"
                                             onClick={handleCopyError}
-                                            className="h-6 px-2 text-[11px] gap-1 text-destructive hover:bg-destructive/20"
+                                            className="h-6 px-2 text-[11px] gap-1 text-destructive hover:bg-destructive/20 active:scale-95 transition-transform"
                                         >
                                             {copiedError ? (
                                                 <Check className="size-3 text-emerald-500" />
@@ -277,25 +278,25 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                     </CardContent>
                 </fieldset>
 
-                <CardFooter className="flex-col gap-2 pt-3">
+                <CardFooter className="flex-col gap-2 pt-3 border-t border-border/30">
                     <Button
                         type="submit"
-                        className="w-full h-10 text-sm font-semibold shadow-md gap-2"
+                        className="w-full h-10 text-sm font-semibold shadow-md gap-2 transition-all active:scale-[0.99] hover:shadow-primary/20 hover:shadow-lg"
                         disabled={loading}
                     >
                         {isConnecting ? (
                             <>
-                                <Spinner className="size-4" />
+                                <Spinner className="size-4 animate-spin" />
                                 <span>Establishing Connection...</span>
                             </>
                         ) : isFetchingKube ? (
                             <>
-                                <Spinner className="size-4" />
+                                <Spinner className="size-4 animate-spin" />
                                 <span>Loading Cluster Defaults...</span>
                             </>
                         ) : (
                             <>
-                                <PlugZap className="size-4" />
+                                <PlugZap className="size-4 text-primary-foreground group-hover:animate-bounce" />
                                 <span>Connect Session</span>
                             </>
                         )}
@@ -303,7 +304,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                     <Button
                         type="reset"
                         variant="outline"
-                        className="w-full h-9 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                        className="w-full h-9 text-xs text-muted-foreground hover:text-foreground gap-1.5 active:scale-[0.99]"
                         disabled={loading}
                     >
                         <RotateCcw className="size-3.5" />
