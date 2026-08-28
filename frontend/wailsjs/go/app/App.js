@@ -70,6 +70,14 @@ export function SelectFile(arg1) {
   return window['go']['app']['App']['SelectFile'](arg1);
 }
 
+export function SetEventEmitter(arg1) {
+  return window['go']['app']['App']['SetEventEmitter'](arg1);
+}
+
+export function SetNotifier(arg1) {
+  return window['go']['app']['App']['SetNotifier'](arg1);
+}
+
 export function StartTelepresence(arg1) {
   return window['go']['app']['App']['StartTelepresence'](arg1);
 }

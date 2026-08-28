@@ -17,21 +17,33 @@ Object.defineProperty(window, "matchMedia", {
 });
 
 // Mock ResizeObserver
-globalThis.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+class ResizeObserverMock {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+globalThis.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 // Mock IntersectionObserver
-globalThis.IntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+class IntersectionObserverMock {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+  readonly root: Element | Document | null = null;
+  readonly rootMargin: string = "";
+  readonly thresholds: ReadonlyArray<number> = [];
+  takeRecords = vi.fn().mockReturnValue([]);
+}
+globalThis.IntersectionObserver =
+  IntersectionObserverMock as unknown as typeof IntersectionObserver;
 
 // Mock window.scrollTo
 window.scrollTo = vi.fn();
+
+// Mock Element.prototype.getAnimations for Base UI / JSDOM
+if (typeof Element !== "undefined" && !Element.prototype.getAnimations) {
+  Element.prototype.getAnimations = vi.fn().mockReturnValue([]);
+}
 
 const runtimeMock = {
   EventsOn: vi.fn((_event: string, _callback: (...args: unknown[]) => void) => () => {}),
@@ -154,3 +166,13 @@ const appMock = {
 // Mock Wails Go App bindings
 vi.mock("@/../wailsjs/go/app/App", () => appMock);
 vi.mock("../../wailsjs/go/app/App", () => appMock);
+
+// Define window.go for runtime checks
+Object.defineProperty(window, "go", {
+  writable: true,
+  value: {
+    app: {
+      App: appMock,
+    },
+  },
+});

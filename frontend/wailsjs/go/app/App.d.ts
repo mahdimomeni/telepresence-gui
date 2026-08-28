@@ -3,6 +3,7 @@
 import {services} from '../models';
 import {models} from '../models';
 import {options} from '../models';
+import {app} from '../models';
 
 export function CheckForUpdates():Promise<services.UpdateInfo>;
 
@@ -37,6 +38,10 @@ export function SaveAppSettings(arg1:models.AppSettings):Promise<void>;
 export function SaveConnectConfig(arg1:models.ConnectConfig):Promise<void>;
 
 export function SelectFile(arg1:string):Promise<string>;
+
+export function SetEventEmitter(arg1:app.EventEmitter):Promise<void>;
+
+export function SetNotifier(arg1:app.Notifier):Promise<void>;
 
 export function StartTelepresence(arg1:models.ConnectConfig):Promise<void>;
 

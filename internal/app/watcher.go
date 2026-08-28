@@ -6,8 +6,6 @@ import (
 	"strings"
 	"telepresence-gui/internal/models"
 	"time"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 func (a *App) startBackgroundWatcher() {
@@ -64,12 +62,12 @@ func (a *App) startGRPCWorkloadStream() {
 			a.statusMu.Unlock()
 
 			if listChanged {
-				runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Workloads (gRPC Stream)] Workload list synchronized (%d workloads)", len(workloads)))
-				runtime.EventsEmit(a.ctx, "workloads-changed", workloads)
+				a.emit("daemon-log", fmt.Sprintf("[Workloads (gRPC Stream)] Workload list synchronized (%d workloads)", len(workloads)))
+				a.emit("workloads-changed", workloads)
 			}
 		},
 		func(err error) {
-			runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[gRPC Stream] Workload stream update: %v (falling back to heartbeat polling)", err))
+			a.emit("daemon-log", fmt.Sprintf("[gRPC Stream] Workload stream update: %v (falling back to heartbeat polling)", err))
 		},
 	)
 }
@@ -96,9 +94,9 @@ func (a *App) checkTelepresenceChanges() {
 
 		if statusChanged && status != nil {
 			connected := status.UserDaemon.Running && strings.EqualFold(status.UserDaemon.Status, "Connected")
-			runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Status] Daemon status updated: UserDaemon=%s (Running=%v), RootDaemon Running=%v", status.UserDaemon.Status, status.UserDaemon.Running, status.RootDaemon.Running))
+			a.emit("daemon-log", fmt.Sprintf("[Status] Daemon status updated: UserDaemon=%s (Running=%v), RootDaemon Running=%v", status.UserDaemon.Status, status.UserDaemon.Running, status.RootDaemon.Running))
 			a.updateConnectionStatus(connected)
-			runtime.EventsEmit(a.ctx, "telepresence-status-changed", status)
+			a.emit("telepresence-status-changed", status)
 		}
 	}
 
@@ -124,8 +122,8 @@ func (a *App) checkTelepresenceChanges() {
 			a.statusMu.Unlock()
 
 			if listChanged {
-				runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Workloads] Workload list synchronized (%d workloads found)", len(workloads)))
-				runtime.EventsEmit(a.ctx, "workloads-changed", workloads)
+				a.emit("daemon-log", fmt.Sprintf("[Workloads] Workload list synchronized (%d workloads found)", len(workloads)))
+				a.emit("workloads-changed", workloads)
 			}
 		}
 	} else {
@@ -134,3 +132,4 @@ func (a *App) checkTelepresenceChanges() {
 		a.statusMu.Unlock()
 	}
 }
+

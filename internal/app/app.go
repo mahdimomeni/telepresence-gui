@@ -14,6 +14,39 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+type EventEmitter interface {
+	Emit(eventName string, data ...interface{})
+}
+
+type defaultEventEmitter struct {
+	ctx context.Context
+}
+
+func (d *defaultEventEmitter) Emit(eventName string, data ...interface{}) {
+	if d.ctx != nil {
+		runtime.EventsEmit(d.ctx, eventName, data...)
+	}
+}
+
+type Notifier interface {
+	SendNotification(title, body string) error
+}
+
+type defaultNotifier struct {
+	ctx context.Context
+}
+
+func (d *defaultNotifier) SendNotification(title, body string) error {
+	if d.ctx != nil && runtime.IsNotificationAvailable(d.ctx) {
+		return runtime.SendNotification(d.ctx, runtime.NotificationOptions{
+			ID:    "telepresence-gui-alert",
+			Title: title,
+			Body:  body,
+		})
+	}
+	return nil
+}
+
 type App struct {
 	ctx           context.Context
 	teleService   *services.TelepresenceService
@@ -22,6 +55,8 @@ type App struct {
 	updateService *services.UpdateService
 	toolService   *services.ToolCheckerService
 	logTailer     *services.LogTailer
+	emitter       EventEmitter
+	notifier      Notifier
 
 	pollMu        sync.Mutex
 	statusMu      sync.Mutex
@@ -53,8 +88,32 @@ func NewApp(
 	}
 }
 
+func (a *App) SetEventEmitter(emitter EventEmitter) {
+	a.emitter = emitter
+}
+
+func (a *App) SetNotifier(notifier Notifier) {
+	a.notifier = notifier
+}
+
+func (a *App) emit(eventName string, data ...interface{}) {
+	if a.emitter != nil {
+		a.emitter.Emit(eventName, data...)
+		return
+	}
+	if a.ctx != nil {
+		runtime.EventsEmit(a.ctx, eventName, data...)
+	}
+}
+
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
+	if a.emitter == nil {
+		a.emitter = &defaultEventEmitter{ctx: ctx}
+	}
+	if a.notifier == nil {
+		a.notifier = &defaultNotifier{ctx: ctx}
+	}
 
 	// Load settings on startup and apply engine parameters
 	settings, err := a.configService.LoadAppSettings()
@@ -94,11 +153,11 @@ func (a *App) Startup(ctx context.Context) {
 		time.Sleep(500 * time.Millisecond)
 		report, err := a.toolService.CheckTools(a.ctx)
 		if err == nil {
-			runtime.EventsEmit(a.ctx, "system-tools:status", report)
+			a.emit("system-tools:status", report)
 			if !report.AllInstalled {
-				runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Tools Warning] %d required tool(s) missing. Telepresence and kubectl are required.", report.MissingCount))
+				a.emit("daemon-log", fmt.Sprintf("[Tools Warning] %d required tool(s) missing. Telepresence and kubectl are required.", report.MissingCount))
 			} else {
-				runtime.EventsEmit(a.ctx, "daemon-log", "[Tools] All required tools (telepresence, kubectl) detected successfully.")
+				a.emit("daemon-log", "[Tools] All required tools (telepresence, kubectl) detected successfully.")
 			}
 		}
 	}()
@@ -111,8 +170,8 @@ func (a *App) Startup(ctx context.Context) {
 		}
 		info, err := a.updateService.CheckForUpdate(a.ctx)
 		if err == nil && info != nil && info.Available {
-			runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Update] New version available: v%s (Current: v%s)", info.LatestVersion, info.CurrentVersion))
-			runtime.EventsEmit(a.ctx, "update:available", info)
+			a.emit("daemon-log", fmt.Sprintf("[Update] New version available: v%s (Current: v%s)", info.LatestVersion, info.CurrentVersion))
+			a.emit("update:available", info)
 		}
 	}()
 }
@@ -122,30 +181,30 @@ func (a *App) CheckSystemTools() (models.SystemToolsReport, error) {
 }
 
 func (a *App) CheckForUpdates() (*services.UpdateInfo, error) {
-	runtime.EventsEmit(a.ctx, "daemon-log", "[Update] Checking for updates...")
+	a.emit("daemon-log", "[Update] Checking for updates...")
 	info, err := a.updateService.CheckForUpdate(a.ctx)
 	if err != nil {
-		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Update Error] Check failed: %v", err))
+		a.emit("daemon-log", fmt.Sprintf("[Update Error] Check failed: %v", err))
 		return nil, err
 	}
 	if info != nil && info.Available {
-		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Update] New version available: v%s", info.LatestVersion))
+		a.emit("daemon-log", fmt.Sprintf("[Update] New version available: v%s", info.LatestVersion))
 	} else {
-		runtime.EventsEmit(a.ctx, "daemon-log", "[Update] App is up to date.")
+		a.emit("daemon-log", "[Update] App is up to date.")
 	}
 	return info, nil
 }
 
 func (a *App) DownloadAndInstallUpdate() error {
 	log.Println("[AutoUpdate] DownloadAndInstallUpdate requested from frontend")
-	runtime.EventsEmit(a.ctx, "daemon-log", "[Update] Starting update download and installation...")
+	a.emit("daemon-log", "[Update] Starting update download and installation...")
 
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("[AutoUpdate] Panic during update: %v\n", r)
-				runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Update Error] Internal panic: %v", r))
-				runtime.EventsEmit(a.ctx, "update:progress", services.UpdateProgress{
+				a.emit("daemon-log", fmt.Sprintf("[Update Error] Internal panic: %v", r))
+				a.emit("update:progress", services.UpdateProgress{
 					Status: "error",
 					Error:  fmt.Sprintf("internal panic: %v", r),
 				})
@@ -154,20 +213,20 @@ func (a *App) DownloadAndInstallUpdate() error {
 
 		err := a.updateService.DownloadAndApply(a.ctx, func(p services.UpdateProgress) {
 			log.Printf("[AutoUpdate] Progress: %d%% (%s)\n", p.Percentage, p.Status)
-			runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Update Progress] %d%% - %s", p.Percentage, p.Status))
-			runtime.EventsEmit(a.ctx, "update:progress", p)
+			a.emit("daemon-log", fmt.Sprintf("[Update Progress] %d%% - %s", p.Percentage, p.Status))
+			a.emit("update:progress", p)
 		})
 
 		if err != nil {
 			log.Printf("[AutoUpdate] Update failed: %v\n", err)
-			runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Update Error] %v", err))
-			runtime.EventsEmit(a.ctx, "update:progress", services.UpdateProgress{
+			a.emit("daemon-log", fmt.Sprintf("[Update Error] %v", err))
+			a.emit("update:progress", services.UpdateProgress{
 				Status: "error",
 				Error:  err.Error(),
 			})
 		} else {
 			log.Println("[AutoUpdate] Update applied successfully!")
-			runtime.EventsEmit(a.ctx, "daemon-log", "[Update] Update applied successfully! Ready to restart.")
+			a.emit("daemon-log", "[Update] Update applied successfully! Ready to restart.")
 		}
 	}()
 
@@ -175,7 +234,7 @@ func (a *App) DownloadAndInstallUpdate() error {
 }
 
 func (a *App) RestartApp() error {
-	runtime.EventsEmit(a.ctx, "daemon-log", "[Update] Restarting application...")
+	a.emit("daemon-log", "[Update] Restarting application...")
 	return a.updateService.RestartApp()
 }
 
@@ -196,25 +255,30 @@ func (a *App) OnSecondInstanceLaunch(secondInstanceData options.SecondInstanceDa
 
 	println("user opened second instance", strings.Join(secondInstanceData.Args, ","))
 	println("user opened second from", secondInstanceData.WorkingDirectory)
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[App] Secondary instance launched with args: %s", strings.Join(secondInstanceData.Args, " ")))
-	runtime.WindowUnminimise(a.ctx)
-	runtime.Show(a.ctx)
-	go runtime.EventsEmit(a.ctx, "launchArgs", secondInstanceArgs)
+	a.emit("daemon-log", fmt.Sprintf("[App] Secondary instance launched with args: %s", strings.Join(secondInstanceData.Args, " ")))
+	if a.ctx != nil && a.emitter == nil {
+		runtime.WindowUnminimise(a.ctx)
+		runtime.Show(a.ctx)
+	}
+	go a.emit("launchArgs", secondInstanceArgs)
 }
 
 func (a *App) Notify(title, body string) error {
-	if !runtime.IsNotificationAvailable(a.ctx) {
-		return nil
-	}
 	settings, err := a.configService.LoadAppSettings()
 	if err == nil && settings != nil && !settings.EnableNotifications {
 		return nil
 	}
-	return runtime.SendNotification(a.ctx, runtime.NotificationOptions{
-		ID:    "telepresence-gui-alert",
-		Title: title,
-		Body:  body,
-	})
+	if a.notifier != nil {
+		return a.notifier.SendNotification(title, body)
+	}
+	if a.ctx != nil && runtime.IsNotificationAvailable(a.ctx) {
+		return runtime.SendNotification(a.ctx, runtime.NotificationOptions{
+			ID:    "telepresence-gui-alert",
+			Title: title,
+			Body:  body,
+		})
+	}
+	return nil
 }
 
 func (a *App) SelectFile(title string) (string, error) {
@@ -228,41 +292,41 @@ func (a *App) StartTelepresence(config models.ConnectConfig) error {
 	if targetNs == "" {
 		targetNs = "default"
 	}
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Connect] Connecting to cluster (Namespace: %s, Context: %s)...", targetNs, config.Context))
+	a.emit("daemon-log", fmt.Sprintf("[Connect] Connecting to cluster (Namespace: %s, Context: %s)...", targetNs, config.Context))
 
 	out, err := a.teleService.Start(a.ctx, config)
 	if out != "" {
 		for _, line := range strings.Split(out, "\n") {
 			if trimmed := strings.TrimSpace(line); trimmed != "" {
-				runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Connect] %s", trimmed))
+				a.emit("daemon-log", fmt.Sprintf("[Connect] %s", trimmed))
 			}
 		}
 	}
 	if err != nil {
-		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Connect Error] Failed to connect: %v", err))
+		a.emit("daemon-log", fmt.Sprintf("[Connect Error] Failed to connect: %v", err))
 		return err
 	}
 
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Connect] Connected successfully to cluster (Namespace: %s)", targetNs))
+	a.emit("daemon-log", fmt.Sprintf("[Connect] Connected successfully to cluster (Namespace: %s)", targetNs))
 	a.updateConnectionStatus(true)
 	return nil
 }
 
 func (a *App) StopTelepresence() error {
-	runtime.EventsEmit(a.ctx, "daemon-log", "[Disconnect] Stopping Telepresence daemon (telepresence quit -s)...")
+	a.emit("daemon-log", "[Disconnect] Stopping Telepresence daemon (telepresence quit -s)...")
 	out, err := a.teleService.QuitSync(a.ctx)
 	if out != "" {
 		for _, line := range strings.Split(out, "\n") {
 			if trimmed := strings.TrimSpace(line); trimmed != "" {
-				runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Disconnect] %s", trimmed))
+				a.emit("daemon-log", fmt.Sprintf("[Disconnect] %s", trimmed))
 			}
 		}
 	}
 	if err != nil {
-		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Disconnect Error] Failed to stop daemon: %v", err))
+		a.emit("daemon-log", fmt.Sprintf("[Disconnect Error] Failed to stop daemon: %v", err))
 		return err
 	}
-	runtime.EventsEmit(a.ctx, "daemon-log", "[Disconnect] Telepresence daemon stopped successfully.")
+	a.emit("daemon-log", "[Disconnect] Telepresence daemon stopped successfully.")
 	a.updateConnectionStatus(false)
 	return nil
 }
@@ -272,58 +336,58 @@ func (a *App) ListWorkloads() ([]models.Workload, error) {
 }
 
 func (a *App) InterceptWorkload(config models.InterceptConfig) error {
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Intercept] Starting intercept for %q (Port: %s, Namespace: %s)...", config.Workload, config.Port, config.Namespace))
+	a.emit("daemon-log", fmt.Sprintf("[Intercept] Starting intercept for %q (Port: %s, Namespace: %s)...", config.Workload, config.Port, config.Namespace))
 	out, err := a.teleService.Intercept(a.ctx, config)
 	if out != "" {
 		for _, line := range strings.Split(out, "\n") {
 			if trimmed := strings.TrimSpace(line); trimmed != "" {
-				runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Intercept] %s", trimmed))
+				a.emit("daemon-log", fmt.Sprintf("[Intercept] %s", trimmed))
 			}
 		}
 	}
 	if err != nil {
-		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Intercept Error] Failed to intercept %q: %v", config.Workload, err))
+		a.emit("daemon-log", fmt.Sprintf("[Intercept Error] Failed to intercept %q: %v", config.Workload, err))
 		return err
 	}
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Intercept] Successfully intercepted workload %q", config.Workload))
+	a.emit("daemon-log", fmt.Sprintf("[Intercept] Successfully intercepted workload %q", config.Workload))
 	a.notifyIntercept("Workload Intercepted", fmt.Sprintf("Successfully intercepted workload %q", config.Workload))
 	return nil
 }
 
 func (a *App) ReplaceWorkload(config models.ReplaceConfig) error {
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Replace] Starting replace for %q (Port: %s, Container: %s)...", config.Workload, config.Port, config.Container))
+	a.emit("daemon-log", fmt.Sprintf("[Replace] Starting replace for %q (Port: %s, Container: %s)...", config.Workload, config.Port, config.Container))
 	out, err := a.teleService.Replace(a.ctx, config)
 	if out != "" {
 		for _, line := range strings.Split(out, "\n") {
 			if trimmed := strings.TrimSpace(line); trimmed != "" {
-				runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Replace] %s", trimmed))
+				a.emit("daemon-log", fmt.Sprintf("[Replace] %s", trimmed))
 			}
 		}
 	}
 	if err != nil {
-		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Replace Error] Failed to replace %q: %v", config.Workload, err))
+		a.emit("daemon-log", fmt.Sprintf("[Replace Error] Failed to replace %q: %v", config.Workload, err))
 		return err
 	}
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Replace] Successfully replaced workload %q", config.Workload))
+	a.emit("daemon-log", fmt.Sprintf("[Replace] Successfully replaced workload %q", config.Workload))
 	a.notifyIntercept("Workload Replaced", fmt.Sprintf("Successfully replaced workload %q", config.Workload))
 	return nil
 }
 
 func (a *App) DetachWorkload(config models.DetachConfig) error {
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Detach] Detaching workload/intercept %q (Namespace: %s)...", config.AttachmentName, config.Namespace))
+	a.emit("daemon-log", fmt.Sprintf("[Detach] Detaching workload/intercept %q (Namespace: %s)...", config.AttachmentName, config.Namespace))
 	out, err := a.teleService.Detach(a.ctx, config)
 	if out != "" {
 		for _, line := range strings.Split(out, "\n") {
 			if trimmed := strings.TrimSpace(line); trimmed != "" {
-				runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Detach] %s", trimmed))
+				a.emit("daemon-log", fmt.Sprintf("[Detach] %s", trimmed))
 			}
 		}
 	}
 	if err != nil {
-		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Detach Error] Failed to detach %q: %v", config.AttachmentName, err))
+		a.emit("daemon-log", fmt.Sprintf("[Detach Error] Failed to detach %q: %v", config.AttachmentName, err))
 		return err
 	}
-	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Detach] Successfully detached workload %q", config.AttachmentName))
+	a.emit("daemon-log", fmt.Sprintf("[Detach] Successfully detached workload %q", config.AttachmentName))
 	a.notifyIntercept("Workload Detached", fmt.Sprintf("Successfully detached workload %q", config.AttachmentName))
 	return nil
 }
@@ -331,11 +395,11 @@ func (a *App) DetachWorkload(config models.DetachConfig) error {
 func (a *App) GetKubeInfo(kubeConfigPath string) (models.KubeInfo, error) {
 	info, err := a.kubeService.GetKubeInfo(a.ctx, kubeConfigPath)
 	if err != nil {
-		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Kube Error] Failed to load kubeconfig: %v", err))
+		a.emit("daemon-log", fmt.Sprintf("[Kube Error] Failed to load kubeconfig: %v", err))
 		return info, err
 	}
 	if len(info.Contexts) > 0 {
-		runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Kube] Loaded kubeconfig from %s (Context: %s, Namespace: %s, Contexts: %d)", info.KubeconfigPath, info.CurrentContext, info.Namespace, len(info.Contexts)))
+		a.emit("daemon-log", fmt.Sprintf("[Kube] Loaded kubeconfig from %s (Context: %s, Namespace: %s, Contexts: %d)", info.KubeconfigPath, info.CurrentContext, info.Namespace, len(info.Contexts)))
 	}
 	return info, nil
 }
@@ -386,7 +450,7 @@ func (a *App) updateConnectionStatus(connected bool) {
 	}
 
 	a.updateTrayMenu(connected)
-	runtime.EventsEmit(a.ctx, "connection-changed", connected)
+	a.emit("connection-changed", connected)
 }
 
 func (a *App) SaveConnectConfig(config models.ConnectConfig) error {
@@ -419,8 +483,8 @@ func (a *App) SaveAppSettings(settings models.AppSettings) error {
 			a.pollInterval = time.Duration(settings.PollIntervalSeconds) * time.Second
 			a.statusMu.Unlock()
 		}
-		runtime.EventsEmit(a.ctx, "app-settings:changed", settings)
-		runtime.EventsEmit(a.ctx, "daemon-log", "[Settings] Application preferences saved successfully.")
+		a.emit("app-settings:changed", settings)
+		a.emit("daemon-log", "[Settings] Application preferences saved successfully.")
 	}
 	return err
 }
@@ -438,7 +502,7 @@ func (a *App) ResetAppSettings() (models.AppSettings, error) {
 		a.pollInterval = time.Duration(settings.PollIntervalSeconds) * time.Second
 		a.statusMu.Unlock()
 	}
-	runtime.EventsEmit(a.ctx, "app-settings:changed", *settings)
-	runtime.EventsEmit(a.ctx, "daemon-log", "[Settings] Application preferences reset to factory defaults.")
+	a.emit("app-settings:changed", *settings)
+	a.emit("daemon-log", "[Settings] Application preferences reset to factory defaults.")
 	return *settings, nil
 }
