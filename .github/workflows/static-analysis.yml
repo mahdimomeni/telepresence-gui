@@ -72,5 +72,11 @@ jobs:
       - name: Dead Code Check (Knip)
         run: npm run deadcode
 
-      - name: Frontend Unit Tests
+      - name: Frontend Unit & Integration Tests
         run: npm run test
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Frontend Playwright E2E Tests
+        run: npm run test:e2e

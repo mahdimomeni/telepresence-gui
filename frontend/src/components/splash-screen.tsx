@@ -56,6 +56,7 @@ export function SplashScreen({ onComplete, durationMs = 2800 }: SplashScreenProp
 
   return (
     <div
+      id="telepresence-splash"
       className={`fixed inset-0 z-40 flex flex-col items-center justify-center bg-background text-foreground select-none overflow-hidden transition-all duration-500 ease-out pt-11 ${
         isFadingOut ? "opacity-0 scale-105 pointer-events-none" : "opacity-100 scale-100"
       }`}

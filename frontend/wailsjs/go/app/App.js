@@ -70,6 +70,10 @@ export function SelectFile(arg1) {
   return window['go']['app']['App']['SelectFile'](arg1);
 }
 
+export function SetContext(arg1) {
+  return window['go']['app']['App']['SetContext'](arg1);
+}
+
 export function SetEventEmitter(arg1) {
   return window['go']['app']['App']['SetEventEmitter'](arg1);
 }

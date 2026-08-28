@@ -10,15 +10,22 @@ import (
 )
 
 type ToolCheckerService struct {
-	runner  cli.Runner
-	timeout time.Duration
+	runner       cli.Runner
+	timeout      time.Duration
+	lookPathFunc func(file string) (string, error)
 }
 
 func NewToolCheckerService(runner cli.Runner) *ToolCheckerService {
 	return &ToolCheckerService{
-		runner:  runner,
-		timeout: 5 * time.Second,
+		runner:       runner,
+		timeout:      5 * time.Second,
+		lookPathFunc: exec.LookPath,
 	}
+}
+
+// SetLookPathFunc allows overriding exec.LookPath (useful for mocking/testing without depending on host PATH).
+func (s *ToolCheckerService) SetLookPathFunc(fn func(file string) (string, error)) {
+	s.lookPathFunc = fn
 }
 
 func (s *ToolCheckerService) CheckTools(ctx context.Context) (models.SystemToolsReport, error) {
@@ -56,7 +63,12 @@ func (s *ToolCheckerService) checkTelepresence(ctx context.Context) models.ToolC
 		DocsURL:     "https://www.getambassador.io/docs/telepresence/latest/install",
 	}
 
-	path, err := exec.LookPath("telepresence")
+	lookPath := s.lookPathFunc
+	if lookPath == nil {
+		lookPath = exec.LookPath
+	}
+
+	path, err := lookPath("telepresence")
 	if err != nil {
 		result.Installed = false
 		result.Error = "Telepresence executable was not found in system PATH."
@@ -100,7 +112,12 @@ func (s *ToolCheckerService) checkKubectl(ctx context.Context) models.ToolCheckR
 		DocsURL:     "https://kubernetes.io/docs/tasks/tools/",
 	}
 
-	path, err := exec.LookPath("kubectl")
+	lookPath := s.lookPathFunc
+	if lookPath == nil {
+		lookPath = exec.LookPath
+	}
+
+	path, err := lookPath("kubectl")
 	if err != nil {
 		result.Installed = false
 		result.Error = "Kubectl executable was not found in system PATH."

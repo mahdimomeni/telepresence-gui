@@ -96,6 +96,10 @@ func (a *App) SetNotifier(notifier Notifier) {
 	a.notifier = notifier
 }
 
+func (a *App) SetContext(ctx context.Context) {
+	a.ctx = ctx
+}
+
 func (a *App) emit(eventName string, data ...interface{}) {
 	if a.emitter != nil {
 		a.emitter.Emit(eventName, data...)

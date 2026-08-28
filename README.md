@@ -110,6 +110,38 @@ wails build -platform darwin/universal
 
 ---
 
+## 🧪 Testing Suite
+
+Telepresence GUI includes a comprehensive test suite across the entire application stack:
+
+### Frontend Tests (Unit, Integration & E2E)
+```bash
+cd frontend
+
+# Run all unit and integration tests (Vitest)
+npm run test
+
+# Run full End-to-End (E2E) tests in browser (Playwright)
+npm run test:e2e
+
+# Run Playwright E2E tests with interactive UI
+npm run test:e2e:ui
+
+# Full validation pipeline (typecheck, lint, formatting, dead code, unit & integration tests)
+npm run validate
+```
+
+### Backend Go Tests (Unit, Integration & E2E)
+```bash
+# Run all Go unit, integration, and E2E tests
+go test -v ./...
+
+# Run Go backend E2E lifecycle and resilience tests only
+go test -v ./internal/e2e/...
+```
+
+---
+
 ## 🤝 Contributing
 
 Contributions are always welcome! Whether reporting a bug, proposing a new feature, or submitting a pull request, please review our **[Contributing Guidelines](https://mahdimomeni.github.io/telepresence-gui/docs/contributing/guidelines)**.

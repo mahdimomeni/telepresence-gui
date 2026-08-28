@@ -93,6 +93,9 @@ func setupTestApp(t *testing.T, runner *mockIntegrationRunner) (*App, *mockEvent
 	kubeService := services.NewKubeService(runner, configService)
 	updateService := services.NewUpdateService("mahdimomeni", "telepresence-gui", "1.0.0")
 	toolService := services.NewToolCheckerService(runner)
+	toolService.SetLookPathFunc(func(file string) (string, error) {
+		return "/mock/bin/" + file, nil
+	})
 
 	appInstance := NewApp(
 		teleService,

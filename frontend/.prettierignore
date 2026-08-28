@@ -4,3 +4,6 @@ wailsjs
 package-lock.json
 package.json.md5
 .vite
+test-results
+playwright-report
+blob-report

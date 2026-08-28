@@ -17,3 +17,8 @@ build/windows/installer/tmp
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Playwright Test Outputs
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
