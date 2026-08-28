@@ -23,12 +23,20 @@ type LogTailer struct {
 	wg       sync.WaitGroup
 	mu       sync.Mutex
 	watching map[string]bool
+	onLog    func(string)
 }
 
 func NewLogTailer() *LogTailer {
 	return &LogTailer{
 		watching: make(map[string]bool),
 	}
+}
+
+// SetOnLog allows configuring a custom log sink callback (useful for testing or external piping).
+func (t *LogTailer) SetOnLog(onLog func(string)) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.onLog = onLog
 }
 
 // Start begins tailing Telepresence log files in the background.
@@ -195,7 +203,16 @@ func (t *LogTailer) emitLog(fileName, line string) {
 		line = line[:4096] + "... [truncated]"
 	}
 	formatted := fmt.Sprintf("[%s] %s", tag, line)
-	wailsRuntime.EventsEmit(t.ctx, "daemon-log", formatted)
+
+	t.mu.Lock()
+	cb := t.onLog
+	t.mu.Unlock()
+
+	if cb != nil {
+		cb(formatted)
+	} else if t.ctx != nil {
+		wailsRuntime.EventsEmit(t.ctx, "daemon-log", formatted)
+	}
 }
 
 func getTelepresenceLogDirs() []string {

@@ -18,6 +18,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Create Frontend Dist Stub
+        run: mkdir -p frontend/dist && touch frontend/dist/index.html
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -26,6 +29,9 @@ jobs:
 
       - name: Go Vet
         run: go vet ./...
+
+      - name: Go Unit Tests
+        run: go test -v ./...
 
       - name: Golangci-lint
         uses: golangci/golangci-lint-action@v6
@@ -64,3 +70,6 @@ jobs:
 
       - name: Dead Code Check (Knip)
         run: npm run deadcode
+
+      - name: Frontend Unit Tests
+        run: npm run test

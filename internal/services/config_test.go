@@ -34,11 +34,13 @@ func TestConfigServiceAppSettings(t *testing.T) {
 		t.Errorf("expected MaxLogLines 2000, got %d", initialSettings.MaxLogLines)
 	}
 
+	const stagingNs = "staging-ns"
+
 	// 2. Save customized settings
 	custom := *initialSettings
 	custom.Theme = "light"
 	custom.EnableGlowEffects = false
-	custom.DefaultNamespace = "staging-ns"
+	custom.DefaultNamespace = stagingNs
 	custom.RequestTimeoutSeconds = 120
 	custom.MaxLogLines = 5000
 
@@ -57,8 +59,8 @@ func TestConfigServiceAppSettings(t *testing.T) {
 	if loaded.EnableGlowEffects {
 		t.Error("expected EnableGlowEffects to be false")
 	}
-	if loaded.DefaultNamespace != "staging-ns" {
-		t.Errorf("expected DefaultNamespace 'staging-ns', got %s", loaded.DefaultNamespace)
+	if loaded.DefaultNamespace != stagingNs {
+		t.Errorf("expected DefaultNamespace '%s', got %s", stagingNs, loaded.DefaultNamespace)
 	}
 	if loaded.RequestTimeoutSeconds != 120 {
 		t.Errorf("expected RequestTimeoutSeconds 120, got %d", loaded.RequestTimeoutSeconds)
