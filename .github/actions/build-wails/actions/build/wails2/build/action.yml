@@ -26,19 +26,25 @@ runs:
       if: inputs.build == 'true'
       env:
         BUILD_OPTIONS: ${{ inputs.build-options }}
+        RUNNER_OS_NAME: ${{ runner.os }}
+        BUILD_PLATFORM: ${{ inputs.build-platform }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        WV2_METHOD: ${{ inputs.wails-build-webview2 }}
       working-directory: ${{ inputs.app-working-directory }}
+      shell: bash
       run: |
-        if [ "${{ runner.os }}" = "Linux" ] && [ "${{ inputs.build-platform }}" = "linux/arm64" ]; then
+        set -euo pipefail
+        if [ "${RUNNER_OS_NAME}" = "Linux" ] && [ "${BUILD_PLATFORM}" = "linux/arm64" ]; then
           export CC=aarch64-linux-gnu-gcc
           export CXX=aarch64-linux-gnu-g++
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
           export PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig
         fi
 
-        OUTPUT_NAME="${{ inputs.build-name }}"
-        if [[ "${{ inputs.build-platform }}" == windows/* ]] && [[ "$OUTPUT_NAME" != *.exe ]]; then
+        OUTPUT_NAME="${BUILD_NAME}"
+        if [[ "${BUILD_PLATFORM}" == windows/* ]] && [[ "$OUTPUT_NAME" != *.exe ]]; then
           OUTPUT_NAME="${OUTPUT_NAME}.exe"
         fi
 
-        wails build --platform ${{ inputs.build-platform }} -webview2 ${{ inputs.wails-build-webview2 }} -o "$OUTPUT_NAME" $BUILD_OPTIONS
-      shell: bash
+        echo "[DEBUG_LOG] Running: wails build --platform ${BUILD_PLATFORM} -webview2 ${WV2_METHOD} -o ${OUTPUT_NAME} ${BUILD_OPTIONS}"
+        wails build --platform "${BUILD_PLATFORM}" -webview2 "${WV2_METHOD}" -o "${OUTPUT_NAME}" ${BUILD_OPTIONS}

@@ -12,7 +12,7 @@ inputs:
     default: "false"
   wails-version:
     required: false
-    default: "latest"
+    default: "v2.13.0"
   wails-dev-build:
     required: false
     default: "false"
@@ -27,17 +27,24 @@ runs:
         cache: ${{ inputs.build-cache }}
         cache-dependency-path: 'go.sum'
         go-version: ${{ inputs.go-version }}
+
     - name: Install Garble
       if: inputs.build-obfuscate == 'true'
+      shell: bash
       run: go install mvdan.cc/garble@latest
+
+    - name: Show Go version
       shell: bash
-    - run: go version
-      shell: bash
+      run: go version
+
     - name: Install Wails
       if: inputs.wails-dev-build == 'false'
-      run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ inputs.wails-version }}
       shell: bash
+      env:
+        WAILS_VER: ${{ inputs.wails-version }}
+      run: go install "github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VER}"
+
     - name: Install macOS deps (gon)
       if: runner.os == 'macOS'
-      run: brew install mitchellh/gon/gon
       shell: bash
+      run: brew install mitchellh/gon/gon

@@ -16,11 +16,12 @@ runs:
       if: runner.os == 'Linux'
       id: linux
       shell: bash
+      env:
+        TARGET_PLATFORM: ${{ inputs.build-platform }}
       run: |
         set -euo pipefail
         export DEBIAN_FRONTEND=noninteractive
 
-        TARGET_PLATFORM="${{ inputs.build-platform }}"
         DISTRO=$(lsb_release -rs)
         CODENAME=$(lsb_release -cs)
         HOST_ARCH=$(dpkg --print-architecture)
@@ -99,13 +100,20 @@ runs:
         fi
 
         echo "DISTRO=$DISTRO" >> "$GITHUB_OUTPUT"
+
     - name: Common metadata (bash)
       if: runner.os != 'Windows'
       id: meta_bash
       shell: bash
+      env:
+        ENV_RUNNER_OS: ${{ runner.os }}
+        ENV_GITHUB_REF: ${{ github.ref }}
+        ENV_GITHUB_SHA: ${{ github.sha }}
+        ENV_GITHUB_REPO: ${{ github.repository }}
+        ENV_GITHUB_OWNER: ${{ github.repository_owner }}
       run: |
         set -euo pipefail
-        OS="${{ runner.os }}"
+        OS="${ENV_RUNNER_OS}"
         M="$(uname -m)"
         case "$M" in
           x86_64|amd64) ARCH="amd64";;
@@ -113,15 +121,15 @@ runs:
           armv7l) ARCH="armv7";;
           *) ARCH="$M";;
         esac
-        REF="${{ github.ref }}"
+        REF="${ENV_GITHUB_REF}"
         BRANCH=""
         if [[ "$REF" == refs/heads/* ]]; then
           BRANCH="${REF#refs/heads/}"
         fi
-        SHA="${{ github.sha }}"
-        SHORT_SHA="${SHA::7}"
-        REPO="${{ github.repository }}"
-        OWNER="${{ github.repository_owner }}"
+        SHA="${ENV_GITHUB_SHA}"
+        SHORT_SHA="${SHA:0:7}"
+        REPO="${ENV_GITHUB_REPO}"
+        OWNER="${ENV_GITHUB_OWNER}"
         TAG=""
         IS_TAG=0
         if [[ "$REF" == refs/tags/* ]]; then
@@ -138,23 +146,30 @@ runs:
         echo "OWNER=$OWNER" >> "$GITHUB_OUTPUT"
         echo "TAG=$TAG" >> "$GITHUB_OUTPUT"
         echo "IS_TAG=$IS_TAG" >> "$GITHUB_OUTPUT"
+
     - name: Common metadata (powershell)
       if: runner.os == 'Windows'
       id: meta_pwsh
       shell: powershell
+      env:
+        ENV_RUNNER_OS: ${{ runner.os }}
+        ENV_GITHUB_REF: ${{ github.ref }}
+        ENV_GITHUB_SHA: ${{ github.sha }}
+        ENV_GITHUB_REPO: ${{ github.repository }}
+        ENV_GITHUB_OWNER: ${{ github.repository_owner }}
       run: |
-        $OS = "${{ runner.os }}"
+        $OS = $Env:ENV_RUNNER_OS
         $archEnv = $Env:PROCESSOR_ARCHITECTURE
         if ($archEnv -eq "AMD64") { $ARCH = "amd64" }
         elseif ($archEnv -eq "ARM64") { $ARCH = "arm64" }
         else { $ARCH = $archEnv }
-        $REF = "${{ github.ref }}"
+        $REF = $Env:ENV_GITHUB_REF
         $BRANCH = ""
         if ($REF.StartsWith("refs/heads/")) { $BRANCH = $REF.Substring(11) }
-        $SHA = "${{ github.sha }}"
-        $SHORT_SHA = $SHA.Substring(0,7)
-        $REPO = "${{ github.repository }}"
-        $OWNER = "${{ github.repository_owner }}"
+        $SHA = $Env:ENV_GITHUB_SHA
+        $SHORT_SHA = $SHA.Substring(0, [Math]::Min(7, $SHA.Length))
+        $REPO = $Env:ENV_GITHUB_REPO
+        $OWNER = $Env:ENV_GITHUB_OWNER
         $TAG = ""
         $IS_TAG = 0
         if ($REF.StartsWith("refs/tags/")) {
@@ -171,6 +186,7 @@ runs:
         "OWNER=$OWNER" >> $Env:GITHUB_OUTPUT
         "TAG=$TAG" >> $Env:GITHUB_OUTPUT
         "IS_TAG=$IS_TAG" >> $Env:GITHUB_OUTPUT
+
     - name: Project markers (bash)
       if: runner.os != 'Windows'
       id: proj_bash
@@ -226,6 +242,7 @@ runs:
         else
           echo "FOUND_FILES=" >> "$GITHUB_OUTPUT"
         fi
+
     - name: Project markers (powershell)
       if: runner.os == 'Windows'
       id: proj_pwsh
@@ -267,6 +284,7 @@ runs:
         "HAS_SUB_MKDOCS=$has_sub_mkdocs" >> $Env:GITHUB_OUTPUT
         "PRIMARY_STACK_SUGGESTION=$suggestion" >> $Env:GITHUB_OUTPUT
         if ($found.Count -gt 0) { "FOUND_FILES=$($found -join ',')" >> $Env:GITHUB_OUTPUT } else { "FOUND_FILES=" >> $Env:GITHUB_OUTPUT }
+
 outputs:
   OS:
     description: "Runner OS (Linux/macOS/Windows)"

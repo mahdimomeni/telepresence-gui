@@ -1,20 +1,26 @@
-name: Wails Release Build
+name: Wails Release & Build
+
 on:
   push:
     tags:
-      - "v*" # Triggers a release when a version tag (e.g., v1.0.0) is pushed
+      - "v*"
   pull_request:
+    branches: [main, master, dev]
+  workflow_dispatch:
 
-# Grant write permissions to create releases and upload assets
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   build:
     name: Build ${{ matrix.build.name }}
     runs-on: ${{ matrix.build.os }}
     strategy:
-      fail-fast: false # Prevents cancelling all builds if just one platform fails
+      fail-fast: false
       matrix:
         build:
           # Linux WebKit 4.1 (Ubuntu 24.04+, Debian 12+, Fedora 40+, Arch)
@@ -45,3 +51,38 @@ jobs:
           build-name: telepresence-gui
           build-platform: ${{ matrix.build.platform }}
           nsis: ${{ matrix.build.nsis || 'false' }}
+          package: 'true'
+          publish-release: 'false'
+
+  publish-release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Generate Checksums
+        working-directory: release-assets
+        run: |
+          set -euo pipefail
+          rm -f artifact_meta.json
+          sha256sum * > checksums.txt
+          echo "Generated SHA256 Checksums:"
+          cat checksums.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          files: release-assets/*
+          generate_release_notes: true

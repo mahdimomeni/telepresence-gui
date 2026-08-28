@@ -34,22 +34,25 @@ runs:
       env:
         DISTRO: ${{ inputs.distro }}
         DISABLE_WEBKIT: ${{ inputs.disable-webkit-auto-tag }}
+        IN_OBFUSCATE: ${{ inputs.build-obfuscate }}
+        IN_TAGS: ${{ inputs.build-tags }}
+        IN_NSIS: ${{ inputs.nsis }}
       run: |
         set -euo pipefail
         build_options=""
         # Obfuscation
-        if ${{ inputs.build-obfuscate == 'true' }}; then
+        if [ "${IN_OBFUSCATE}" = "true" ]; then
           build_options+=" -obfuscated"
         fi
         # Normalize tags: accept commas and/or spaces, trim, de-duplicate
         norm_tags=""
-        if [[ "${{ inputs.build-tags }}" != "false" ]]; then
-          raw="${{ inputs.build-tags }}"
+        if [ -n "${IN_TAGS}" ] && [ "${IN_TAGS}" != "false" ]; then
+          raw="${IN_TAGS}"
           raw="${raw//,/ }"
           # collapse multiple spaces
           raw=$(echo "$raw" | tr -s ' ')
           for t in $raw; do
-            if [[ -n "$t" ]]; then
+            if [ -n "$t" ]; then
               case " $norm_tags " in
                 *" $t "*) ;; # already present
                 *) norm_tags+=" $t" ;;
@@ -58,17 +61,17 @@ runs:
           done
         fi
         # Ubuntu 24.04 webkit auto-tag unless disabled or already present
-        if [[ "$DISTRO" == '24.04' && "${DISABLE_WEBKIT}" != 'true' ]]; then
+        if [ "$DISTRO" = "24.04" ] && [ "${DISABLE_WEBKIT}" != "true" ]; then
           case " $norm_tags " in
             *" webkit2_41 "*) : ;; # already present
             *) norm_tags+=" webkit2_41" ;;
           esac
         fi
-        if [[ -n "$norm_tags" ]]; then
+        if [ -n "$norm_tags" ]; then
           build_options+=" -tags${norm_tags}"
         fi
         # NSIS
-        if ${{ inputs.nsis == 'true' }}; then
+        if [ "${IN_NSIS}" = "true" ]; then
           build_options+=" -nsis"
         fi
         echo "BUILD_OPTIONS=$build_options" >> "$GITHUB_OUTPUT"
