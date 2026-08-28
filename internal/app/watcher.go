@@ -1,8 +1,10 @@
 package app
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
+	"telepresence-gui/internal/models"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -20,6 +22,40 @@ func (a *App) startBackgroundWatcher() {
 			a.checkTelepresenceChanges()
 		}
 	}
+}
+
+func (a *App) startGRPCWorkloadStream() {
+	grpcClient := a.teleService.GRPC()
+	if !grpcClient.IsConnected() {
+		_ = grpcClient.Connect(a.ctx)
+	}
+	if !grpcClient.IsConnected() {
+		return
+	}
+
+	_ = grpcClient.StartWatchWorkloads(
+		a.ctx,
+		nil,
+		func(workloads []models.Workload) {
+			rawJSON, _ := json.Marshal(workloads)
+			strJSON := string(rawJSON)
+
+			a.statusMu.Lock()
+			listChanged := strJSON != a.lastListRaw
+			if listChanged {
+				a.lastListRaw = strJSON
+			}
+			a.statusMu.Unlock()
+
+			if listChanged {
+				runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Workloads (gRPC Stream)] Workload list synchronized (%d workloads)", len(workloads)))
+				runtime.EventsEmit(a.ctx, "workloads-changed", workloads)
+			}
+		},
+		func(err error) {
+			runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[gRPC Stream] Workload stream update: %v (falling back to heartbeat polling)", err))
+		},
+	)
 }
 
 func (a *App) checkTelepresenceChanges() {
@@ -55,6 +91,13 @@ func (a *App) checkTelepresenceChanges() {
 	a.statusMu.Unlock()
 
 	if connected {
+		// Ensure gRPC client is connected and stream is active
+		if !a.teleService.GRPC().IsConnected() {
+			if err := a.teleService.GRPC().Connect(a.ctx); err == nil {
+				a.startGRPCWorkloadStream()
+			}
+		}
+
 		rawList, workloads, err := a.teleService.ListWorkloadsRawNoLock(a.ctx)
 		if err == nil {
 			a.statusMu.Lock()
@@ -75,4 +118,3 @@ func (a *App) checkTelepresenceChanges() {
 		a.statusMu.Unlock()
 	}
 }
-

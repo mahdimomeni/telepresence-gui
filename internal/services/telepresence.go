@@ -13,16 +13,22 @@ import (
 )
 
 type TelepresenceService struct {
-	runner  cli.Runner
-	timeout time.Duration
-	mu      sync.Mutex
+	runner     cli.Runner
+	grpcClient *TelepresenceGRPCClient
+	timeout    time.Duration
+	mu         sync.Mutex
 }
 
 func NewTelepresenceService(runner cli.Runner) *TelepresenceService {
 	return &TelepresenceService{
-		runner:  runner,
-		timeout: 60 * time.Second,
+		runner:     runner,
+		grpcClient: NewTelepresenceGRPCClient(),
+		timeout:    60 * time.Second,
 	}
+}
+
+func (s *TelepresenceService) GRPC() *TelepresenceGRPCClient {
+	return s.grpcClient
 }
 
 func (s *TelepresenceService) TryLock() bool {
@@ -157,12 +163,17 @@ func (s *TelepresenceService) Start(ctx context.Context, config models.ConnectCo
 		}
 	}
 
+	// Try establishing gRPC connection immediately after connect
+	_ = s.grpcClient.Connect(ctx)
+
 	return output, nil
 }
 
 func (s *TelepresenceService) Stop(ctx context.Context) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	s.grpcClient.Disconnect()
 
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
@@ -172,6 +183,8 @@ func (s *TelepresenceService) Stop(ctx context.Context) (string, error) {
 func (s *TelepresenceService) QuitSync(ctx context.Context) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	s.grpcClient.Disconnect()
 
 	return s.runner.Run(ctx, "telepresence", "quit", "-s")
 }
@@ -188,6 +201,16 @@ func (s *TelepresenceService) ListWorkloadsNoLock(ctx context.Context) ([]models
 }
 
 func (s *TelepresenceService) ListWorkloadsRawNoLock(ctx context.Context) (string, []models.Workload, error) {
+	// 1. Try gRPC first if connected
+	if s.grpcClient.IsConnected() {
+		workloads, err := s.grpcClient.ListWorkloads(ctx, "")
+		if err == nil {
+			rawJSON, _ := json.Marshal(workloads)
+			return string(rawJSON), workloads, nil
+		}
+	}
+
+	// 2. Fallback to CLI
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
@@ -394,6 +417,16 @@ func (s *TelepresenceService) Status(ctx context.Context) (string, *models.Telep
 }
 
 func (s *TelepresenceService) StatusNoLock(ctx context.Context) (string, *models.TelepresenceStatusOutput, error) {
+	// 1. Try direct gRPC query first if connected
+	if s.grpcClient.IsConnected() {
+		status, err := s.grpcClient.GetStatus(ctx)
+		if err == nil && status != nil {
+			rawJSON, _ := json.Marshal(status)
+			return string(rawJSON), status, nil
+		}
+	}
+
+	// 2. Fallback to CLI command
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 

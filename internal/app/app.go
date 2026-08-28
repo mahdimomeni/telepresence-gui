@@ -308,8 +308,15 @@ func (a *App) updateConnectionStatus(connected bool) {
 
 	if connected {
 		_ = a.Notify("Telepresence Connected", "Connected to cluster successfully.")
+		go func() {
+			if err := a.teleService.GRPC().Connect(a.ctx); err == nil {
+				a.startGRPCWorkloadStream()
+			}
+		}()
 	} else {
 		_ = a.Notify("Telepresence Disconnected", "Daemon stopped successfully.")
+		a.teleService.GRPC().StopWatchWorkloads()
+		a.teleService.GRPC().Disconnect()
 	}
 
 	a.updateTrayMenu(connected)
