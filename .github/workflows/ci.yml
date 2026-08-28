@@ -1,4 +1,4 @@
-name: Static Analysis & Linting
+name: CI
 
 on:
   push:
@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  go-static-analysis:
-    name: Go Static Analysis
+  backend-lint:
+    name: Backend Lint & Static Analysis
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -30,9 +30,6 @@ jobs:
       - name: Go Vet
         run: go vet ./...
 
-      - name: Go Unit Tests
-        run: go test -v ./...
-
       - name: Golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
@@ -40,8 +37,27 @@ jobs:
           install-mode: goinstall
           args: --timeout=5m
 
-  frontend-static-analysis:
-    name: Frontend Static Analysis
+  backend-test:
+    name: Backend Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create Frontend Dist Stub
+        run: mkdir -p frontend/dist && touch frontend/dist/index.html
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Run Go Unit Tests
+        run: go test -v ./...
+
+  frontend-lint:
+    name: Frontend Lint & Static Analysis
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -72,11 +88,51 @@ jobs:
       - name: Dead Code Check (Knip)
         run: npm run deadcode
 
-      - name: Frontend Unit & Integration Tests
+  frontend-test:
+    name: Frontend Unit & Integration Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Vitest Tests
         run: npm run test
+
+  frontend-e2e:
+    name: Frontend Playwright E2E Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Frontend Playwright E2E Tests
+      - name: Run Playwright E2E Tests
         run: npm run test:e2e

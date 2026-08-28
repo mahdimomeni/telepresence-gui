@@ -8,6 +8,16 @@ sidebar_position: 6
 
 Telepresence GUI utilizes automated **GitHub Actions** workflows to compile, package, and publish release binaries across Windows, macOS, and Linux whenever a version tag (`v*.*.*`) is pushed.
 
+## 🧪 Continuous Integration Workflow (`.github/workflows/ci.yml`)
+
+Runs on every `push` and `pull_request` targeting `main`, `master`, and `dev` branches:
+
+- **`backend-lint`**: Runs Go static analysis with `go vet` and `golangci-lint`.
+- **`backend-test`**: Runs backend unit tests (`go test -v ./...`).
+- **`frontend-lint`**: Type checks with TypeScript (`npm run typecheck`), checks code style with ESLint (`npm run lint`), verifies formatting with Prettier (`npm run format:check`), and detects dead code with Knip (`npm run deadcode`).
+- **`frontend-test`**: Executes frontend unit and component integration tests with Vitest (`npm run test`).
+- **`frontend-e2e`**: Runs end-to-end browser automation tests via Playwright (`npm run test:e2e`).
+
 ---
 
 ## 🚀 Release Workflow (`.github/workflows/release.yml`)

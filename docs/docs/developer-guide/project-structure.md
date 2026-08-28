@@ -17,6 +17,7 @@ telepresence-gui/
 ├── .github/
 │   ├── actions/build-wails/      # Custom reusable GitHub Action for cross-platform builds
 │   └── workflows/
+│       ├── ci.yml                # Continuous Integration (lint, test, e2e)
 │       ├── release.yml           # CI/CD multi-platform build & release pipeline
 │       └── deploy-docs.yml       # Docusaurus documentation build & GitHub Pages deploy
 ├── build/                        # Packaging assets, icons, and platform-specific manifests
