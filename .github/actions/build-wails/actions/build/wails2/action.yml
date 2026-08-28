@@ -39,7 +39,7 @@ inputs:
   wails-version:
     description: "Wails version to use"
     required: false
-    default: "latest"
+    default: "v2.13.0"
   wails-build-webview2:
     description: "WebView2 installer method [download,embed,browser,error]"
     required: false
@@ -49,9 +49,9 @@ inputs:
     required: false
     default: "1.23"
   node-version:
-    description: "Node js version (unused by pipeline but kept for compatibility)"
+    description: "Node js version"
     required: false
-    default: "20.x"
+    default: "22.x"
   deno-build:
     description: "Deno command to run (optional, ENV-first)"
     required: false

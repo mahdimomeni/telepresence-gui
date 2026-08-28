@@ -13,14 +13,14 @@ inputs:
     default: "false"
   wails-version:
     required: false
-    default: "latest"
+    default: "v2.13.0"
   wails-dev-build:
     required: false
     default: "false"
   # Node/npm
   node-version:
     required: false
-    default: "20.x"
+    default: "22.x"
   npm-working-directory:
     required: false
     default: "."
@@ -46,7 +46,7 @@ runs:
   steps:
     - name: Install NSIS (Windows)
       if: runner.os == 'Windows'
-      uses: negrutiu/nsis-install@v2
+      uses: negrutiu/nsis-install@v3
     - name: Setup Go
       uses: ./.github/actions/build-wails/actions/setup/go
       with:

@@ -13,9 +13,13 @@ inputs:
     required: false
     default: "false"
   package:
-    description: "Upload artifacts and publish release on tags"
+    description: "Upload artifacts and package binaries"
     required: false
     default: "true"
+  publish-release:
+    description: "Publish release directly in matrix job (default: false for atomic workflow releases)"
+    required: false
+    default: "false"
   nsis:
     description: "Build a Windows Installer"
     required: false
@@ -68,17 +72,19 @@ runs:
         AUTO_STACK: ${{ inputs.AUTO_STACK }}
         AUTO_SETUP: ${{ inputs.AUTO_SETUP }}
         STACK: ${{ inputs.STACK }}
-        # Pass suggestion from discovery so orchestrator can skip re-scanning if it wants
         PRIMARY_STACK_SUGGESTION: ${{ steps.discovery.outputs.PRIMARY_STACK_SUGGESTION }}
 
     - name: Debug selected stack
       shell: bash
-      run: echo "[DEBUG_LOG] (root) Orchestrator selected stack=${{ steps.dir_orch.outputs.SELECTED_STACK }}"
+      env:
+        SELECTED_STACK: ${{ steps.dir_orch.outputs.SELECTED_STACK }}
+      run: echo "[DEBUG_LOG] (root) Orchestrator selected stack=${SELECTED_STACK}"
 
     - name: Package & release
       uses: ./.github/actions/build-wails/actions/package
       with:
         package: ${{ inputs.package }}
+        publish-release: ${{ inputs.publish-release }}
         build-name: ${{ inputs.build-name }}
         build-platform: ${{ inputs.build-platform }}
         os: ${{ steps.discovery.outputs.OS }}

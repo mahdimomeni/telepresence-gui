@@ -1,5 +1,5 @@
 name: "Package & Release"
-description: "Uploads build artifacts and publishes GitHub Release on tag if enabled"
+description: "Uploads build artifacts and optionally publishes GitHub Release on tag"
 inputs:
   package:
     required: false
@@ -38,18 +38,27 @@ inputs:
     description: "Include artifact_meta.json with discovery metadata in the uploaded artifact"
     required: false
     default: "true"
+  publish-release:
+    description: "Directly publish release in this action (default: false to allow atomic workflow releases)"
+    required: false
+    default: "false"
 runs:
   using: "composite"
   steps:
     - name: Compute artifact name
       id: meta
       shell: bash
+      env:
+        PLATFORM_IN: ${{ inputs.build-platform }}
+        TAG_IN: ${{ inputs.tag }}
+        SHORT_SHA_IN: ${{ inputs.short-sha }}
+        OS_IN: ${{ inputs.os }}
+        ARCH_IN: ${{ inputs.arch }}
+        BUILD_NAME_IN: ${{ inputs.build-name }}
+        RUNNER_OS_IN: ${{ runner.os }}
+        GITHUB_SHA_IN: ${{ github.sha }}
       run: |
         set -euo pipefail
-        PLATFORM_IN="${{ inputs.build-platform }}"
-        TAG_IN="${{ inputs.tag }}"
-        SHORT_SHA_IN="${{ inputs.short-sha }}"
-
         TARGET_OS=""
         TARGET_ARCH=""
         if [ -n "$PLATFORM_IN" ]; then
@@ -58,11 +67,11 @@ runs:
         fi
 
         if [ -z "$TARGET_OS" ]; then
-          TARGET_OS="${{ inputs.os }}"
-          if [ -z "$TARGET_OS" ]; then TARGET_OS="${RUNNER_OS:-}"; fi
+          TARGET_OS="$OS_IN"
+          if [ -z "$TARGET_OS" ]; then TARGET_OS="$RUNNER_OS_IN"; fi
         fi
         if [ -z "$TARGET_ARCH" ]; then
-          TARGET_ARCH="${{ inputs.arch }}"
+          TARGET_ARCH="$ARCH_IN"
         fi
 
         TARGET_OS=$(echo "$TARGET_OS" | tr '[:upper:]' '[:lower:]')
@@ -73,8 +82,7 @@ runs:
           REV="$TAG_IN"
         else
           if [ -z "$SHORT_SHA_IN" ]; then
-            GHS="${GITHUB_SHA:-}"
-            SHORT_SHA_IN="${GHS:0:7}"
+            SHORT_SHA_IN="${GITHUB_SHA_IN:0:7}"
           fi
           REV="$SHORT_SHA_IN"
         fi
@@ -89,7 +97,7 @@ runs:
           fi
         fi
 
-        NAME="${{ inputs.build-name }}_${TARGET_OS}_${TARGET_ARCH}${ABI_LABEL}_${REV}"
+        NAME="${BUILD_NAME_IN}_${TARGET_OS}_${TARGET_ARCH}${ABI_LABEL}_${REV}"
         echo "ARTIFACT_NAME=$NAME" >> "$GITHUB_OUTPUT"
         echo "TARGET_OS=$TARGET_OS" >> "$GITHUB_OUTPUT"
         echo "TARGET_ARCH=$TARGET_ARCH" >> "$GITHUB_OUTPUT"
@@ -128,32 +136,33 @@ runs:
     - name: Package archive assets
       if: inputs.package == 'true'
       shell: bash
+      env:
+        TARGET_OS: ${{ steps.meta.outputs.TARGET_OS }}
+        TARGET_ARCH: ${{ steps.meta.outputs.TARGET_ARCH }}
+        ABI_LABEL: ${{ steps.meta.outputs.ABI_LABEL }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        TAG: ${{ inputs.tag }}
+        REV: ${{ steps.meta.outputs.REV }}
       run: |
         set -euo pipefail
         mkdir -p dist
 
-        target_os="${{ steps.meta.outputs.TARGET_OS }}"
-        target_arch="${{ steps.meta.outputs.TARGET_ARCH }}"
-        abi_label="${{ steps.meta.outputs.ABI_LABEL }}"
-        build_name="${{ inputs.build-name }}"
-        tag="${{ inputs.tag }}"
-
-        if [ -n "$tag" ]; then
-          clean_tag="${tag#v}"
-          base_archive="${build_name}_${clean_tag}_${target_os}_${target_arch}${abi_label}"
+        if [ -n "$TAG" ]; then
+          clean_tag="${TAG#v}"
+          base_archive="${BUILD_NAME}_${clean_tag}_${TARGET_OS}_${TARGET_ARCH}${ABI_LABEL}"
         else
-          clean_tag="0.0.0-${{ steps.meta.outputs.REV }}"
-          base_archive="${build_name}_${target_os}_${target_arch}${abi_label}"
+          clean_tag="0.0.0-${REV}"
+          base_archive="${BUILD_NAME}_${TARGET_OS}_${TARGET_ARCH}${ABI_LABEL}"
         fi
 
         bin_dir="build/bin"
 
-        if [ "$target_os" = "windows" ]; then
+        if [ "$TARGET_OS" = "windows" ]; then
           archive_name="${base_archive}.zip"
           
-          # 1. Compress ONLY the portable executable into the .zip archive
-          if [ -f "${bin_dir}/${build_name}.exe" ]; then
-            powershell.exe -NoProfile -Command "Compress-Archive -Path '${bin_dir}/${build_name}.exe' -DestinationPath 'dist/${archive_name}' -Force"
+          # 1. Compress portable executable into .zip
+          if [ -f "${bin_dir}/${BUILD_NAME}.exe" ]; then
+            powershell.exe -NoProfile -Command "Compress-Archive -Path '${bin_dir}/${BUILD_NAME}.exe' -DestinationPath 'dist/${archive_name}' -Force"
             echo "[DEBUG_LOG] Successfully packaged portable zip: dist/${archive_name}"
           fi
 
@@ -166,12 +175,12 @@ runs:
             fi
           done
 
-        elif [ "$target_os" = "darwin" ]; then
+        elif [ "$TARGET_OS" = "darwin" ]; then
           archive_name="${base_archive}.tar.gz"
-          if [ -d "${bin_dir}/${build_name}.app" ]; then
-            tar -czf "dist/${archive_name}" -C "$bin_dir" "${build_name}.app"
-          elif [ -f "${bin_dir}/${build_name}" ]; then
-            tar -czf "dist/${archive_name}" -C "$bin_dir" "${build_name}"
+          if [ -d "${bin_dir}/${BUILD_NAME}.app" ]; then
+            tar -czf "dist/${archive_name}" -C "$bin_dir" "${BUILD_NAME}.app"
+          elif [ -f "${bin_dir}/${BUILD_NAME}" ]; then
+            tar -czf "dist/${archive_name}" -C "$bin_dir" "${BUILD_NAME}"
           else
             tar -czf "dist/${archive_name}" -C "$bin_dir" .
           fi
@@ -180,8 +189,8 @@ runs:
         else
           # Linux packaging
           archive_name="${base_archive}.tar.gz"
-          if [ -f "${bin_dir}/${build_name}" ]; then
-            tar -czf "dist/${archive_name}" -C "$bin_dir" "${build_name}"
+          if [ -f "${bin_dir}/${BUILD_NAME}" ]; then
+            tar -czf "dist/${archive_name}" -C "$bin_dir" "${BUILD_NAME}"
           else
             tar -czf "dist/${archive_name}" -C "$bin_dir" .
           fi
@@ -193,10 +202,10 @@ runs:
               go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
             fi
 
-            export APP_NAME="$build_name"
-            export TARGET_ARCH="$target_arch"
+            export APP_NAME="$BUILD_NAME"
+            export TARGET_ARCH="$TARGET_ARCH"
             export VERSION=$(echo "$clean_tag" | tr '-' '+')
-            export PKG_NAME_SUFFIX="$abi_label"
+            export PKG_NAME_SUFFIX="$ABI_LABEL"
 
             DISTRO_VER=$(lsb_release -rs 2>/dev/null || echo "24.04")
             if [[ "$DISTRO_VER" == "20.04" || "$DISTRO_VER" == "22.04" ]]; then
@@ -213,7 +222,7 @@ runs:
 
             envsubst < nfpm.yaml > dist/nfpm-resolved.yaml
 
-            echo "[DEBUG_LOG] Generating Linux distribution packages ($DISTRO_VER / $abi_label)..."
+            echo "[DEBUG_LOG] Generating Linux distribution packages ($DISTRO_VER / $ABI_LABEL)..."
             nfpm package -f dist/nfpm-resolved.yaml --packager deb --target dist/
             nfpm package -f dist/nfpm-resolved.yaml --packager rpm --target dist/
             nfpm package -f dist/nfpm-resolved.yaml --packager apk --target dist/
@@ -224,13 +233,13 @@ runs:
     - uses: actions/upload-artifact@v4
       if: inputs.package == 'true'
       with:
-        overwrite: 'true'
+        overwrite: true
         name: ${{ steps.meta.outputs.ARTIFACT_NAME }}
         path: dist/*
 
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      if: inputs.package == 'true' && startsWith(github.ref, 'refs/tags/')
+    - name: Release (Standalone fallback)
+      uses: softprops/action-gh-release@v2
+      if: inputs.package == 'true' && inputs.publish-release == 'true' && startsWith(github.ref, 'refs/tags/')
       with:
         name: Release ${{ inputs.tag }}
         files: dist/*
