@@ -28,6 +28,7 @@ type App struct {
 	isConnected   bool
 	lastStatusRaw string
 	lastListRaw   string
+	pollInterval  time.Duration
 
 	linuxTrayIcon   []byte
 	darwinTrayIcon  []byte
@@ -51,6 +52,7 @@ func NewApp(
 		updateService:   updateService,
 		toolService:     toolService,
 		logTailer:       services.NewLogTailer(),
+		pollInterval:    4 * time.Second,
 		linuxTrayIcon:   linuxTrayIcon,
 		darwinTrayIcon:  darwinTrayIcon,
 		windowsTrayIcon: windowsTrayIcon,
@@ -59,6 +61,25 @@ func NewApp(
 
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
+
+	// Load settings on startup and apply engine parameters
+	settings, err := a.configService.LoadAppSettings()
+	if err == nil && settings != nil {
+		if settings.RequestTimeoutSeconds > 0 {
+			a.teleService.SetTimeout(time.Duration(settings.RequestTimeoutSeconds) * time.Second)
+		}
+		if settings.PollIntervalSeconds > 0 {
+			a.statusMu.Lock()
+			a.pollInterval = time.Duration(settings.PollIntervalSeconds) * time.Second
+			a.statusMu.Unlock()
+		}
+		if settings.StartMinimized {
+			go func() {
+				time.Sleep(150 * time.Millisecond)
+				runtime.WindowHide(a.ctx)
+			}()
+		}
+	}
 
 	if err := runtime.InitializeNotifications(a.ctx); err != nil {
 		log.Printf("Failed to initialize notifications: %v", err)
@@ -90,6 +111,10 @@ func (a *App) Startup(ctx context.Context) {
 
 	go func() {
 		time.Sleep(2 * time.Second)
+		currentSettings, err := a.configService.LoadAppSettings()
+		if err == nil && currentSettings != nil && !currentSettings.AutoCheckUpdates {
+			return
+		}
 		info, err := a.updateService.CheckForUpdate(a.ctx)
 		if err == nil && info != nil && info.Available {
 			runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Update] New version available: v%s (Current: v%s)", info.LatestVersion, info.CurrentVersion))
@@ -187,6 +212,10 @@ func (a *App) Notify(title string, body string) error {
 	if !runtime.IsNotificationAvailable(a.ctx) {
 		return nil
 	}
+	settings, err := a.configService.LoadAppSettings()
+	if err == nil && settings != nil && !settings.EnableNotifications {
+		return nil
+	}
 	return runtime.SendNotification(a.ctx, runtime.NotificationOptions{
 		ID:    "telepresence-gui-alert",
 		Title: title,
@@ -263,6 +292,7 @@ func (a *App) InterceptWorkload(config models.InterceptConfig) error {
 		return err
 	}
 	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Intercept] Successfully intercepted workload \"%s\"", config.Workload))
+	a.notifyIntercept("Workload Intercepted", fmt.Sprintf("Successfully intercepted workload \"%s\"", config.Workload))
 	return nil
 }
 
@@ -281,6 +311,7 @@ func (a *App) ReplaceWorkload(config models.ReplaceConfig) error {
 		return err
 	}
 	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Replace] Successfully replaced workload \"%s\"", config.Workload))
+	a.notifyIntercept("Workload Replaced", fmt.Sprintf("Successfully replaced workload \"%s\"", config.Workload))
 	return nil
 }
 
@@ -299,6 +330,7 @@ func (a *App) DetachWorkload(config models.DetachConfig) error {
 		return err
 	}
 	runtime.EventsEmit(a.ctx, "daemon-log", fmt.Sprintf("[Detach] Successfully detached workload \"%s\"", config.AttachmentName))
+	a.notifyIntercept("Workload Detached", fmt.Sprintf("Successfully detached workload \"%s\"", config.AttachmentName))
 	return nil
 }
 
@@ -314,6 +346,26 @@ func (a *App) GetKubeInfo(kubeConfigPath string) (models.KubeInfo, error) {
 	return info, nil
 }
 
+func (a *App) notifyConnect(title string, body string) {
+	settings, err := a.configService.LoadAppSettings()
+	if err == nil && settings != nil {
+		if !settings.EnableNotifications || !settings.NotifyOnConnect {
+			return
+		}
+	}
+	_ = a.Notify(title, body)
+}
+
+func (a *App) notifyIntercept(title string, body string) {
+	settings, err := a.configService.LoadAppSettings()
+	if err == nil && settings != nil {
+		if !settings.EnableNotifications || !settings.NotifyOnIntercept {
+			return
+		}
+	}
+	_ = a.Notify(title, body)
+}
+
 func (a *App) updateConnectionStatus(connected bool) {
 	a.statusMu.Lock()
 	if a.isConnected == connected {
@@ -327,14 +379,14 @@ func (a *App) updateConnectionStatus(connected bool) {
 	a.statusMu.Unlock()
 
 	if connected {
-		_ = a.Notify("Telepresence Connected", "Connected to cluster successfully.")
+		a.notifyConnect("Telepresence Connected", "Connected to cluster successfully.")
 		go func() {
 			if err := a.teleService.GRPC().Connect(a.ctx); err == nil {
 				a.startGRPCWorkloadStream()
 			}
 		}()
 	} else {
-		_ = a.Notify("Telepresence Disconnected", "Daemon stopped successfully.")
+		a.notifyConnect("Telepresence Disconnected", "Daemon stopped successfully.")
 		a.teleService.GRPC().StopWatchWorkloads()
 		a.teleService.GRPC().Disconnect()
 	}
@@ -350,4 +402,51 @@ func (a *App) SaveConnectConfig(config models.ConnectConfig) error {
 func (a *App) LoadConnectConfig() (*models.ConnectConfig, error) {
 	return a.configService.LoadConnectConfig()
 }
+
+func (a *App) GetAppSettings() (models.AppSettings, error) {
+	settings, err := a.configService.LoadAppSettings()
+	if err != nil {
+		return models.DefaultAppSettings(), err
+	}
+	if settings == nil {
+		return models.DefaultAppSettings(), nil
+	}
+	return *settings, nil
+}
+
+func (a *App) SaveAppSettings(settings models.AppSettings) error {
+	err := a.configService.SaveAppSettings(settings)
+	if err == nil {
+		if settings.RequestTimeoutSeconds > 0 {
+			a.teleService.SetTimeout(time.Duration(settings.RequestTimeoutSeconds) * time.Second)
+		}
+		if settings.PollIntervalSeconds > 0 {
+			a.statusMu.Lock()
+			a.pollInterval = time.Duration(settings.PollIntervalSeconds) * time.Second
+			a.statusMu.Unlock()
+		}
+		runtime.EventsEmit(a.ctx, "app-settings:changed", settings)
+		runtime.EventsEmit(a.ctx, "daemon-log", "[Settings] Application preferences saved successfully.")
+	}
+	return err
+}
+
+func (a *App) ResetAppSettings() (models.AppSettings, error) {
+	settings, err := a.configService.ResetAppSettings()
+	if err != nil {
+		return models.DefaultAppSettings(), err
+	}
+	if settings.RequestTimeoutSeconds > 0 {
+		a.teleService.SetTimeout(time.Duration(settings.RequestTimeoutSeconds) * time.Second)
+	}
+	if settings.PollIntervalSeconds > 0 {
+		a.statusMu.Lock()
+		a.pollInterval = time.Duration(settings.PollIntervalSeconds) * time.Second
+		a.statusMu.Unlock()
+	}
+	runtime.EventsEmit(a.ctx, "app-settings:changed", *settings)
+	runtime.EventsEmit(a.ctx, "daemon-log", "[Settings] Application preferences reset to factory defaults.")
+	return *settings, nil
+}
+
 

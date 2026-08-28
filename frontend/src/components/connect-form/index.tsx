@@ -30,6 +30,7 @@ import { AdvancedTab } from "@/components/connect-form/tabs/advanced-tab"
 import { ConnectFormProps, DEFAULT_VALUES } from "@/components/connect-form/types"
 import { EventsOff, EventsOn } from "../../../wailsjs/runtime/runtime"
 import { useLoadingStore } from "@/stores/useLoadingStore"
+import { useSettingsStore } from "@/stores/useSettingsStore"
 import { KubeService } from "@/services/kube"
 import { CoreService } from "@/services/core"
 import { TelepresenceService } from "@/services/telepresence"
@@ -47,6 +48,7 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
     const startLoading = useLoadingStore((state) => state.startLoading)
     const stopLoading = useLoadingStore((state) => state.stopLoading)
     const setLoading = useLoadingStore((state) => state.setLoading)
+    const appSettings = useSettingsStore((state) => state.settings)
 
     const [connectConfig, setConnectConfig] = useState(new models.ConnectConfig(DEFAULT_VALUES))
     const [availableContexts, setAvailableContexts] = useState<string[]>([])
@@ -63,15 +65,16 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
 
     useEffect(() => {
         // Guard: Prevent double-fetching and infinite state-update loops
-        if (connectConfig.kubeconfig === lastLoadedKubeconfig.current) {
+        if (connectConfig.kubeconfig === lastLoadedKubeconfig.current && lastLoadedKubeconfig.current !== null) {
             return
         }
 
         const fetchKubeData = async () => {
             startLoading("kube-info")
             try {
-                // Fetch using the current state's path (starts as "" on mount)
-                const info = await KubeService.getInfo(connectConfig.kubeconfig)
+                // Fetch using the current state's path or settings default
+                const targetPath = connectConfig.kubeconfig || appSettings.defaultKubeconfig || ""
+                const info = await KubeService.getInfo(targetPath)
 
                 // 1. Update our ref so we don't fetch this exact path again
                 lastLoadedKubeconfig.current = info.kubeconfigPath
@@ -81,19 +84,23 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                     setAvailableContexts(info.contexts)
                 }
 
-                // 3. Handle Saved Config vs. CLI Defaults
+                // 3. Handle Saved Config vs. Settings / CLI Defaults
                 if (connectConfig.kubeconfig === "" && info.savedConfig) {
                     // Initial load ONLY: if a saved config exists, use it entirely
                     setConnectConfig(info.savedConfig)
-                    // Ensure our guard knows about the saved config's path
                     lastLoadedKubeconfig.current = info.savedConfig.kubeconfig
                 } else {
-                    // Subsequent loads (or if no saved config exists): merge the CLI data
+                    // Subsequent loads (or if no saved config exists): merge the CLI data with settings defaults
                     setConnectConfig((prevData) => ({
                         ...prevData,
                         kubeconfig: info.kubeconfigPath,
-                        context: info.currentContext,
-                        namespace: info.namespace
+                        context: appSettings.defaultContext || info.currentContext,
+                        namespace: appSettings.defaultNamespace || info.namespace || "default",
+                        "manager-namespace": appSettings.managerNamespace || prevData["manager-namespace"],
+                        docker: appSettings.dockerDaemonMode ?? prevData.docker,
+                        "insecure-skip-tls-verify": appSettings.insecureSkipTLS ?? prevData["insecure-skip-tls-verify"],
+                        "disable-compression": appSettings.disableCompression ?? prevData["disable-compression"],
+                        "request-timeout": appSettings.requestTimeoutSeconds ? `${appSettings.requestTimeoutSeconds}s` : prevData["request-timeout"]
                     }))
                 }
             } catch (error) {
@@ -104,16 +111,27 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
         }
 
         fetchKubeData()
-    }, [connectConfig.kubeconfig, startLoading, stopLoading])
+    }, [connectConfig.kubeconfig, appSettings, startLoading, stopLoading])
 
     const handleReset = useCallback(async (event: SyntheticEvent<HTMLFormElement>) => {
-        setConnectConfig(new models.ConnectConfig(DEFAULT_VALUES))
+        const resetDefaults = {
+            ...DEFAULT_VALUES,
+            namespace: appSettings.defaultNamespace || DEFAULT_VALUES.namespace,
+            kubeconfig: appSettings.defaultKubeconfig || DEFAULT_VALUES.kubeconfig,
+            context: appSettings.defaultContext || DEFAULT_VALUES.context,
+            "manager-namespace": appSettings.managerNamespace || DEFAULT_VALUES["manager-namespace"],
+            docker: appSettings.dockerDaemonMode ?? DEFAULT_VALUES.docker,
+            "insecure-skip-tls-verify": appSettings.insecureSkipTLS ?? DEFAULT_VALUES["insecure-skip-tls-verify"],
+            "disable-compression": appSettings.disableCompression ?? DEFAULT_VALUES["disable-compression"],
+            "request-timeout": appSettings.requestTimeoutSeconds ? `${appSettings.requestTimeoutSeconds}s` : DEFAULT_VALUES["request-timeout"]
+        }
+        setConnectConfig(new models.ConnectConfig(resetDefaults))
         CoreService.notify("Telepresence Config Reset", "Options reset successfully.")
 
         startLoading("kube-info")
 
         try {
-            const info = await KubeService.getInfo("")
+            const info = await KubeService.getInfo(appSettings.defaultKubeconfig || "")
 
             if (info.contexts && info.contexts.length > 0) {
                 setAvailableContexts(info.contexts)
@@ -121,16 +139,16 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
 
             setConnectConfig((prevData) => ({
                 ...prevData,
-                context: info.currentContext,
-                namespace: info.namespace,
                 kubeconfig: info.kubeconfigPath,
+                context: appSettings.defaultContext || info.currentContext,
+                namespace: appSettings.defaultNamespace || info.namespace || "default"
             }))
         } catch (error) {
             console.warn("Could not load kubeconfig defaults:", error)
         } finally {
             stopLoading("kube-info")
         }
-    }, [startLoading, stopLoading])
+    }, [appSettings, startLoading, stopLoading])
 
     const handleFieldChange = useCallback((key: keyof models.ConnectConfig, value: any) => {
         setConnectConfig((prev) => ({ ...prev, [key]: value }))

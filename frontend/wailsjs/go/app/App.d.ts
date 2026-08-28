@@ -12,6 +12,8 @@ export function DetachWorkload(arg1:models.DetachConfig):Promise<void>;
 
 export function DownloadAndInstallUpdate():Promise<void>;
 
+export function GetAppSettings():Promise<models.AppSettings>;
+
 export function GetKubeInfo(arg1:string):Promise<models.KubeInfo>;
 
 export function InterceptWorkload(arg1:models.InterceptConfig):Promise<void>;
@@ -26,7 +28,11 @@ export function OnSecondInstanceLaunch(arg1:options.SecondInstanceData):Promise<
 
 export function ReplaceWorkload(arg1:models.ReplaceConfig):Promise<void>;
 
+export function ResetAppSettings():Promise<models.AppSettings>;
+
 export function RestartApp():Promise<void>;
+
+export function SaveAppSettings(arg1:models.AppSettings):Promise<void>;
 
 export function SaveConnectConfig(arg1:models.ConnectConfig):Promise<void>;
 

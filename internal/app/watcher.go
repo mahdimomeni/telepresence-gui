@@ -11,7 +11,14 @@ import (
 )
 
 func (a *App) startBackgroundWatcher() {
-	ticker := time.NewTicker(4 * time.Second)
+	a.statusMu.Lock()
+	interval := a.pollInterval
+	if interval <= 0 {
+		interval = 4 * time.Second
+	}
+	a.statusMu.Unlock()
+
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
@@ -20,6 +27,15 @@ func (a *App) startBackgroundWatcher() {
 			return
 		case <-ticker.C:
 			a.checkTelepresenceChanges()
+
+			// Dynamically adjust interval if updated from settings
+			a.statusMu.Lock()
+			currentInterval := a.pollInterval
+			a.statusMu.Unlock()
+			if currentInterval > 0 && currentInterval != interval {
+				interval = currentInterval
+				ticker.Reset(interval)
+			}
 		}
 	}
 }

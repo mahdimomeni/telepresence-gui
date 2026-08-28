@@ -80,3 +80,65 @@ type ReplaceConfig struct {
 	DockerMount    string   `json:"docker_mount"`
 	Namespace      string   `json:"namespace"`
 }
+
+type AppSettings struct {
+	// General & Appearance
+	Theme             string `json:"theme"`             // "dark" | "light" | "system"
+	EnableGlowEffects bool   `json:"enableGlowEffects"` // Ambient aurora glows
+	ShowSplashScreen  bool   `json:"showSplashScreen"`  // Show splash animation on startup
+	CloseToTray       bool   `json:"closeToTray"`       // Hide to tray on close vs quit
+	StartMinimized    bool   `json:"startMinimized"`    // Start minimized to tray
+
+	// Desktop Notifications
+	EnableNotifications bool `json:"enableNotifications"` // Master notification switch
+	NotifyOnConnect     bool `json:"notifyOnConnect"`     // Notify on connect/disconnect
+	NotifyOnIntercept   bool `json:"notifyOnIntercept"`   // Notify on intercept/replace/detach
+
+	// Updates
+	AutoCheckUpdates bool `json:"autoCheckUpdates"` // Check for updates on startup
+
+	// Telepresence Defaults & Connectivity
+	DefaultNamespace      string `json:"defaultNamespace"`
+	DefaultKubeconfig     string `json:"defaultKubeconfig"`
+	DefaultContext        string `json:"defaultContext"`
+	ManagerNamespace      string `json:"managerNamespace"`
+	RequestTimeoutSeconds int    `json:"requestTimeoutSeconds"` // default 60
+	PollIntervalSeconds   int    `json:"pollIntervalSeconds"`   // default 4
+	DockerDaemonMode      bool   `json:"dockerDaemonMode"`
+	DisableCompression    bool   `json:"disableCompression"`
+	InsecureSkipTLS       bool   `json:"insecureSkipTLS"`
+
+	// Log Console Preferences
+	MaxLogLines     int    `json:"maxLogLines"`     // default 2000
+	AutoScrollLogs  bool   `json:"autoScrollLogs"`  // default true
+	WrapLogLines    bool   `json:"wrapLogLines"`    // default true
+	DefaultLogLevel string `json:"defaultLogLevel"` // "all", "error", "warn", "info", "commands", "daemon"
+}
+
+func DefaultAppSettings() AppSettings {
+	return AppSettings{
+		Theme:                 "dark",
+		EnableGlowEffects:     true,
+		ShowSplashScreen:      true,
+		CloseToTray:           true,
+		StartMinimized:        false,
+		EnableNotifications:   true,
+		NotifyOnConnect:       true,
+		NotifyOnIntercept:     true,
+		AutoCheckUpdates:      true,
+		DefaultNamespace:      "default",
+		DefaultKubeconfig:     "",
+		DefaultContext:        "",
+		ManagerNamespace:      "",
+		RequestTimeoutSeconds: 60,
+		PollIntervalSeconds:   4,
+		DockerDaemonMode:      false,
+		DisableCompression:    false,
+		InsecureSkipTLS:       false,
+		MaxLogLines:           2000,
+		AutoScrollLogs:        true,
+		WrapLogLines:          true,
+		DefaultLogLevel:       "all",
+	}
+}
+

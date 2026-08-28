@@ -39,6 +39,14 @@ func (s *TelepresenceService) Unlock() {
 	s.mu.Unlock()
 }
 
+func (s *TelepresenceService) SetTimeout(d time.Duration) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if d > 0 {
+		s.timeout = d
+	}
+}
+
 func (s *TelepresenceService) Start(ctx context.Context, config models.ConnectConfig) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

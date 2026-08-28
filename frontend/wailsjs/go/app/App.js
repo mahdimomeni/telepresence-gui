@@ -18,6 +18,10 @@ export function DownloadAndInstallUpdate() {
   return window['go']['app']['App']['DownloadAndInstallUpdate']();
 }
 
+export function GetAppSettings() {
+  return window['go']['app']['App']['GetAppSettings']();
+}
+
 export function GetKubeInfo(arg1) {
   return window['go']['app']['App']['GetKubeInfo'](arg1);
 }
@@ -46,8 +50,16 @@ export function ReplaceWorkload(arg1) {
   return window['go']['app']['App']['ReplaceWorkload'](arg1);
 }
 
+export function ResetAppSettings() {
+  return window['go']['app']['App']['ResetAppSettings']();
+}
+
 export function RestartApp() {
   return window['go']['app']['App']['RestartApp']();
+}
+
+export function SaveAppSettings(arg1) {
+  return window['go']['app']['App']['SaveAppSettings'](arg1);
 }
 
 export function SaveConnectConfig(arg1) {

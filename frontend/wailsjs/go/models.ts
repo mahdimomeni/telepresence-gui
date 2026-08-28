@@ -1,5 +1,59 @@
 export namespace models {
 	
+	export class AppSettings {
+	    theme: string;
+	    enableGlowEffects: boolean;
+	    showSplashScreen: boolean;
+	    closeToTray: boolean;
+	    startMinimized: boolean;
+	    enableNotifications: boolean;
+	    notifyOnConnect: boolean;
+	    notifyOnIntercept: boolean;
+	    autoCheckUpdates: boolean;
+	    defaultNamespace: string;
+	    defaultKubeconfig: string;
+	    defaultContext: string;
+	    managerNamespace: string;
+	    requestTimeoutSeconds: number;
+	    pollIntervalSeconds: number;
+	    dockerDaemonMode: boolean;
+	    disableCompression: boolean;
+	    insecureSkipTLS: boolean;
+	    maxLogLines: number;
+	    autoScrollLogs: boolean;
+	    wrapLogLines: boolean;
+	    defaultLogLevel: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AppSettings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.theme = source["theme"];
+	        this.enableGlowEffects = source["enableGlowEffects"];
+	        this.showSplashScreen = source["showSplashScreen"];
+	        this.closeToTray = source["closeToTray"];
+	        this.startMinimized = source["startMinimized"];
+	        this.enableNotifications = source["enableNotifications"];
+	        this.notifyOnConnect = source["notifyOnConnect"];
+	        this.notifyOnIntercept = source["notifyOnIntercept"];
+	        this.autoCheckUpdates = source["autoCheckUpdates"];
+	        this.defaultNamespace = source["defaultNamespace"];
+	        this.defaultKubeconfig = source["defaultKubeconfig"];
+	        this.defaultContext = source["defaultContext"];
+	        this.managerNamespace = source["managerNamespace"];
+	        this.requestTimeoutSeconds = source["requestTimeoutSeconds"];
+	        this.pollIntervalSeconds = source["pollIntervalSeconds"];
+	        this.dockerDaemonMode = source["dockerDaemonMode"];
+	        this.disableCompression = source["disableCompression"];
+	        this.insecureSkipTLS = source["insecureSkipTLS"];
+	        this.maxLogLines = source["maxLogLines"];
+	        this.autoScrollLogs = source["autoScrollLogs"];
+	        this.wrapLogLines = source["wrapLogLines"];
+	        this.defaultLogLevel = source["defaultLogLevel"];
+	    }
+	}
 	export class ClientSession {
 	    session_id: string;
 	    manager_install_id: string;

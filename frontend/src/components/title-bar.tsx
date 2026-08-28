@@ -4,18 +4,21 @@ import {
   WindowToggleMaximise,
   WindowIsMaximised,
   WindowHide,
+  Quit,
 } from "../../wailsjs/runtime/runtime"
-import { Minus, Square, Copy, X, Terminal, AlertTriangle } from "lucide-react"
+import { Minus, Square, Copy, X, Terminal, AlertTriangle, Settings } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "./mode-toggle"
 import Logo from "@/assets/images/logo.svg?react"
+import { useSettingsStore } from "@/stores/useSettingsStore"
 
 interface TitleBarProps {
   isConnected: boolean
   report?: any
   isLogsOpen: boolean
   onToggleLogs: () => void
+  onOpenSettings?: () => void
   onReplaySplash?: () => void
 }
 
@@ -24,9 +27,11 @@ export function TitleBar({
   report,
   isLogsOpen,
   onToggleLogs,
+  onOpenSettings,
   onReplaySplash,
 }: TitleBarProps) {
   const [isMaximized, setIsMaximized] = useState(false)
+  const closeToTray = useSettingsStore((state) => state.settings.closeToTray)
 
   const checkMaximized = useCallback(async () => {
     try {
@@ -56,7 +61,11 @@ export function TitleBar({
   }
 
   const handleClose = () => {
-    WindowHide()
+    if (closeToTray) {
+      WindowHide()
+    } else {
+      Quit()
+    }
   }
 
   return (
@@ -133,6 +142,18 @@ export function TitleBar({
         >
           <Terminal className="size-3.5" />
           <span className="hidden sm:inline">Logs</span>
+        </Button>
+
+        {/* Settings Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onOpenSettings}
+          className="h-7.5 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground active:scale-95 transition-all"
+          title="Open Preferences & Settings (Ctrl+,)"
+        >
+          <Settings className="size-3.5 text-primary" />
+          <span className="hidden sm:inline">Settings</span>
         </Button>
 
         {/* Theme Mode Toggle */}

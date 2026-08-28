@@ -22,6 +22,16 @@ func (a *App) setupSystemTray() {
 		tray = systray.New()
 
 		menu := systray.NewMenu()
+		menu.Add("Show Window", func() {
+			wailsRuntime.WindowUnminimise(a.ctx)
+			wailsRuntime.WindowShow(a.ctx)
+		})
+		menu.Add("Settings...", func() {
+			wailsRuntime.WindowUnminimise(a.ctx)
+			wailsRuntime.WindowShow(a.ctx)
+			wailsRuntime.EventsEmit(a.ctx, "open-settings")
+		})
+		menu.AddSeparator()
 		mConnectToggle = menu.Add("Connect", func() {
 			a.statusMu.Lock()
 			currentlyConnected := a.isConnected

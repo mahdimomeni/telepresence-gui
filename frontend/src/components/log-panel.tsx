@@ -27,8 +27,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { useSettingsStore } from "@/stores/useSettingsStore"
 
-const MAX_LOG_LINES = 2000
 const MAX_LINE_LENGTH = 4000
 
 export type LogLevel = "error" | "warn" | "info" | "success" | "debug" | "system"
@@ -145,14 +145,40 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
   const isOpen = isControlled ? controlledOpen : internalOpen
   const setIsOpen = isControlled ? (setControlledOpen ?? (() => {})) : setInternalOpen
 
+  const appSettings = useSettingsStore((state) => state.settings)
+  const maxLogLines = appSettings.maxLogLines || 2000
+
   const [logs, setLogs] = useState<ParsedLog[]>([])
-  const [filterCategory, setFilterCategory] = useState<LogCategory>("all")
+  const [filterCategory, setFilterCategory] = useState<LogCategory>((appSettings.defaultLogLevel as LogCategory) || "all")
   const [filterQuery, setFilterQuery] = useState("")
-  const [autoScroll, setAutoScroll] = useState(true)
-  const [wrapLines, setWrapLines] = useState(true)
+  const [autoScroll, setAutoScroll] = useState(appSettings.autoScrollLogs ?? true)
+  const [wrapLines, setWrapLines] = useState(appSettings.wrapLogLines ?? true)
   const [isExpandedHeight, setIsExpandedHeight] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [isUserScrolledUp, setIsUserScrolledUp] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  const getViewport = useCallback(() => {
+    return (
+      scrollRef.current?.querySelector<HTMLElement>(
+        '[data-slot="scroll-area-viewport"], [data-radix-scroll-area-viewport]'
+      ) || scrollRef.current
+    )
+  }, [])
+
+  const scrollToBottom = useCallback((smooth = false) => {
+    const viewport = getViewport()
+    if (viewport) {
+      if (smooth) {
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" })
+      } else {
+        viewport.scrollTop = viewport.scrollHeight
+      }
+    } else if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "nearest" })
+    }
+  }, [getViewport])
 
   useEffect(() => {
     EventsOn("daemon-log", (newLine: string) => {
@@ -160,25 +186,84 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
       setLogs((prevLogs) => {
         const parsed = parseLogLine(newLine, prevLogs.length)
         const updated = [...prevLogs, parsed]
-        return updated.length > MAX_LOG_LINES ? updated.slice(-MAX_LOG_LINES) : updated
+        return updated.length > maxLogLines ? updated.slice(-maxLogLines) : updated
       })
     })
 
     return () => {
       EventsOff("daemon-log")
     }
-  }, [])
+  }, [maxLogLines])
+
+  // Synchronize with app settings preferences
+  useEffect(() => {
+    if (appSettings.autoScrollLogs !== undefined) {
+      setAutoScroll(appSettings.autoScrollLogs)
+    }
+  }, [appSettings.autoScrollLogs])
 
   useEffect(() => {
-    if (isOpen && autoScroll && scrollRef.current) {
-      requestAnimationFrame(() => {
-        const viewport = scrollRef.current?.querySelector("[data-radix-scroll-area-viewport]")
-        if (viewport) {
-          viewport.scrollTop = viewport.scrollHeight
-        }
-      })
+    if (appSettings.wrapLogLines !== undefined) {
+      setWrapLines(appSettings.wrapLogLines)
     }
-  }, [logs, isOpen, autoScroll, filterCategory, filterQuery])
+  }, [appSettings.wrapLogLines])
+
+  useEffect(() => {
+    if (appSettings.defaultLogLevel) {
+      setFilterCategory(appSettings.defaultLogLevel as LogCategory)
+    }
+  }, [appSettings.defaultLogLevel])
+
+  // Listen for scroll events to detect if user has scrolled away from the bottom
+  useEffect(() => {
+    if (!isOpen) return
+
+    const viewport = getViewport()
+    if (!viewport) return
+
+    const handleScroll = () => {
+      const threshold = 40
+      const isNearBottom =
+        viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= threshold
+      setIsUserScrolledUp(!isNearBottom)
+    }
+
+    viewport.addEventListener("scroll", handleScroll, { passive: true })
+    return () => {
+      viewport.removeEventListener("scroll", handleScroll)
+    }
+  }, [isOpen, getViewport])
+
+  // Auto-scroll when logs update or preferences change
+  useEffect(() => {
+    if (isOpen && autoScroll && !isUserScrolledUp) {
+      scrollToBottom()
+      const rafId = requestAnimationFrame(() => {
+        scrollToBottom()
+      })
+      return () => cancelAnimationFrame(rafId)
+    }
+  }, [
+    logs,
+    isOpen,
+    autoScroll,
+    isUserScrolledUp,
+    filterCategory,
+    filterQuery,
+    wrapLines,
+    isExpandedHeight,
+    scrollToBottom,
+  ])
+
+  // Reset scrolled state when opening console
+  useEffect(() => {
+    if (isOpen) {
+      setIsUserScrolledUp(false)
+      if (autoScroll) {
+        requestAnimationFrame(() => scrollToBottom())
+      }
+    }
+  }, [isOpen, autoScroll, scrollToBottom])
 
   // Counts by category
   const counts = useMemo(() => {
@@ -496,7 +581,14 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
             className={`h-6 px-2 text-[11px] gap-1 cursor-pointer ${
               autoScroll ? "text-primary bg-primary/10" : "text-zinc-400 hover:text-zinc-100"
             }`}
-            onClick={() => setAutoScroll(!autoScroll)}
+            onClick={() => {
+              const next = !autoScroll
+              setAutoScroll(next)
+              if (next) {
+                setIsUserScrolledUp(false)
+                scrollToBottom(true)
+              }
+            }}
             title={autoScroll ? "Auto-scroll ON (click to pause)" : "Auto-scroll OFF (click to enable)"}
           >
             <ArrowDownToLine className="size-3" />
@@ -540,7 +632,10 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
             variant="ghost"
             size="sm"
             className="h-6 px-2 text-[11px] text-zinc-400 hover:text-rose-400 gap-1 cursor-pointer"
-            onClick={() => setLogs([])}
+            onClick={() => {
+              setLogs([])
+              setIsUserScrolledUp(false)
+            }}
             disabled={logs.length === 0}
             title="Clear current logs"
           >
@@ -551,83 +646,103 @@ export function LogPanel({ isOpen: controlledOpen, onOpenChange: setControlledOp
       </div>
 
       {/* Log Lines Stream Area */}
-      <ScrollArea
-        ref={scrollRef}
-        className={`${
-          isExpandedHeight ? "h-96 sm:h-[480px]" : "h-64"
-        } w-full px-3 py-2 font-mono text-[11px] leading-5 tracking-tight transition-all duration-200`}
-      >
-        {logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-52 text-zinc-500 italic space-y-1.5">
-            <Terminal className="size-7 opacity-35 text-zinc-400 mb-1" />
-            <span className="font-semibold text-zinc-400">Waiting for Telepresence daemon logs...</span>
-            <span className="text-[10px] text-zinc-500">
-              Cluster connection events, traffic manager routing, and intercept output will stream here in real time.
-            </span>
-          </div>
-        ) : filteredLogs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-zinc-500 italic py-8 text-center space-y-1">
-            <span>No logs match current filters</span>
-            {filterQuery && (
-              <span className="text-[10px] text-zinc-600">Query: &quot;{filterQuery}&quot;</span>
-            )}
-          </div>
-        ) : (
-          filteredLogs.map((log, index) => (
-            <div
-              key={log.id || index}
-              className={`flex items-start gap-2 hover:bg-zinc-900/75 py-0.5 rounded px-1.5 -mx-1 transition-colors ${
-                log.level === "error"
-                  ? "bg-rose-950/20"
-                  : log.level === "warn"
-                  ? "bg-amber-950/15"
-                  : ""
-              }`}
-            >
-              {/* Line Number */}
-              <span className="text-zinc-600 select-none text-[10px] w-7 text-right shrink-0 pt-0.5">
-                {index + 1}
-              </span>
-
-              {/* Timestamp */}
-              <span className="text-zinc-500 select-none text-[10px] shrink-0 pt-0.5 font-mono">
-                {log.timestamp}
-              </span>
-
-              {/* Level Pill */}
-              <span
-                className={`inline-flex items-center px-1.5 py-0 rounded text-[9px] font-semibold uppercase tracking-wider shrink-0 border ${getLevelBadgeClass(
-                  log.level
-                )}`}
-              >
-                {log.level === "error"
-                  ? "ERR"
-                  : log.level === "warn"
-                  ? "WRN"
-                  : log.level === "success"
-                  ? "OK"
-                  : log.level === "debug"
-                  ? "DBG"
-                  : "INF"}
-              </span>
-
-              {/* Source Tag */}
-              <span className="text-zinc-400 font-semibold text-[10px] shrink-0">
-                [{log.source}]
-              </span>
-
-              {/* Message Content */}
-              <span
-                className={`flex-1 ${
-                  wrapLines ? "whitespace-pre-wrap break-all" : "whitespace-pre overflow-x-auto"
-                } ${getLogTextClass(log.level)}`}
-              >
-                {highlightMatch(log.message)}
+      <div className="relative">
+        <ScrollArea
+          ref={scrollRef}
+          className={`${
+            isExpandedHeight ? "h-96 sm:h-[480px]" : "h-64"
+          } w-full px-3 py-2 font-mono text-[11px] leading-5 tracking-tight transition-all duration-200`}
+        >
+          {logs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-52 text-zinc-500 italic space-y-1.5">
+              <Terminal className="size-7 opacity-35 text-zinc-400 mb-1" />
+              <span className="font-semibold text-zinc-400">Waiting for Telepresence daemon logs...</span>
+              <span className="text-[10px] text-zinc-500">
+                Cluster connection events, traffic manager routing, and intercept output will stream here in real time.
               </span>
             </div>
-          ))
+          ) : filteredLogs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-40 text-zinc-500 italic py-8 text-center space-y-1">
+              <span>No logs match current filters</span>
+              {filterQuery && (
+                <span className="text-[10px] text-zinc-600">Query: &quot;{filterQuery}&quot;</span>
+              )}
+            </div>
+          ) : (
+            <>
+              {filteredLogs.map((log, index) => (
+                <div
+                  key={log.id || index}
+                  className={`flex items-start gap-2 hover:bg-zinc-900/75 py-0.5 rounded px-1.5 -mx-1 transition-colors ${
+                    log.level === "error"
+                      ? "bg-rose-950/20"
+                      : log.level === "warn"
+                      ? "bg-amber-950/15"
+                      : ""
+                  }`}
+                >
+                  {/* Line Number */}
+                  <span className="text-zinc-600 select-none text-[10px] w-7 text-right shrink-0 pt-0.5">
+                    {index + 1}
+                  </span>
+
+                  {/* Timestamp */}
+                  <span className="text-zinc-500 select-none text-[10px] shrink-0 pt-0.5 font-mono">
+                    {log.timestamp}
+                  </span>
+
+                  {/* Level Pill */}
+                  <span
+                    className={`inline-flex items-center px-1.5 py-0 rounded text-[9px] font-semibold uppercase tracking-wider shrink-0 border ${getLevelBadgeClass(
+                      log.level
+                    )}`}
+                  >
+                    {log.level === "error"
+                      ? "ERR"
+                      : log.level === "warn"
+                      ? "WRN"
+                      : log.level === "success"
+                      ? "OK"
+                      : log.level === "debug"
+                      ? "DBG"
+                      : "INF"}
+                  </span>
+
+                  {/* Source Tag */}
+                  <span className="text-zinc-400 font-semibold text-[10px] shrink-0">
+                    [{log.source}]
+                  </span>
+
+                  {/* Message Content */}
+                  <span
+                    className={`flex-1 ${
+                      wrapLines ? "whitespace-pre-wrap break-all" : "whitespace-pre overflow-x-auto"
+                    } ${getLogTextClass(log.level)}`}
+                  >
+                    {highlightMatch(log.message)}
+                  </span>
+                </div>
+              ))}
+              <div ref={bottomRef} className="h-0 w-0" />
+            </>
+          )}
+        </ScrollArea>
+
+        {/* Floating Jump-to-bottom Button when scrolled up */}
+        {isUserScrolledUp && filteredLogs.length > 0 && (
+          <button
+            onClick={() => {
+              setIsUserScrolledUp(false)
+              if (!autoScroll) setAutoScroll(true)
+              scrollToBottom(true)
+            }}
+            className="absolute bottom-3 right-5 z-20 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all cursor-pointer animate-in fade-in slide-in-from-bottom-2 duration-150 border border-primary/20"
+          >
+            <ChevronDown className="size-3.5" />
+            <span>Jump to bottom</span>
+          </button>
         )}
-      </ScrollArea>
+      </div>
     </div>
   )
 }

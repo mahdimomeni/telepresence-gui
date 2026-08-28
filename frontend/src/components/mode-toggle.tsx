@@ -8,9 +8,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "@/components/theme-provider"
+import { useSettingsStore } from "@/stores/useSettingsStore"
 
 export function ModeToggle() {
-  const { theme,setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
+  const updateField = useSettingsStore((state) => state.updateField)
+  const saveSettings = useSettingsStore((state) => state.saveSettings)
+
+  const handleSelectTheme = (newTheme: "light" | "dark" | "system") => {
+    setTheme(newTheme)
+    updateField("theme", newTheme)
+    saveSettings()
+  }
 
   return (
     <DropdownMenu>
@@ -22,13 +31,13 @@ export function ModeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")} disabled={theme === "light"}>
+        <DropdownMenuItem onClick={() => handleSelectTheme("light")} disabled={theme === "light"}>
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")} disabled={theme === "dark"}>
+        <DropdownMenuItem onClick={() => handleSelectTheme("dark")} disabled={theme === "dark"}>
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")} disabled={theme === "system"}>
+        <DropdownMenuItem onClick={() => handleSelectTheme("system")} disabled={theme === "system"}>
           System
         </DropdownMenuItem>
       </DropdownMenuContent>
