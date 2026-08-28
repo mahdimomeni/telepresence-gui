@@ -195,20 +195,20 @@ export function ConnectForm({ onConnectSuccess }: ConnectFormProps) {
                 <fieldset disabled={loading} className="space-y-0 border-0 p-0 m-0 min-w-0">
                     <CardContent className="pt-4 pb-2">
                         <Tabs defaultValue="core" className="w-full">
-                            <TabsList className="grid w-full grid-cols-4 mb-4 bg-muted/50 p-1">
-                                <TabsTrigger value="core" className="gap-1.5 text-xs transition-all data-[state=active]:shadow-xs">
+                            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1 mb-4 bg-muted/50 p-1">
+                                <TabsTrigger value="core" className="gap-1.5 text-xs transition-all data-[state=active]:shadow-xs py-1.5">
                                     <Radio className="size-3.5" />
                                     <span>Core</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="network" className="gap-1.5 text-xs transition-all data-[state=active]:shadow-xs">
+                                <TabsTrigger value="network" className="gap-1.5 text-xs transition-all data-[state=active]:shadow-xs py-1.5">
                                     <Network className="size-3.5" />
                                     <span>Network</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="cluster" className="gap-1.5 text-xs transition-all data-[state=active]:shadow-xs">
+                                <TabsTrigger value="cluster" className="gap-1.5 text-xs transition-all data-[state=active]:shadow-xs py-1.5">
                                     <ShieldCheck className="size-3.5" />
                                     <span>Cluster & Auth</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="advanced" className="gap-1.5 text-xs transition-all data-[state=active]:shadow-xs">
+                                <TabsTrigger value="advanced" className="gap-1.5 text-xs transition-all data-[state=active]:shadow-xs py-1.5">
                                     <SlidersHorizontal className="size-3.5" />
                                     <span>Advanced</span>
                                 </TabsTrigger>

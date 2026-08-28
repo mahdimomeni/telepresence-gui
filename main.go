@@ -68,8 +68,9 @@ func main() {
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:             "Telepresence GUI",
-		Width:             1024,
-		Height:            768,
+		Width:             1200,
+		Height:            800,
+		Frameless:         true,
 		HideWindowOnClose: true,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
@@ -80,12 +81,13 @@ func main() {
 		Bind: []interface{}{
 			application,
 		},
-		MinWidth:  1024,
-		MinHeight: 768,
+		MinWidth:  800,
+		MinHeight: 600,
 		Windows: &windows.Options{
-			WindowIsTranslucent:  true,
-			WebviewIsTransparent: true,
-			BackdropType:         windows.Auto,
+			WindowIsTranslucent:               true,
+			WebviewIsTransparent:              true,
+			BackdropType:                      windows.Auto,
+			DisableFramelessWindowDecorations: false,
 		},
 		DragAndDrop: &options.DragAndDrop{
 			DisableWebViewDrop: true,

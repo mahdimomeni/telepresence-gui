@@ -430,4 +430,18 @@ textarea,
 
 .animate-ripple {
   animation: ripple 2.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-}
+}
+
+/* Wails Desktop Window Drag & TitleBar Utilities */
+.wails-drag {
+  --wails-draggable: drag;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-app-region: drag;
+}
+
+.wails-no-drag {
+  --wails-draggable: no-drag;
+  -webkit-app-region: no-drag;
+}
+

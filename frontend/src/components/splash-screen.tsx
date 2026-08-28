@@ -56,9 +56,8 @@ export function SplashScreen({ onComplete, durationMs = 2800 }: SplashScreenProp
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-background text-foreground select-none overflow-hidden transition-all duration-500 ease-out ${
-        isFadingOut ? "opacity-0 scale-105 pointer-events-none" : "opacity-100 scale-100"
-      }`}
+      className={`fixed inset-0 z-40 flex flex-col items-center justify-center bg-background text-foreground select-none overflow-hidden transition-all duration-500 ease-out pt-11 ${isFadingOut ? "opacity-0 scale-105 pointer-events-none" : "opacity-100 scale-100"
+        }`}
     >
       {/* Dynamic Cyber Grid Background */}
       <div className="absolute inset-0 cyber-grid-bg opacity-70 pointer-events-none" />
@@ -68,12 +67,12 @@ export function SplashScreen({ onComplete, durationMs = 2800 }: SplashScreenProp
       <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-cyan-500/15 rounded-full blur-[140px] pointer-events-none animate-aurora-2" />
 
       {/* Skip Button */}
-      <div className="absolute top-6 right-6 z-20">
+      <div className="absolute top-14 right-6 z-20 wails-no-drag">
         <Button
           variant="ghost"
           size="sm"
           onClick={handleSkip}
-          className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground bg-muted/30 hover:bg-muted/60 backdrop-blur-md rounded-full border border-border/40 transition-all hover:scale-105"
+          className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted/70 backdrop-blur-md rounded-full border border-border/50 transition-all hover:scale-105 cursor-pointer shadow-xs"
         >
           Skip Boot
         </Button>
@@ -150,13 +149,12 @@ export function SplashScreen({ onComplete, durationMs = 2800 }: SplashScreenProp
               return (
                 <div
                   key={step.id}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    isPassed
+                  className={`h-1.5 rounded-full transition-all duration-300 ${isPassed
                       ? "bg-primary shadow-[0_0_8px_var(--primary)]"
                       : isCurrent
-                      ? "bg-primary/50 animate-pulse"
-                      : "bg-muted"
-                  }`}
+                        ? "bg-primary/50 animate-pulse"
+                        : "bg-muted"
+                    }`}
                 />
               )
             })}
